@@ -62,3 +62,27 @@ Options:
 `)
 
 }
+
+func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
+	p0 := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      &TestParseValues{},
+	}
+	p1 := p0.AddParser(&ArgumentParser{
+		Name:        "subcommand",
+		Destination: &TestParseValues{},
+	})
+	p1.AddArgument(&Argument{
+		Name:        "string",
+		Type:        "",
+		NumArgs:     '1',
+		Description: "Required string value",
+	})
+
+	// No string argument passed after subcommand
+	argv := []string{"subcommand"}
+	err := p0.ParseArgv(argv)
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Equals, "Expected a required string argument")
+}

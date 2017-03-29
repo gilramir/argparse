@@ -165,10 +165,10 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 	// TODO - switchArgumants
 
 	// If there aren't enough positional arguments, check the next known argument to see if it is required
-	if len(self.positionalArguments) > 0 && parser.nextPositionalArgument < len(self.positionalArguments) {
-		arg := self.positionalArguments[parser.nextPositionalArgument]
+	if len(results.triggeredParser.positionalArguments) > 0 && parser.nextPositionalArgument < len(results.triggeredParser.positionalArguments) {
+		arg := results.triggeredParser.positionalArguments[parser.nextPositionalArgument]
 		if arg.NumArgs == numArgs1 || arg.NumArgs == numArgsStar {
-			results.parseError = errors.Errorf("Expected %s argument (required)", arg.prettyName())
+			results.parseError = errors.Errorf("Expected a required %s argument", arg.prettyName())
 			return results
 		}
 	}
