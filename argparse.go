@@ -23,7 +23,7 @@ type ArgumentParser struct {
 	// The name of the program or subcommand
 	Name string
 
-	// One-line usage statement
+	// One-line description of the program
 	ShortDescription string
 
 	// This can be a multi-line, longer explanation of
@@ -34,8 +34,7 @@ type ArgumentParser struct {
 	// after all the options in the --help output
 	Epilog string
 
-	// The function to call when this parser/subcommand
-	// is triggered.
+	// The struct that will receive the values after parsing
 	Destination Destination
 
 	// If this is set, instead of printing help or usage
