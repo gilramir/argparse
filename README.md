@@ -40,7 +40,7 @@ interface requires a "Run" method, which is triggered when the parse is finished
             Short: "-i",
             Long: "--input",
             Description: "The input file",
-            Metvar: "FILE",
+            Metavar: "FILE",
         })
 
         p.AddArgument(&argparse.Argument{
@@ -48,7 +48,7 @@ interface requires a "Run" method, which is triggered when the parse is finished
             Short: "-o",
             Long: "--output",
             Description: "The output file",
-            Metvar: "FILE",
+            Metavar: "FILE",
         })
 
         err := p.ParseArgs()
