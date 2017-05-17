@@ -225,3 +225,37 @@ func (self *ArgumentParser) HelpString() string {
 
 	return text
 }
+
+// Print a textual represntation of the parser tree to stdout.
+// This can be useful for developers if they have issues with their parser.
+func (self *ArgumentParser) Dump() {
+	self.dump("")
+}
+
+func (self *ArgumentParser) dump(spaces string) {
+	fmt.Printf("%sName: %s\n", spaces, self.Name)
+	if self.ShortDescription != "" {
+		fmt.Printf("%sShortDescription: %s\n", spaces, self.ShortDescription)
+	}
+	if self.LongDescription != "" {
+		fmt.Printf("%sLongDescription: %s\n", spaces, self.LongDescription)
+	}
+	if self.Epilog != "" {
+		fmt.Printf("%sEpilog: %s\n", spaces, self.Epilog)
+	}
+	fmt.Printf("%sDestination: %v\n", spaces, self.Destination)
+
+	var subSpaces string = spaces + "    "
+	for _, arg := range self.switchArguments {
+		arg.dump(subSpaces)
+	}
+	for _, arg := range self.positionalArguments {
+		arg.dump(subSpaces)
+	}
+	fmt.Printf("\n")
+
+	subSpaces += "    "
+	for _, subParser := range self.subParsers {
+		subParser.dump(subSpaces)
+	}
+}

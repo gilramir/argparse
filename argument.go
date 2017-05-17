@@ -340,3 +340,24 @@ func (self *Argument) HelpString() string {
 	}
 	return text
 }
+
+func (self *Argument) dump(spaces string) {
+	if self.Short != "" {
+		fmt.Printf("%sShort: %s\n", spaces, self.Short)
+	}
+	if self.Long != "" {
+		fmt.Printf("%sLong: %s\n", spaces, self.Long)
+	}
+	if self.Name != "" {
+		fmt.Printf("%sName: %s\n", spaces, self.Name)
+	}
+	fmt.Printf("%sType: %q\n", spaces, self.Type)
+	fmt.Printf("%sDescription: %s\n", spaces, self.Description)
+	if self.Metavar != "" {
+		fmt.Printf("%sMetavar: %s\n", spaces, self.Metavar)
+	}
+	if self.NumArgs != '0' && self.NumArgs != '1' {
+		fmt.Printf("%sNumArgs: %s\n", spaces, string(self.NumArgs))
+	}
+	fmt.Printf("\n")
+}
