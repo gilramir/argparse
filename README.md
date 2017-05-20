@@ -27,12 +27,14 @@ interface requires a "Run" method, which is triggered when the parse is finished
         cliOk = true
         err = dosomething(self.Input, self.Output)
     }
-        
+       
+    var options MyProgramOptions
 
     func example() (error) {
         p := &argparse.ArgumentParser{
             Name: "my_program",
             ShortDescription: "A utility program",
+            Destination: &options,
         }
 
         p.AddArgument(&argparse.Argument{
@@ -77,6 +79,34 @@ The following fields can be set in ArgumentParser:
 
 * Stdout - an io.Writer to send the output of "--help" to instead of os.Stdout
 
+# Destination interface
+
+The Destination interface needs to have field names that match either the short
+name or the long name of the Arguments added to an ArgumentParser.  Because the
+field name needs to be inspected by "argparse", it must start with an upper case
+character (so that Go exports those field names to other modules). Also, any embedded
+dashes are removed and the field name is expected to be in CamelCase. For example
+
+* "-s" : the field name is S
+
+* "--input": the field name is Input
+
+* "--no-verify": the field name is NoVerify
+
+The Destination interface requires a Run() method. It receives a slice of
+Destination objects, which are the Destinations for any parent ArgumentParsers. If there
+is only one ArgumentParser object (no sub-commands), then this slice will be empty.
+
+    func (self *MyProgramOptions) Run(parents []Destination) (cliOk bool, err error) {
+        cliOk = true
+        err = dosomething(self.Input, self.Output)
+    }
+
+The return values are a boolean and an error. The boolean indicates whether the CLI
+syntax is okay, and the error is for any error condition that happend while processing
+the action. If the CLI is not okay, then argparse will print a usage statement to the
+user.
+
 # Argument
 
 The following fields can be set in Argument:
@@ -108,3 +138,16 @@ The following fields can be set in Argument:
 
     This is not used for "dash" arguments. If the type of the value of a dash argument is a slice,
     then argparse allows the argument to occur more than once, and saves each value.
+
+
+# Tutorial and Examples
+
+## Create a CLI that accepts no options
+
+    func main() () {
+        p := &argparse.ArgumentParser{
+            Name: "my_program",
+            ShortDescription: "A utility program",
+        }
+        p.ParseArgs()
+    }
