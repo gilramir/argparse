@@ -41,7 +41,7 @@ func (s *MySuite) TestArgumentParseString(c *C) {
 
 	arg := &Argument{
 		Name: "string",
-		Type: "",
+		//Type: "",
 	}
 	arg.sanityCheck(v)
 	arg.Parse("foo")
@@ -53,7 +53,7 @@ func (s *MySuite) TestArgumentParseStringSlice(c *C) {
 
 	arg := &Argument{
 		Name: "strings",
-		Type: []string{},
+//		Type: []string{},
 	}
 	arg.sanityCheck(v)
 	arg.Parse("foo")
@@ -68,7 +68,7 @@ func (s *MySuite) TestArgumentParseBool(c *C) {
 
 	arg := &Argument{
 		Name: "bool",
-		Type: false,
+//		Type: false,
 	}
 	arg.sanityCheck(v)
 	arg.Parse("true")
@@ -80,7 +80,7 @@ func (s *MySuite) TestArgumentParseInt(c *C) {
 
 	arg := &Argument{
 		Name: "integer",
-		Type: 0,
+//		Type: 0,
 	}
 	arg.sanityCheck(v)
 	arg.Parse("42")

@@ -47,8 +47,8 @@ func (s *MySuite) TestParseHelpOptions(c *C) {
 	}
 	p.AddArgument(&Argument{
 		Long:        "--string",
-		Type:        "",
-		Description: "Pass a string value",
+//		Type:        "",
+		Help: "Pass a string value",
 	})
 
 	argv := []string{"--help"}
@@ -75,9 +75,9 @@ func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
 	})
 	p1.AddArgument(&Argument{
 		Name:        "string",
-		Type:        "",
+		//Type:        "",
 		NumArgs:     '1',
-		Description: "Required string value",
+		Help: "Required string value",
 	})
 
 	// No string argument passed after subcommand

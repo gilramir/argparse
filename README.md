@@ -38,7 +38,6 @@ interface requires a "Run" method, which is triggered when the parse is finished
         }
 
         p.AddArgument(&argparse.Argument{
-            Type: "",
             Short: "-i",
             Long: "--input",
             Description: "The input file",
@@ -46,7 +45,6 @@ interface requires a "Run" method, which is triggered when the parse is finished
         })
 
         p.AddArgument(&argparse.Argument{
-            Type: "",
             Short: "-o",
             Long: "--output",
             Description: "The output file",
@@ -110,10 +108,6 @@ user.
 # Argument
 
 The following fields can be set in Argument:
-
-* Type: a literal value whose type is the same as the value of this argument.
-    The recommendation is to use the nil value for the type, as in:
-    "", 0, false, []string{}, etc.
 
 * Short: (optional) The sort (one-dash) version of this argument. You must supply the "-".
 

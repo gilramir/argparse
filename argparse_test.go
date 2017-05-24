@@ -102,7 +102,7 @@ func (s *MySuite) TestArgString(c *C) {
 	}
 	p.AddArgument(&Argument{
 		Long: "--string",
-		Type: "",
+		//Type: "",
 	})
 
 	argv := []string{"--string", "foo"}
@@ -139,7 +139,7 @@ func (s *MySuite) TestArgDestinations(c *C) {
 	}
 	p0.AddArgument(&Argument{
 		Long: "--string",
-		Type: "",
+		//Type: "",
 	})
 
 	p1 := p0.AddParser(&ArgumentParser{
@@ -149,7 +149,7 @@ func (s *MySuite) TestArgDestinations(c *C) {
 	})
 	p1.AddArgument(&Argument{
 		Long: "--string",
-		Type: "",
+		//Type: "",
 	})
 
 	argv := []string{"--string", "foo", "subcommand", "--string", "bar"}

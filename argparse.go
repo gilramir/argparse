@@ -62,6 +62,9 @@ func (self *ArgumentParser) AddParser(p *ArgumentParser) *ArgumentParser {
 }
 
 func (self *ArgumentParser) AddArgument(arg *Argument) {
+        if self.Destination == nil {
+            panic(fmt.Sprintf("There is no Destination set for ArgumentParser %s", self.Name))
+        }
 	arg.sanityCheck(self.Destination)
 	if arg.isPositional() {
 		self.positionalArguments = append(self.positionalArguments, arg)
@@ -200,7 +203,7 @@ func (self *ArgumentParser) HelpString() string {
 		for _, argument := range self.switchArguments {
 			lhs := argument.HelpString()
 			indent := startRHS - len(lhs)
-			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Description + "\n"
+			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
 		}
 	}
 	if len(self.positionalArguments) > 0 {
@@ -215,7 +218,7 @@ func (self *ArgumentParser) HelpString() string {
 				lhs = "[" + lhs + "]"
 			}
 			indent := startRHS - len(lhs)
-			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Description + "\n"
+			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
 		}
 	}
 

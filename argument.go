@@ -4,39 +4,50 @@ package argparse
 import (
 	"fmt"
 	"io"
+//        "log"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 )
+const (
+    kNilRune = '\x00'
+)
 
 type Argument struct {
-	Type        interface{}
 	Short       string
 	Long        string
 	Name        string
-	Description string
+	Help        string
 	Metavar     string
+        // Number of arguments that can or should appear, only for positional arguments
 	NumArgs     numArgsType
+
+        // The golang field type (Kind) where the parsed value will be stored
+        typeKind       reflect.Kind
+        // If typeKind is a Slice, then it's a slice of what?
+        sliceKind       reflect.Kind
+
+        // A "pointer" to where to store the parsed value
 	value       reflect.Value
 }
 
 func (self *Argument) sanityCheck(dest Destination) {
 	var err error
+        // Ensure that there is some name field set
 	err = self._sanityCheckName()
 	if err != nil {
 		panic(err.Error())
 	}
-	err = self._sanityCheckType()
-	if err != nil {
-		panic(err.Error())
-	}
-	err = self._sanityCheckNumArgs()
-	if err != nil {
-		panic(err.Error())
-	}
+        // Check the type of value in the destination struct
+        // This is the side-effect of setting self.typeKind and self.value
 	err = self._sanityCheckDestination(dest)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = self._sanityCheckNumArgs()
 	if err != nil {
 		panic(err.Error())
 	}
@@ -65,63 +76,6 @@ func (self *Argument) _sanityCheckName() error {
 		if self.Name != "" {
 			return errors.New("Name cannot be given if short/long is given")
 		}
-	}
-	return nil
-}
-
-func (self *Argument) _sanityCheckType() error {
-	if self.Type == nil {
-		return errors.New(fmt.Sprintf("Argument %s needs a Type field", self.prettyName()))
-	}
-	switch reflect.TypeOf(self.Type).Kind() {
-	case reflect.Bool:
-		// no-op
-	case reflect.Int:
-		// no-op
-	case reflect.String:
-		// no-op
-	case reflect.Slice:
-		// What kind of slice is it?
-		switch reflect.TypeOf(self.Type).Elem().Kind() {
-		case reflect.String:
-			// no -op
-		default:
-			return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
-				self.prettyName(), reflect.TypeOf(self.Type)))
-		}
-	default:
-		return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
-			self.prettyName(), reflect.TypeOf(self.Type)))
-	}
-	return nil
-}
-
-func (self *Argument) _sanityCheckNumArgs() error {
-	// Was NumArgs not given?
-	if self.NumArgs == '\x00' {
-		switch reflect.TypeOf(self.Type).Kind() {
-		case reflect.Bool:
-			self.NumArgs = '0'
-		case reflect.Int:
-			self.NumArgs = '1'
-		case reflect.String:
-			self.NumArgs = '1'
-		case reflect.Slice:
-			// What kind of slice is it?
-			switch reflect.TypeOf(self.Type).Elem().Kind() {
-			case reflect.String:
-				self.NumArgs = '1'
-			default:
-				return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
-					self.prettyName(), reflect.TypeOf(self.Type)))
-			}
-		default:
-			return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
-				self.prettyName(), reflect.TypeOf(self.Type)))
-		}
-	} else {
-		// XXX
-		/// check short/long/named
 	}
 	return nil
 }
@@ -194,36 +148,78 @@ func argumentVariableName(orig string) string {
 	return newString
 }
 
-// Check that we have we
+// Check that there is a field in the destination struct that correponds
+// to this argument.
 func (self *Argument) _sanityCheckDestination(dest Destination) error {
+        // TODO - some sanity checks here would be great
 	ptrValue := reflect.ValueOf(dest)
 	structValue := reflect.Indirect(ptrValue)
-	type_ := structValue.Type()
+	structType := structValue.Type()
 
 	var field reflect.StructField
 	var found bool
 
 	if self.Short != "" {
 		shortStructName := argumentVariableName(self.Short[1:len(self.Short)])
-		field, found = type_.FieldByName(shortStructName)
+		field, found = structType.FieldByName(shortStructName)
 	}
 	if !found && self.Long != "" {
 		longStructName := argumentVariableName(self.Long[2:len(self.Long)])
-		field, found = type_.FieldByName(longStructName)
+		field, found = structType.FieldByName(longStructName)
 	}
 	if !found && self.Name != "" {
 		structName := argumentVariableName(self.Name)
-		field, found = type_.FieldByName(structName)
+		field, found = structType.FieldByName(structName)
 	}
 	if !found {
-		return errors.New(fmt.Sprintf("Could not find destination variable for argument %s",
+		return errors.New(fmt.Sprintf("Could not find destination field for argument %s",
 			self.prettyName()))
 	}
 
-	fieldIndex := field.Index
-	self.value = structValue.FieldByIndex(fieldIndex)
+	// By using the index of the field within the struct type,
+        // we can get the corresponding struct value
+	self.value = structValue.FieldByIndex(field.Index)
+        self.typeKind = field.Type.Kind()
+        if self.typeKind == reflect.Slice {
+            // Get the type of slice
+            self.sliceKind = self.value.Type().Elem().Kind()
+        }
+//        log.Printf("field=%v index=%d typeKind=%v value=%v sliceKind=%v",
+//            field, field.Index, self.typeKind, self.value, self.sliceKind)
 	return nil
 }
+
+func (self *Argument) _sanityCheckNumArgs() error {
+	// Was NumArgs not given?
+	if self.NumArgs == kNilRune {
+		//switch reflect.TypeOf(self.Type).Kind() {
+		switch self.typeKind {
+		case reflect.Bool:
+			self.NumArgs = '0'
+		case reflect.Int:
+			self.NumArgs = '1'
+		case reflect.String:
+			self.NumArgs = '1'
+		case reflect.Slice:
+			// What kind of slice is it?
+			switch self.sliceKind {
+			case reflect.String:
+				self.NumArgs = '1'
+			default:
+				return errors.New(fmt.Sprintf("Argument %s cannot be of type []%s",
+					self.prettyName(), self.sliceKind.String()))
+			}
+		default:
+			return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
+				self.prettyName(), self.typeKind.String()))
+		}
+	} else {
+		// TODO - only allow setting NumArgs for positional arguments
+		/// check short/long/named
+	}
+	return nil
+}
+
 
 func (self *Argument) prettyName() string {
 	if self.Long == "" {
@@ -263,7 +259,8 @@ func (self *Argument) isPositional() bool {
 func (self *Argument) Parse(text string) error {
 	var err error
 
-	switch reflect.TypeOf(self.Type).Kind() {
+	//switch reflect.TypeOf(self.Type).Kind() {
+	switch self.typeKind {
 	case reflect.Bool:
 		var boolValue bool
 		boolValue, err = strconv.ParseBool(text)
@@ -281,7 +278,8 @@ func (self *Argument) Parse(text string) error {
 	case reflect.String:
 		self.value.SetString(text)
 	case reflect.Slice:
-		switch reflect.TypeOf(self.Type).Elem().Kind() {
+		//switch reflect.TypeOf(self.Type).Elem().Kind() {
+		switch self.sliceKind {
 		case reflect.String:
 			newValue := reflect.ValueOf(text)
 			self.value.Set(reflect.Append(self.value, newValue))
@@ -295,7 +293,8 @@ func (self *Argument) Parse(text string) error {
 }
 
 func (self *Argument) Seen() {
-	switch reflect.TypeOf(self.Type).Kind() {
+	//switch reflect.TypeOf(self.Type).Kind() {
+	switch self.typeKind {
 	case reflect.Bool:
 		self.value.SetBool(true)
 	default:
@@ -351,8 +350,8 @@ func (self *Argument) dump(spaces string) {
 	if self.Name != "" {
 		fmt.Printf("%sName: %s\n", spaces, self.Name)
 	}
-	fmt.Printf("%sType: %q\n", spaces, self.Type)
-	fmt.Printf("%sDescription: %s\n", spaces, self.Description)
+//	fmt.Printf("%sType: %q\n", spaces, self.Type)
+	fmt.Printf("%sHelp: %s\n", spaces, self.Help)
 	if self.Metavar != "" {
 		fmt.Printf("%sMetavar: %s\n", spaces, self.Metavar)
 	}

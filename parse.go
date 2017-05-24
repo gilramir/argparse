@@ -121,6 +121,7 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 			lastArgument = argToken.argument
 			lastArgLabel = argToken.argumentLabel
 			if lastArgument.NumArgs == numArgs0 {
+                                // TODO - why this?
 				lastArgument.Seen()
 			}
 
