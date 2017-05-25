@@ -12,8 +12,8 @@ type TestArgumentValues struct {
 	Integer int
 }
 
-func (self *TestArgumentValues) Run(values []Destination) (cliOK bool, err error) {
-	return true, nil
+func (self *TestArgumentValues) Run(values []Destination) (error) {
+	return nil
 }
 
 func (s *MySuite) TestArgumentPrettyname(c *C) {

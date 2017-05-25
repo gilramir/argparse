@@ -10,9 +10,9 @@ type TestArgParseValues struct {
 	ran    bool
 }
 
-func (self *TestArgParseValues) Run(values []Destination) (cliOK bool, err error) {
+func (self *TestArgParseValues) Run(values []Destination) (error) {
 	self.ran = true
-	return true, nil
+	return nil
 }
 
 //
@@ -119,12 +119,12 @@ type TestArgParseSubcommandValues struct {
 	parentString string
 }
 
-func (self *TestArgParseSubcommandValues) Run(values []Destination) (cliOK bool, err error) {
+func (self *TestArgParseSubcommandValues) Run(values []Destination) (err error) {
 	self.numAncestors = len(values)
 	if len(values) == 1 {
 		self.parentString = values[0].(*TestArgParseValues).String
 	}
-	return true, nil
+	return nil
 }
 
 func (s *MySuite) TestArgDestinations(c *C) {

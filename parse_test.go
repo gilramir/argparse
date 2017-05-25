@@ -11,8 +11,8 @@ type TestParseValues struct {
 	String string
 }
 
-func (self *TestParseValues) Run(values []Destination) (cliOK bool, err error) {
-	return true, nil
+func (self *TestParseValues) Run(values []Destination) (error) {
+	return nil
 }
 
 func (s *MySuite) TestParseHelpNoOptions(c *C) {

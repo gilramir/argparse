@@ -12,8 +12,8 @@ type Options struct {
     Filenames   []string
 }
 
-func (self *Options) Run([]argparse.Destination) (bool, error) {
-	return false, nil
+func (self *Options) Run([]argparse.Destination) (error) {
+	return nil
 }
 
 func main() () {

@@ -23,9 +23,9 @@ interface requires a "Run" method, which is triggered when the parse is finished
         Output  string
     }
 
-    func (self *MyProgramOptions) Run(parents []Destination) (cliOk bool, err error) {
-        cliOk = true
-        err = dosomething(self.Input, self.Output)
+    func (self *MyProgramOptions) Run(parents []Destination) (error) {
+        err := dosomething(self.Input, self.Output)
+        return err
     }
        
     var options MyProgramOptions
@@ -95,15 +95,15 @@ The Destination interface requires a Run() method. It receives a slice of
 Destination objects, which are the Destinations for any parent ArgumentParsers. If there
 is only one ArgumentParser object (no sub-commands), then this slice will be empty.
 
-    func (self *MyProgramOptions) Run(parents []Destination) (cliOk bool, err error) {
-        cliOk = true
-        err = dosomething(self.Input, self.Output)
+    func (self *MyProgramOptions) Run(parents []Destination) (error) {
+        err := dosomething(self.Input, self.Output)
+        return err
     }
 
-The return values are a boolean and an error. The boolean indicates whether the CLI
-syntax is okay, and the error is for any error condition that happend while processing
-the action. If the CLI is not okay, then argparse will print a usage statement to the
-user.
+The return value is an error. The error is simply passed back as the return value of
+Argument.ParseArgs() or Argument.ParseArgv(), but if the error wraps
+argparse.ParseError, using github.com/pkg/error and its Wrap or Wrapf facility,
+then the ArgumentParer's usage statement is printed before the error is returned.
 
 # Argument
 

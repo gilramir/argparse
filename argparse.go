@@ -14,8 +14,12 @@ import (
 )
 
 type Destination interface {
-	Run([]Destination) (cliOK bool, err error)
+	Run([]Destination) (err error)
 }
+
+// If Run() returns an error that wraps ParseError, using the github.com/pkg/errors package,
+// then the usage statement will be printed before control is returned to ParseArgs or ParseArgv
+var ParseError error = errors.New("ParseError")
 
 // The ArgumentParser struct is the top-level, root node of
 // the command-line option parsing.
@@ -102,9 +106,13 @@ func (self *ArgumentParser) ParseArgv(argv []string) error {
 		return errors.New("Not a proper subcommand")
 	}
 
-	cliOk, err := results.triggeredParser.Destination.Run(results.ancestors)
-	if !cliOk {
-		// show usage statement
+	err := results.triggeredParser.Destination.Run(results.ancestors)
+        cause := errors.Cause(err)
+        if cause == ParseError {
+                // TODO: show usage statement
+		fmt.Fprintf(output, "\n%s\n", results.triggeredParser.HelpString())
+		//fmt.Fprintf(output, "\n%s\n%s\n", results.triggeredParser.HelpString(), err.Error())
+                return err
 	}
 	return err
 }
