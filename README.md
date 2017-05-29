@@ -24,17 +24,14 @@ interface requires a "Run" method, which is triggered when the parse is finished
     }
 
     func (self *MyProgramOptions) Run(parents []Destination) (error) {
-        err := dosomething(self.Input, self.Output)
-        return err
+        return doSomething(self.Input, self.Output)
     }
        
-    var options MyProgramOptions
-
     func example() (error) {
         p := &argparse.ArgumentParser{
             Name: "my_program",
             ShortDescription: "A utility program",
-            Destination: &options,
+            Destination: &MyProgramOptions{},
         }
 
         p.AddArgument(&argparse.Argument{
