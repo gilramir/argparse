@@ -139,7 +139,7 @@ The following fields can be set in Argument:
 
 ## Create a CLI that accepts no options
 
-See ![exaples/ex1.go](ex1.go)
+See ![examples/ex1.go](ex1.go)
 
     func main() () {
         p := &argparse.ArgumentParser{
@@ -151,7 +151,7 @@ See ![exaples/ex1.go](ex1.go)
 
 ## Create a CLI with an option and a positional argument
 
-See ![exaples/ex2.go](ex2.go)
+See ![examples/ex2.go](ex2.go)
 
     type Options struct {
         Pattern     string
@@ -188,7 +188,7 @@ See ![exaples/ex2.go](ex2.go)
 
 ## Return a ParseErr, indicating a CLI problem
 
-See ![exaples/ex3.go](ex3.go)
+See ![examples/ex3.go](ex3.go)
 
     type Options struct {
             Filenames []string
