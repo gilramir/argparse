@@ -149,7 +149,7 @@ See [ex1.go](examples/ex1.go)
         p.ParseArgs()
     }
 
-## Create a CLI with an option and a positional argument
+## Create a CLI with two positional arguments
 
 See [ex2.go](examples/ex2.go)
 
@@ -159,6 +159,8 @@ See [ex2.go](examples/ex2.go)
     }
 
     func (self *Options) Run([]argparse.Destination) (error) {
+            fmt.Printf("Pattern: %s\n", self.Pattern)
+            fmt.Printf("Filenames: %v\n", self.Filenames)
             return nil
     }
 
@@ -216,4 +218,44 @@ See [ex3.go](examples/ex3.go)
                     fmt.Fprint(os.Stderr, err)
             }
             fmt.Printf("Done.\n")
+    }
+
+## Create a CLI with two switch arguments
+
+See [ex4.go](examples/ex4.go)
+
+    type Options struct {
+            Pattern     string
+            Filename    []string
+    }
+
+    func (self *Options) Run([]argparse.Destination) error {
+            fmt.Printf("Pattern: %s\n", self.Pattern)
+            fmt.Printf("Filenames: %v\n", self.Filename)
+            return nil
+    }
+
+    func main() {
+            p := &argparse.ArgumentParser{
+                    Name:             "my_program",
+                    ShortDescription: "This program takes positional arguments",
+                    Destination:      &Options{},
+            }
+
+            p.AddArgument(&argparse.Argument{
+                    Short: "-p",
+                    Long: "--pattern",
+                    Help: "The pattern to look for",
+            })
+
+            p.AddArgument(&argparse.Argument{
+                    Short: "-f",
+                    Long: "--filename",
+                    Help: "The file to look at. Can be given more than once.",
+            })
+
+            err := p.ParseArgs()
+            if err != nil {
+                    fmt.Fprint(os.Stderr, err)
+            }
     }

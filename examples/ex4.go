@@ -8,13 +8,13 @@ import (
 )
 
 type Options struct {
-	Pattern   string
-	Filenames []string
+	Pattern     string
+	Filename    []string
 }
 
 func (self *Options) Run([]argparse.Destination) error {
         fmt.Printf("Pattern: %s\n", self.Pattern)
-        fmt.Printf("Filenames: %v\n", self.Filenames)
+        fmt.Printf("Filenames: %v\n", self.Filename)
 	return nil
 }
 
@@ -26,14 +26,15 @@ func main() {
 	}
 
 	p.AddArgument(&argparse.Argument{
-		Name: "pattern",
+		Short: "-p",
+		Long: "--pattern",
 		Help: "The pattern to look for",
 	})
 
 	p.AddArgument(&argparse.Argument{
-		Name:    "filenames",
-		Help:    "The file(s) to look at",
-		NumArgs: '+',
+		Short: "-f",
+		Long: "--filename",
+		Help: "The file to look at. Can be given more than once.",
 	})
 
 	err := p.ParseArgs()
