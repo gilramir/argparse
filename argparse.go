@@ -17,10 +17,6 @@ type Destination interface {
 	Run([]Destination) (err error)
 }
 
-// If Run() returns an error that wraps ParseError, using the github.com/pkg/errors package,
-// then the usage statement will be printed before control is returned to ParseArgs or ParseArgv
-var ParseError error = errors.New("ParseError")
-
 // The ArgumentParser struct is the top-level, root node of
 // the command-line option parsing.
 type ArgumentParser struct {
@@ -41,9 +37,13 @@ type ArgumentParser struct {
 	// The struct that will receive the values after parsing
 	Destination Destination
 
-	// If this is set, instead of printing help or usage
-	// statements to os.Stdout, prints it to this.
+	// If this is set, instead of printing the help statement,
+	// when --help is requested, to os.Stdout, the output goes here.
 	Stdout io.Writer
+
+	// If this is set, instead of printing the usage statement,
+	// when a ParseErr is encountered, to os.Stderr, the output goes here.
+	Stderr io.Writer
 
 	// Internal fields
 	subParsers          []*ArgumentParser
@@ -66,9 +66,9 @@ func (self *ArgumentParser) AddParser(p *ArgumentParser) *ArgumentParser {
 }
 
 func (self *ArgumentParser) AddArgument(arg *Argument) {
-        if self.Destination == nil {
-            panic(fmt.Sprintf("There is no Destination set for ArgumentParser %s", self.Name))
-        }
+	if self.Destination == nil {
+		panic(fmt.Sprintf("There is no Destination set for ArgumentParser %s", self.Name))
+	}
 	arg.sanityCheck(self.Destination)
 	if arg.isPositional() {
 		self.positionalArguments = append(self.positionalArguments, arg)
@@ -82,13 +82,6 @@ func (self *ArgumentParser) ParseArgs() error {
 }
 
 func (self *ArgumentParser) ParseArgv(argv []string) error {
-	var output io.Writer
-
-	if self.Stdout == nil {
-		output = os.Stdout
-	} else {
-		output = self.Stdout
-	}
 
 	results := self.parseArgv(argv)
 	if results.parseError != nil {
@@ -96,6 +89,13 @@ func (self *ArgumentParser) ParseArgv(argv []string) error {
 		return results.parseError
 	}
 	if results.helpRequested {
+		var output io.Writer
+
+		if self.Stdout == nil {
+			output = os.Stdout
+		} else {
+			output = self.Stdout
+		}
 		fmt.Fprintf(output, results.triggeredParser.HelpString())
 		return nil
 	}
@@ -103,16 +103,30 @@ func (self *ArgumentParser) ParseArgv(argv []string) error {
 	// The parser doesn't have a destination?
 	if results.triggeredParser.Destination == nil {
 		// show usage statement
-		return errors.New("Not a proper subcommand")
+                if self.parentParser == nil {
+                    // The root command is allowed to have no Destination if it also
+                    // doesn't have any subcommands
+                    if len(self.subParsers) == 0 {
+                        return nil
+                    } else {
+                        return errors.New("The ArgumentParser needs a Destination")
+                    }
+                } else {
+                        return errors.Errorf("The ArgumentParser '%s' needs a Destination", self.Name)
+                }
 	}
 
 	err := results.triggeredParser.Destination.Run(results.ancestors)
-        cause := errors.Cause(err)
-        if cause == ParseError {
-                // TODO: show usage statement
+	switch err.(type) {
+	case ParseErr:
+		var output io.Writer
+
+		if self.Stderr == nil {
+			output = os.Stderr
+		} else {
+			output = self.Stderr
+		}
 		fmt.Fprintf(output, "\n%s\n", results.triggeredParser.HelpString())
-		//fmt.Fprintf(output, "\n%s\n%s\n", results.triggeredParser.HelpString(), err.Error())
-                return err
 	}
 	return err
 }

@@ -101,9 +101,10 @@ is only one ArgumentParser object (no sub-commands), then this slice will be emp
     }
 
 The return value is an error. The error is simply passed back as the return value of
-Argument.ParseArgs() or Argument.ParseArgv(), but if the error wraps
-argparse.ParseError, using github.com/pkg/error and its Wrap or Wrapf facility,
-then the ArgumentParer's usage statement is printed before the error is returned.
+Argument.ParseArgs() or Argument.ParseArgv(). There is a special error type named
+argparse.ParseErr, which if returned, causes ArgumentParser to print the usage statement to
+stderr before returning the error back to the caller. You can create a ParseErr
+with the helper functions argparse.ParseError() or argparse.ParseErrorf().
 
 # Argument
 
@@ -138,10 +139,81 @@ The following fields can be set in Argument:
 
 ## Create a CLI that accepts no options
 
+See ![exaples/ex1.go](ex1.go)
+
     func main() () {
         p := &argparse.ArgumentParser{
             Name: "my_program",
             ShortDescription: "A utility program",
         }
         p.ParseArgs()
+    }
+
+## Create a CLI with an option and a positional argument
+
+See ![exaples/ex2.go](ex2.go)
+
+    type Options struct {
+        Pattern     string
+        Filenames   []string
+    }
+
+    func (self *Options) Run([]argparse.Destination) (error) {
+            return nil
+    }
+
+    func main() () {
+        p := &argparse.ArgumentParser{
+            Name: "my_program",
+            ShortDescription: "This program takes positional arguments",
+            Destination: &Options{},
+        }
+
+        p.AddArgument(&argparse.Argument{
+            Name: "pattern",
+            Help: "The pattern to look for",
+        })
+
+        p.AddArgument(&argparse.Argument{
+            Name: "filenames",
+            Help: "The file(s) to look at",
+            NumArgs: '+',
+        })
+
+        err := p.ParseArgs()
+        if err != nil {
+            fmt.Fprint(os.Stderr, err)
+        }
+    }
+
+## Return a ParseErr, indicating a CLI problem
+
+See ![exaples/ex3.go](ex3.go)
+
+    type Options struct {
+            Filenames []string
+    }
+
+    func (self *Options) Run([]argparse.Destination) error {
+            return argparse.ParseError("The CLI syntax is bad")
+    }
+
+    func main() {
+            p := &argparse.ArgumentParser{
+                    Name:             "my_program",
+                    ShortDescription: "This program takes positional arguments",
+                    Destination: &Options{},
+            }
+
+            p.AddArgument(&argparse.Argument{
+                    Name:    "filenames",
+                    Help:    "The file(s) to look at",
+                    NumArgs: '+',
+            })
+
+            err := p.ParseArgs()
+            if err != nil {
+                    fmt.Fprint(os.Stderr, err)
+            }
+            fmt.Printf("Done.\n")
     }

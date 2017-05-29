@@ -8,12 +8,11 @@ import (
 )
 
 type Options struct {
-	Pattern   string
 	Filenames []string
 }
 
 func (self *Options) Run([]argparse.Destination) error {
-	return nil
+	return argparse.ParseError("The CLI syntax is bad")
 }
 
 func main() {
@@ -22,11 +21,6 @@ func main() {
 		ShortDescription: "This program takes positional arguments",
 		Destination:      &Options{},
 	}
-
-	p.AddArgument(&argparse.Argument{
-		Name: "pattern",
-		Help: "The pattern to look for",
-	})
 
 	p.AddArgument(&argparse.Argument{
 		Name:    "filenames",
@@ -38,4 +32,5 @@ func main() {
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 	}
+	fmt.Printf("Done.\n")
 }
