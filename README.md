@@ -88,6 +88,17 @@ dashes are removed and the field name is expected to be in CamelCase. For exampl
 
 * "--no-verify": the field name is NoVerify
 
+The fields for switch or positional arguments can be of the following types:
+
+* bool - For a switch, if the switch is present, the value is set to true.
+
+* string
+
+* int
+
+* []string - indicates a switch is accepted more than one, or a positional argument can be
+    appear more than once.
+
 The Destination interface requires a Run() method. It receives a slice of
 Destination objects, which are the Destinations for any parent ArgumentParsers. If there
 is only one ArgumentParser object (no sub-commands), then this slice will be empty.
