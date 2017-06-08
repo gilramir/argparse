@@ -21,6 +21,8 @@ type Argument struct {
 	Name        string
 	Help        string
 	Metavar     string
+    Dest        string
+
         // Number of arguments that can or should appear, only for positional arguments
 	NumArgs     numArgsType
 
@@ -158,23 +160,35 @@ func (self *Argument) _sanityCheckDestination(dest Destination) error {
 
 	var field reflect.StructField
 	var found bool
+    var needles []string
 
-	if self.Short != "" {
-		shortStructName := argumentVariableName(self.Short[1:len(self.Short)])
-		field, found = structType.FieldByName(shortStructName)
-	}
-	if !found && self.Long != "" {
-		longStructName := argumentVariableName(self.Long[2:len(self.Long)])
-		field, found = structType.FieldByName(longStructName)
-	}
-	if !found && self.Name != "" {
-		structName := argumentVariableName(self.Name)
-		field, found = structType.FieldByName(structName)
-	}
-	if !found {
-		return errors.New(fmt.Sprintf("Could not find destination field for argument %s",
-			self.prettyName()))
-	}
+    if self.Dest != "" {
+		field, found = structType.FieldByName(self.Dest)
+        if !found {
+            return errors.New(fmt.Sprintf("Could not find destination field for argument %s, given as %s",
+                self.prettyName(), self.Dest))
+        }
+    } else {
+        if self.Short != "" {
+            shortStructName := argumentVariableName(self.Short[1:len(self.Short)])
+            needles = append(needles, shortStructName)
+            field, found = structType.FieldByName(shortStructName)
+        }
+        if !found && self.Long != "" {
+            longStructName := argumentVariableName(self.Long[2:len(self.Long)])
+            needles = append(needles, longStructName)
+            field, found = structType.FieldByName(longStructName)
+        }
+        if !found && self.Name != "" {
+            structName := argumentVariableName(self.Name)
+            needles = append(needles, structName)
+            field, found = structType.FieldByName(structName)
+        }
+        if !found {
+            return errors.New(fmt.Sprintf("Could not find destination field for argument %s; checked %s",
+                self.prettyName(), strings.Join(needles, ",")))
+        }
+    }
 
 	// By using the index of the field within the struct type,
         // we can get the corresponding struct value

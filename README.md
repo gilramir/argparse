@@ -26,7 +26,7 @@ interface requires a "Run" method, which is triggered when the parse is finished
     func (self *MyProgramOptions) Run(parents []Destination) (error) {
         return doSomething(self.Input, self.Output)
     }
-       
+
     func example() (error) {
         p := &argparse.ArgumentParser{
             Name: "my_program",
@@ -125,6 +125,9 @@ The following fields can be set in Argument:
 * Name: (optional) For positional arguments (after all "dash" arguments), the name of
     the argument. While this name is not used by the user when giving the CLI string,
     it is used in the help statement produced by argparse.
+
+* Dest: The name of the field in the Destination where the value will be stored.
+    This is only needed if you wish to override the default.
 
 * Description: A description of the argument. Can be multi-line.
 
