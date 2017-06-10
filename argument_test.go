@@ -16,7 +16,42 @@ func (self *TestArgumentValues) Run(values []Destination) (error) {
 	return nil
 }
 
-func (s *MySuite) TestArgumentPrettyname(c *C) {
+func (s *MySuite) TestArgumentIsSwitch(c *C) {
+	switchArgShort := &Argument{
+		Short: "-s",
+	}
+	c.Check(switchArgShort.isSwitch(), Equals, true)
+	c.Check(switchArgShort.isPositional(), Equals, false)
+	c.Check(switchArgShort.isCommand(), Equals, false)
+
+	switchArgLong := &Argument{
+		Long: "--switch",
+	}
+	c.Check(switchArgLong.isSwitch(), Equals, true)
+	c.Check(switchArgLong.isPositional(), Equals, false)
+	c.Check(switchArgLong.isCommand(), Equals, false)
+}
+
+func (s *MySuite) TestArgumentIsPositional(c *C) {
+	positionalArg := &Argument{
+		Name: "s",
+	}
+	c.Check(positionalArg.isSwitch(), Equals, false)
+	c.Check(positionalArg.isPositional(), Equals, true)
+	c.Check(positionalArg.isCommand(), Equals, false)
+}
+
+func (s *MySuite) TestArgumentIsCommand(c *C) {
+	commandArg := &Argument{
+                ParseCommand: PassThrough,
+		Short: "--",
+	}
+	c.Check(commandArg.isSwitch(), Equals, false)
+	c.Check(commandArg.isPositional(), Equals, false)
+	c.Check(commandArg.isCommand(), Equals, true)
+}
+
+func (s *MySuite) TestArgumentPrettyName(c *C) {
 	arg := &Argument{
 		Short: "-s",
 	}

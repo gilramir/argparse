@@ -118,11 +118,11 @@ with the helper functions argparse.ParseError() or argparse.ParseErrorf().
 
 The following fields can be set in Argument:
 
-* Short: (optional) The sort (one-dash) version of this argument. You must supply the "-".
+* Short: (optional) The short (one-dash) version of this argument. You must supply the "-".
 
 * Long: (optional) The long (two-dash) version of this argument. You must supply the "--".
 
-* Name: (optional) For positional arguments (after all "dash" arguments), the name of
+* Name: (optional) For positional arguments (after all switch arguments, which start with dashes), the name of
     the argument. While this name is not used by the user when giving the CLI string,
     it is used in the help statement produced by argparse.
 
@@ -142,8 +142,58 @@ The following fields can be set in Argument:
 
     * '?' - one or zero
 
-    This is not used for "dash" arguments. If the type of the value of a dash argument is a slice,
+    This is not used for switch arguments. If the type of the value of a switch argument is a slice,
     then argparse allows the argument to occur more than once, and saves each value.
+
+# ParseCommands
+
+ParseCommands are special types of Arguments that tell the ArgumentParser to change behavior while it's
+parsing. If an Argument is a ParseCommand, then instead of Short, Long, or Name, the String field is used
+to denote what to expect on the command-line.
+
+The only ParseCommand available right now is *PassThrough*. This tells argparse that all the remaining
+arguments on the command-line should be added to the slice that "Dest" names.
+
+You can AddArgument the ParseCommand Argument in any order. It does not have to be added via AddArgument
+in any order in relation to any switch arguments or positional arguments.
+
+See [ex5.go](examples/ex5.go)
+
+    type Options struct {
+            Filename        []string
+            OtherArguments  []string
+    }
+
+    func (self *Options) Run([]argparse.Destination) error {
+            fmt.Printf("Filenames: %v\n", self.Filename)
+            fmt.Printf("Other Arguments: %v\n", self.OtherArguments)
+            return nil
+    }
+
+    func main() {
+            p := &argparse.ArgumentParser{
+                    Name:             "my_program",
+                    ShortDescription: "This program takes positional arguments",
+                    Destination:      &Options{},
+            }
+
+            p.AddArgument(&argparse.Argument{
+                    Name: "filename",
+                    Help: "The file to look at. Can be given more than once.",
+            })
+
+            p.AddArgument(&argparse.Argument{
+                    ParseCommand: argparse.PassThrough,
+                    String:        "--",
+                    Dest:         "OtherArguments",
+            })
+
+            err := p.ParseArgs()
+            if err != nil {
+                    fmt.Fprint(os.Stderr, err)
+            }
+    }
+
 
 
 # Tutorial and Examples

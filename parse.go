@@ -58,6 +58,9 @@ type parserState struct {
 	subParserAllowed bool
 
 	nextPositionalArgument int
+
+        // when we need to keep track of an *Argument across state transitions
+        stickyArg   *Argument
 }
 
 type stateFunc func(*parserState) stateFunc
@@ -211,6 +214,15 @@ func (self *ArgumentParser) stateArgument(parser *parserState) stateFunc {
 		}
 	}
 
+        // Is it a parse command?
+        for _, commandArg := range self.commandArguments {
+            if arg == commandArg.String {
+                // A little ugly, since stateCommandArgument is going to check the self.commandArguments
+                // list again
+                return self.stateCommandArgument
+            }
+        }
+
 	if len(arg) > 1 && arg[0] == '-' {
 		if len(arg) > 2 {
 			if arg[0:2] == "--" {
@@ -349,17 +361,54 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 		// End of the list
 		return nil
 	}
-	arg := parser.args[parser.pos]
 
 	if len(self.positionalArguments) > parser.nextPositionalArgument {
+                arg := parser.args[parser.pos]
 		posArg := self.positionalArguments[parser.nextPositionalArgument]
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
 		parser.nextPositionalArgument++
 		parser.emitWithValue(tokValue, arg)
 		parser.pos += 1
 		return self.statePositionalArgument
+        } else if len(self.commandArguments) > 0 {
+            // Is it a command argument?
+            return self.stateCommandArgument
 	} else {
+                arg := parser.args[parser.pos]
 		parser.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
 		return nil
 	}
+}
+
+func (self *ArgumentParser) stateCommandArgument(parser *parserState) stateFunc {
+        arg := parser.args[parser.pos]
+
+        for _, commandArg := range self.commandArguments {
+            if arg == commandArg.String {
+                switch commandArg.ParseCommand {
+                case PassThrough:
+                    parser.stickyArg = commandArg
+                    parser.pos += 1
+                    return self.statePassThrough
+                default:
+                    parser.emitWithValue(tokError, fmt.Sprintf("Unexpected ParseCommand value %s = %d", arg,
+                        commandArg.ParseCommand))
+                    return nil
+                }
+            }
+        }
+        // Didn't match
+        parser.emitWithValue(tokError, fmt.Sprintf("Unexpected argument: %s", arg))
+        return nil
+}
+
+
+// Consume the rest of the args
+func (self *ArgumentParser) statePassThrough(parser *parserState) stateFunc {
+    for ; parser.pos < len(parser.args) ; parser.pos++ {
+        arg := parser.args[parser.pos]
+        parser.emitWithArgument(tokArgument, parser.stickyArg, parser.stickyArg.String)
+        parser.emitWithValue(tokValue, arg)
+    }
+    return nil
 }

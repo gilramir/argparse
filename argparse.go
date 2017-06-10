@@ -49,6 +49,7 @@ type ArgumentParser struct {
 	subParsers          []*ArgumentParser
 	switchArguments     []*Argument
 	positionalArguments []*Argument
+        commandArguments    []*Argument
 
 	// This causes a circular reference, keeping
 	// the tree of ArgumentParsers to NOT be garbage collected
@@ -70,11 +71,15 @@ func (self *ArgumentParser) AddArgument(arg *Argument) {
 		panic(fmt.Sprintf("There is no Destination set for ArgumentParser %s", self.Name))
 	}
 	arg.sanityCheck(self.Destination)
-	if arg.isPositional() {
+	if arg.isCommand() {
+		self.commandArguments = append(self.commandArguments, arg)
+        } else if arg.isPositional() {
 		self.positionalArguments = append(self.positionalArguments, arg)
-	} else {
+        } else if arg.isSwitch() {
 		self.switchArguments = append(self.switchArguments, arg)
-	}
+	} else {
+            panic(fmt.Sprintf("Cannot determine type for %v", arg))
+        }
 }
 
 func (self *ArgumentParser) ParseArgs() error {
@@ -251,7 +256,7 @@ func (self *ArgumentParser) HelpString() string {
 	return text
 }
 
-// Print a textual represntation of the parser tree to stdout.
+// Print a textual representation of the parser tree to stdout.
 // This can be useful for developers if they have issues with their parser.
 func (self *ArgumentParser) Dump() {
 	self.dump("")

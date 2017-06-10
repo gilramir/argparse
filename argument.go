@@ -25,7 +25,9 @@ type Argument struct {
 	Help         string
 	Metavar      string
 	Dest         string
-	ParseCommand int
+
+	ParseCommand    int
+        String          string
 
 	// Number of arguments that can or should appear, only for positional arguments
 	NumArgs numArgsType
@@ -60,6 +62,21 @@ func (self *Argument) sanityCheck(dest Destination) {
 }
 
 func (self *Argument) _sanityCheckName() error {
+
+        if self.ParseCommand != 0 {
+            if self.Short != "" || self.Long != "" || self.Name != "" {
+                return errors.New("A ParseCommand cannot have a Short, Long, or Name field")
+            }
+            if self.String == "" {
+                return errors.New("A ParseCommand must have a String field")
+            }
+            return nil
+        }
+
+        if self.String != "" {
+                return errors.New("String cannot be set if ParseCommand is not set")
+        }
+
 	if self.Short != "" && self.Short[0] != '-' {
 		return errors.New("The Short version of the argument must begin with '-'")
 	}
@@ -67,7 +84,7 @@ func (self *Argument) _sanityCheckName() error {
 		return errors.New("The Long version of the argument must begin with '--'")
 	}
 	if self.Long != "" && self.Long[0:2] != "--" {
-		return errors.New("The Short version of the argument must begin with '--'")
+		return errors.New("The Long version of the argument must begin with '--'")
 	}
 	if self.Name != "" && self.Name[0] == '-' {
 		return errors.New("The Name of a positional argument cannot begin with '-'")
@@ -158,6 +175,8 @@ func argumentVariableName(orig string) string {
 // to this argument.
 func (self *Argument) _sanityCheckDestination(dest Destination) error {
 	// TODO - some sanity checks here would be great
+        // TODO - if PassThrough, check that it's a slice
+
 	ptrValue := reflect.ValueOf(dest)
 	structValue := reflect.Indirect(ptrValue)
 	structType := structValue.Type()
@@ -266,11 +285,15 @@ func (self *Argument) prettyName() string {
 }
 
 func (self *Argument) isSwitch() bool {
-	return self.Short != "" || self.Long != ""
+	return !self.isCommand() && (self.Short != "" || self.Long != "")
 }
 
 func (self *Argument) isPositional() bool {
-	return !(self.isSwitch())
+	return !self.isCommand() && !(self.isSwitch())
+}
+
+func (self *Argument) isCommand() bool {
+	return self.ParseCommand != 0
 }
 
 func (self *Argument) Parse(text string) error {

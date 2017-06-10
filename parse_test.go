@@ -9,10 +9,10 @@ import (
 
 type TestParseValues struct {
 	String      string
-    PassThrough []string
+	PassThrough []string
 }
 
-func (self *TestParseValues) Run(values []Destination) (error) {
+func (self *TestParseValues) Run(values []Destination) error {
 	return nil
 }
 
@@ -47,7 +47,7 @@ func (s *MySuite) TestParseHelpOptions(c *C) {
 		Stdout:           &buffer,
 	}
 	p.AddArgument(&Argument{
-		Long:        "--string",
+		Long: "--string",
 		Help: "Pass a string value",
 	})
 
@@ -74,9 +74,9 @@ func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
 		Destination: &TestParseValues{},
 	})
 	p1.AddArgument(&Argument{
-		Name:        "string",
-		NumArgs:     '1',
-		Help: "Required string value",
+		Name:    "string",
+//		NumArgs: '1',
+		Help:    "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -87,7 +87,7 @@ func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
 }
 
 func (s *MySuite) TestParseOneString(c *C) {
-    values := &TestParseValues{}
+	values := &TestParseValues{}
 
 	p0 := &ArgumentParser{
 		Name:             "progname",
@@ -95,9 +95,9 @@ func (s *MySuite) TestParseOneString(c *C) {
 		Destination:      values,
 	}
 	p0.AddArgument(&Argument{
-		Name:        "string",
-		NumArgs:     '1',
-		Help: "Required string value",
+		Name:    "string",
+//		NumArgs: '1',
+		Help:    "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -106,9 +106,9 @@ func (s *MySuite) TestParseOneString(c *C) {
 	c.Assert(err, NotNil)
 	c.Check(err.Error(), Equals, "Unexpected positional argument: bar")
 }
-/*
-func (s *MySuite) TestParsePassThrough(c *C) {
-    values := &TestParseValues{}
+
+func (s *MySuite) TestParsePassThroughAfterPositional(c *C) {
+	values := &TestParseValues{}
 
 	p0 := &ArgumentParser{
 		Name:             "progname",
@@ -116,14 +116,14 @@ func (s *MySuite) TestParsePassThrough(c *C) {
 		Destination:      values,
 	}
 	p0.AddArgument(&Argument{
-        ParseCommand: PassThrough,
-		Short:        "--",
-        Dest:           "PassThrough",
+		ParseCommand: PassThrough,
+		String:        "--",
+		Dest:         "PassThrough",
 	})
 	p0.AddArgument(&Argument{
-		Name:        "string",
-		NumArgs:     '1',
-		Help: "Required string value",
+		Name:    "string",
+//		NumArgs: '1',
+		Help:    "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -132,5 +132,32 @@ func (s *MySuite) TestParsePassThrough(c *C) {
 	c.Assert(err, IsNil)
 	c.Check(values.String, Equals, "foo")
 	c.Assert(len(values.PassThrough), Equals, 3)
+	c.Assert(values.PassThrough, DeepEquals, []string{"a", "b", "c"})
 }
-*/
+
+func (s *MySuite) TestParsePassThroughAfterSwitch(c *C) {
+	values := &TestParseValues{}
+
+	p0 := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p0.AddArgument(&Argument{
+		ParseCommand: PassThrough,
+		String:        "--",
+		Dest:         "PassThrough",
+	})
+	p0.AddArgument(&Argument{
+		Long:    "--string",
+		Help:    "Required string value",
+	})
+
+	// No string argument passed after subcommand
+	argv := []string{"--string", "xxx", "--", "a", "b", "c"}
+	err := p0.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.String, Equals, "xxx")
+	c.Assert(len(values.PassThrough), Equals, 3)
+	c.Assert(values.PassThrough, DeepEquals, []string{"a", "b", "c"})
+}
