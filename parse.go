@@ -113,7 +113,6 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 
 	var lastArgLabel string
 	var lastArgument *Argument
-	//	var lastSubParser *ArgumentParser
 
 	for argToken := range parser.tokenChan {
 		switch argToken.typ {
@@ -234,7 +233,7 @@ func (self *ArgumentParser) stateArgument(parser *parserState) stateFunc {
 		return self.statePositionalArgument
 	}
 
-	parser.emitWithValue(tokError, fmt.Sprintf("Unexpected argument: %s", arg))
+	parser.emitWithValue(tokError, fmt.Sprintf("Unexpected switch argument: %s", arg))
 	return nil
 }
 
@@ -351,6 +350,7 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 		return nil
 	}
 	arg := parser.args[parser.pos]
+
 	if len(self.positionalArguments) > parser.nextPositionalArgument {
 		posArg := self.positionalArguments[parser.nextPositionalArgument]
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
@@ -359,7 +359,7 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 		parser.pos += 1
 		return self.statePositionalArgument
 	} else {
-		parser.emitWithValue(tokError, fmt.Sprintf("Unexpected argument %s", arg))
+		parser.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
 		return nil
 	}
 }

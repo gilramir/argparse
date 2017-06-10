@@ -4,46 +4,50 @@ package argparse
 import (
 	"fmt"
 	"io"
-//        "log"
+	//        "log"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 )
+
 const (
-    kNilRune = '\x00'
+	kNilRune = '\x00'
+
+	PassThrough = 1
 )
 
 type Argument struct {
-	Short       string
-	Long        string
-	Name        string
-	Help        string
-	Metavar     string
-    Dest        string
+	Short        string
+	Long         string
+	Name         string
+	Help         string
+	Metavar      string
+	Dest         string
+	ParseCommand int
 
-        // Number of arguments that can or should appear, only for positional arguments
-	NumArgs     numArgsType
+	// Number of arguments that can or should appear, only for positional arguments
+	NumArgs numArgsType
 
-        // The golang field type (Kind) where the parsed value will be stored
-        typeKind       reflect.Kind
-        // If typeKind is a Slice, then it's a slice of what?
-        sliceKind       reflect.Kind
+	// The golang field type (Kind) where the parsed value will be stored
+	typeKind reflect.Kind
+	// If typeKind is a Slice, then it's a slice of what?
+	sliceKind reflect.Kind
 
-        // A "pointer" to where to store the parsed value
-	value       reflect.Value
+	// A "pointer" to where to store the parsed value
+	value reflect.Value
 }
 
 func (self *Argument) sanityCheck(dest Destination) {
 	var err error
-        // Ensure that there is some name field set
+	// Ensure that there is some name field set
 	err = self._sanityCheckName()
 	if err != nil {
 		panic(err.Error())
 	}
-        // Check the type of value in the destination struct
-        // This is the side-effect of setting self.typeKind and self.value
+	// Check the type of value in the destination struct
+	// This is the side-effect of setting self.typeKind and self.value
 	err = self._sanityCheckDestination(dest)
 	if err != nil {
 		panic(err.Error())
@@ -153,53 +157,53 @@ func argumentVariableName(orig string) string {
 // Check that there is a field in the destination struct that correponds
 // to this argument.
 func (self *Argument) _sanityCheckDestination(dest Destination) error {
-        // TODO - some sanity checks here would be great
+	// TODO - some sanity checks here would be great
 	ptrValue := reflect.ValueOf(dest)
 	structValue := reflect.Indirect(ptrValue)
 	structType := structValue.Type()
 
 	var field reflect.StructField
 	var found bool
-    var needles []string
+	var needles []string
 
-    if self.Dest != "" {
+	if self.Dest != "" {
 		field, found = structType.FieldByName(self.Dest)
-        if !found {
-            return errors.New(fmt.Sprintf("Could not find destination field for argument %s, given as %s",
-                self.prettyName(), self.Dest))
-        }
-    } else {
-        if self.Short != "" {
-            shortStructName := argumentVariableName(self.Short[1:len(self.Short)])
-            needles = append(needles, shortStructName)
-            field, found = structType.FieldByName(shortStructName)
-        }
-        if !found && self.Long != "" {
-            longStructName := argumentVariableName(self.Long[2:len(self.Long)])
-            needles = append(needles, longStructName)
-            field, found = structType.FieldByName(longStructName)
-        }
-        if !found && self.Name != "" {
-            structName := argumentVariableName(self.Name)
-            needles = append(needles, structName)
-            field, found = structType.FieldByName(structName)
-        }
-        if !found {
-            return errors.New(fmt.Sprintf("Could not find destination field for argument %s; checked %s",
-                self.prettyName(), strings.Join(needles, ",")))
-        }
-    }
+		if !found {
+			return errors.New(fmt.Sprintf("Could not find destination field for argument %s, given as %s",
+				self.prettyName(), self.Dest))
+		}
+	} else {
+		if self.Short != "" {
+			shortStructName := argumentVariableName(self.Short[1:len(self.Short)])
+			needles = append(needles, shortStructName)
+			field, found = structType.FieldByName(shortStructName)
+		}
+		if !found && self.Long != "" {
+			longStructName := argumentVariableName(self.Long[2:len(self.Long)])
+			needles = append(needles, longStructName)
+			field, found = structType.FieldByName(longStructName)
+		}
+		if !found && self.Name != "" {
+			structName := argumentVariableName(self.Name)
+			needles = append(needles, structName)
+			field, found = structType.FieldByName(structName)
+		}
+		if !found {
+			return errors.New(fmt.Sprintf("Could not find destination field for argument %s; checked %s",
+				self.prettyName(), strings.Join(needles, ",")))
+		}
+	}
 
 	// By using the index of the field within the struct type,
-        // we can get the corresponding struct value
+	// we can get the corresponding struct value
 	self.value = structValue.FieldByIndex(field.Index)
-        self.typeKind = field.Type.Kind()
-        if self.typeKind == reflect.Slice {
-            // Get the type of slice
-            self.sliceKind = self.value.Type().Elem().Kind()
-        }
-//        log.Printf("field=%v index=%d typeKind=%v value=%v sliceKind=%v",
-//            field, field.Index, self.typeKind, self.value, self.sliceKind)
+	self.typeKind = field.Type.Kind()
+	if self.typeKind == reflect.Slice {
+		// Get the type of slice
+		self.sliceKind = self.value.Type().Elem().Kind()
+	}
+	//        log.Printf("field=%v index=%d typeKind=%v value=%v sliceKind=%v",
+	//            field, field.Index, self.typeKind, self.value, self.sliceKind)
 	return nil
 }
 
@@ -233,7 +237,6 @@ func (self *Argument) _sanityCheckNumArgs() error {
 	}
 	return nil
 }
-
 
 func (self *Argument) prettyName() string {
 	if self.Long == "" {
@@ -364,7 +367,7 @@ func (self *Argument) dump(spaces string) {
 	if self.Name != "" {
 		fmt.Printf("%sName: %s\n", spaces, self.Name)
 	}
-//	fmt.Printf("%sType: %q\n", spaces, self.Type)
+	//	fmt.Printf("%sType: %q\n", spaces, self.Type)
 	fmt.Printf("%sHelp: %s\n", spaces, self.Help)
 	if self.Metavar != "" {
 		fmt.Printf("%sMetavar: %s\n", spaces, self.Metavar)
