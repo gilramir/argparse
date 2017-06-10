@@ -200,6 +200,50 @@ See [ex5.go](examples/ex5.go)
 
 # Tutorial and Examples
 
+## How to structure your CLI program
+
+A good way to stay organized is to have a very simple main() function, and
+a subdirectory of all the source files related to the command-line, then a sibling
+subdirectory for non-CLI (non-UI) logic that the CLI code should call.
+
+    PROJECT/
+        main.go
+        cmd/
+            root.go
+            subcommand1.go
+            subcommand2.go
+        lib/
+            real_logic1.go
+            real_logic2.go
+
+The main.go is as simple as:
+
+    package main
+
+    import "MY_URL/PROJECT/cmd"
+
+    func main() {
+        cmd.Execute()
+    }
+
+If you have sub-commands, can define your ArgumentParsers with global-scope variables:
+
+    import "github.com/gilramir/argparse"
+
+    var rootParser = &argparse.ArgumentParser{
+        .....
+    }
+
+The Execute() function in "cmd/" is as simple as:
+
+    func Execute() {
+        err := rootParser.ParseArgs()
+        if err != nil {
+            fmt.Fprintln(os.Stderr, err)
+            os.Exit(1)
+        }
+    }
+
 ## Create a CLI that accepts no options
 
 See [ex1.go](examples/ex1.go)

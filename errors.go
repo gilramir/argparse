@@ -34,23 +34,24 @@ import (
 	"fmt"
 )
 
-// If Run() returns a ParseErr, the usage statement will be printed before the error
-// is returned to ParseArgs or ParseArgv
+// If the Destination.Run() returns a ParseErr, argparse will print the
+// the usage statement before returning the error from ParseArgs or ParseArgv.
+// Use ParseError() or ParseErrorf() to produce a ParseErr object.
 type ParseErr struct {
 	msg string
 }
 
 func (e ParseErr) Error() string { return e.msg }
 
-// New returns an error with the supplied message.
+// Returns an error with the supplied message.
 func ParseError(message string) error {
 	return ParseErr{
 		message,
 	}
 }
 
-// ParseErrorf formats according to a format specifier and returns the string
-// as a value that satisfies error.
+// Formats a string according to the format specifier and arguments, and returns an error
+// that has the resulting string.
 func ParseErrorf(format string, args ...interface{}) error {
 	return ParseErr{
 		fmt.Sprintf(format, args...),

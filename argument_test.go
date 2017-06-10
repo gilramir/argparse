@@ -79,7 +79,7 @@ func (s *MySuite) TestArgumentParseString(c *C) {
 		//Type: "",
 	}
 	arg.sanityCheck(v)
-	arg.Parse("foo")
+	arg.parse("foo")
 	c.Check(v.String, Equals, "foo")
 }
 
@@ -91,8 +91,8 @@ func (s *MySuite) TestArgumentParseStringSlice(c *C) {
 //		Type: []string{},
 	}
 	arg.sanityCheck(v)
-	arg.Parse("foo")
-	arg.Parse("bar")
+	arg.parse("foo")
+	arg.parse("bar")
 	c.Check(len(v.Strings), Equals, 2)
 	c.Check(v.Strings[0], Equals, "foo")
 	c.Check(v.Strings[1], Equals, "bar")
@@ -106,7 +106,7 @@ func (s *MySuite) TestArgumentParseBool(c *C) {
 //		Type: false,
 	}
 	arg.sanityCheck(v)
-	arg.Parse("true")
+	arg.parse("true")
 	c.Check(v.Bool, Equals, true)
 }
 
@@ -118,6 +118,6 @@ func (s *MySuite) TestArgumentParseInt(c *C) {
 //		Type: 0,
 	}
 	arg.sanityCheck(v)
-	arg.Parse("42")
+	arg.parse("42")
 	c.Check(v.Integer, Equals, 42)
 }

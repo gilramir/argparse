@@ -184,7 +184,7 @@ func (s *MySuite) TestArgParseSubcommandHelp(c *C) {
 		Destination:      &TestParseValues{},
 	})
 
-	c.Check(p3.UsageString(), Equals, `progname sub1 sub2 sub3
+	c.Check(p3.usageString(), Equals, `progname sub1 sub2 sub3
 
 `)
 

@@ -104,7 +104,7 @@ func (self *ArgumentParser) ParseArgv(argv []string) error {
 		} else {
 			output = self.Stdout
 		}
-		fmt.Fprintf(output, results.triggeredParser.HelpString())
+		fmt.Fprintf(output, results.triggeredParser.helpString())
 		return nil
 	}
 
@@ -134,12 +134,12 @@ func (self *ArgumentParser) ParseArgv(argv []string) error {
 		} else {
 			output = self.Stderr
 		}
-		fmt.Fprintf(output, "\n%s\n", results.triggeredParser.HelpString())
+		fmt.Fprintf(output, "\n%s\n", results.triggeredParser.helpString())
 	}
 	return err
 }
 
-func (self *ArgumentParser) UsageString() string {
+func (self *ArgumentParser) usageString() string {
 	var usage string
 
 	var rootParser *ArgumentParser
@@ -172,10 +172,10 @@ func (self *ArgumentParser) UsageString() string {
 	return usage
 }
 
-func (self *ArgumentParser) HelpString() string {
+func (self *ArgumentParser) helpString() string {
 	var text string
 
-	text = self.UsageString()
+	text = self.usageString()
 
 	if len(self.subParsers) > 0 {
 		text += "Sub-Commands:\n\n"
@@ -202,7 +202,7 @@ func (self *ArgumentParser) HelpString() string {
 
 	maxLHS := 0
 	for _, argument := range self.switchArguments {
-		length := len(argument.HelpString())
+		length := len(argument.helpString())
 		if length > maxLHS {
 			maxLHS = length
 		}
@@ -231,7 +231,7 @@ func (self *ArgumentParser) HelpString() string {
 		text += "Options:\n"
 		argumentsLabelPrinted = true
 		for _, argument := range self.switchArguments {
-			lhs := argument.HelpString()
+			lhs := argument.helpString()
 			indent := startRHS - len(lhs)
 			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
 		}
@@ -243,7 +243,7 @@ func (self *ArgumentParser) HelpString() string {
 		}
 		text += "Positional Arguments:\n"
 		for _, argument := range self.positionalArguments {
-			lhs := argument.GetMetavar()
+			lhs := argument.getMetavar()
 			if argument.NumArgs == numArgsMaybe {
 				lhs = "[" + lhs + "]"
 			}

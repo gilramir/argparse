@@ -295,7 +295,7 @@ func (self *Argument) isCommand() bool {
 	return self.ParseCommand != 0
 }
 
-func (self *Argument) Parse(text string) error {
+func (self *Argument) parse(text string) error {
 	var err error
 
 	//switch reflect.TypeOf(self.Type).Kind() {
@@ -331,7 +331,7 @@ func (self *Argument) Parse(text string) error {
 	return nil
 }
 
-func (self *Argument) Seen() {
+func (self *Argument) seen() {
 	//switch reflect.TypeOf(self.Type).Kind() {
 	switch self.typeKind {
 	case reflect.Bool:
@@ -341,12 +341,12 @@ func (self *Argument) Seen() {
 	}
 }
 
-func (self *Argument) SeenWithoutValue() error {
+func (self *Argument) seenWithoutValue() error {
 	panic("not yet implemented")
 	return nil
 }
 
-func (self *Argument) GetMetavar() string {
+func (self *Argument) getMetavar() string {
 	if self.Metavar != "" {
 		return self.Metavar
 	} else if self.Name != "" {
@@ -361,7 +361,7 @@ func (self *Argument) GetMetavar() string {
 	return ""
 }
 
-func (self *Argument) HelpString() string {
+func (self *Argument) helpString() string {
 	var text string
 
 	if self.Short != "" {
@@ -374,7 +374,7 @@ func (self *Argument) HelpString() string {
 		text += self.Long
 	}
 	if self.NumArgs != numArgs0 {
-		text += "=" + self.GetMetavar()
+		text += "=" + self.getMetavar()
 	}
 	return text
 }

@@ -123,14 +123,14 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 			lastArgLabel = argToken.argumentLabel
 			if lastArgument.NumArgs == numArgs0 {
                                 // TODO - why this?
-				lastArgument.Seen()
+				lastArgument.seen()
 			}
 
 		case tokValue:
 			if lastArgument == nil {
 				panic("Found value without a preceding argument")
 			}
-			err := lastArgument.Parse(argToken.value)
+			err := lastArgument.parse(argToken.value)
 			if err != nil {
 				results.parseError = errors.Wrapf(err,
 					"While parsing value for %s", lastArgLabel)
@@ -140,7 +140,7 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 			if lastArgument == nil {
 				panic("Found ValueNotPresent without a preceding argument")
 			}
-			err := lastArgument.SeenWithoutValue()
+			err := lastArgument.seenWithoutValue()
 			if err != nil {
 				results.parseError = errors.Wrapf(err,
 					"%s argument", lastArgLabel)
