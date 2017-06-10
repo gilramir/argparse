@@ -9,6 +9,8 @@ parser object is done parsing them.
 A parser object chan have children parser objects. This is how sub-commands are
 implemented.
 
+See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse)
+
 # Usage
 
 Instantiate the parser object with argparse.ArgumentParser. Every ArgumentParser

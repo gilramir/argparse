@@ -1,8 +1,11 @@
-// Copyright (c) 2017 by Gilbert Ramirez <gram@alumni.rice.edu>
 // The argparse module is a simple way to add a command-line
 // parser to your CLI program. It is modeled somewhat after the
-// Python module of the same name.
+// Python module of the same name. Noticeably, it keeps you organized by
+// requiring that the fields whose values are set from the command-line are
+// members of a struct, instead of global or local-scope variables.
 package argparse
+
+// Copyright (c) 2017 by Gilbert Ramirez <gram@alumni.rice.edu>
 
 import (
 	"fmt"
