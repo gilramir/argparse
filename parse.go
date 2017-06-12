@@ -365,7 +365,10 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
                 arg := parser.args[parser.pos]
 		posArg := self.positionalArguments[parser.nextPositionalArgument]
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
-		parser.nextPositionalArgument++
+                // If only one arg is allowed, then go to the next positional argument
+                if posArg.NumArgs == '1' {
+                    parser.nextPositionalArgument++
+                }
 		parser.emitWithValue(tokValue, arg)
 		parser.pos += 1
 		return self.statePositionalArgument

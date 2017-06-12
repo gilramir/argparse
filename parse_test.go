@@ -9,6 +9,7 @@ import (
 
 type TestParseValues struct {
 	String      string
+	Strings		[]string
 	PassThrough []string
 }
 
@@ -75,7 +76,6 @@ func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
 	})
 	p1.AddArgument(&Argument{
 		Name:    "string",
-//		NumArgs: '1',
 		Help:    "Required string value",
 	})
 
@@ -95,8 +95,7 @@ func (s *MySuite) TestParseOneString(c *C) {
 		Destination:      values,
 	}
 	p0.AddArgument(&Argument{
-		Name:    "string",
-//		NumArgs: '1',
+		Name:    "strings",
 		Help:    "Required string value",
 	})
 
@@ -105,6 +104,27 @@ func (s *MySuite) TestParseOneString(c *C) {
 	err := p0.ParseArgv(argv)
 	c.Assert(err, NotNil)
 	c.Check(err.Error(), Equals, "Unexpected positional argument: bar")
+}
+
+func (s *MySuite) TestParseOneOrMoreString(c *C) {
+	values := &TestParseValues{}
+
+	p0 := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p0.AddArgument(&Argument{
+		Name:    "strings",
+		Help:    "Required string value",
+		NumArgs: '+',
+	})
+
+	// No string argument passed after subcommand
+	argv := []string{"foo", "bar", "baz"}
+	err := p0.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.Strings, DeepEquals, []string{"foo", "bar", "baz"})
 }
 
 func (s *MySuite) TestParsePassThroughAfterPositional(c *C) {
