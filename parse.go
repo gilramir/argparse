@@ -57,6 +57,7 @@ type parserState struct {
 	subParserAllowed bool
 
 	nextPositionalArgument int
+        numEvaluatedPositionalArguments int
 
         // when we need to keep track of an *Argument across state transitions
         stickyArg   *Argument
@@ -167,10 +168,10 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 	// TODO - switchArgumants
 
 	// If there aren't enough positional arguments, check the next known argument to see if it is required
-	if len(results.triggeredParser.positionalArguments) > 0 && parser.nextPositionalArgument < len(results.triggeredParser.positionalArguments) {
+	if len(results.triggeredParser.positionalArguments) > 0 && parser.numEvaluatedPositionalArguments < results.triggeredParser.numRequiredPositionalArguments {
 		arg := results.triggeredParser.positionalArguments[parser.nextPositionalArgument]
-		if arg.NumArgs == numArgs1 || arg.NumArgs == numArgsStar {
-			results.parseError = errors.Errorf("Expected a required %s argument", arg.prettyName())
+		if arg.NumArgs == '1' || arg.NumArgs == '+' {
+			results.parseError = errors.Errorf("Expected a required '%s' argument", arg.prettyName())
 			return results
 		}
 	}
@@ -216,8 +217,7 @@ func (self *ArgumentParser) stateArgument(parser *parserState) stateFunc {
         // Is it a parse command?
         for _, commandArg := range self.commandArguments {
             if arg == commandArg.String {
-                // A little ugly, since stateCommandArgument is going to check the self.commandArguments
-                // list again
+                // A little ugly, since stateCommandArgument is going to check self.commandArguments again
                 return self.stateCommandArgument
             }
         }
@@ -361,7 +361,34 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 		return nil
 	}
 
-	if len(self.positionalArguments) > parser.nextPositionalArgument {
+//        log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
+//            parser.nextPositionalArgument, parser.numEvaluatedPositionalArguments, self.numRequiredPositionalArguments, self.numMaxPositionalArguments)
+
+        // Is there more than enough required positional arguments, but there could be more?
+        //if parser.numEvaluatedPositionalArguments > self.numRequiredPositionalArguments && self.numMaxPositionalArguments == -1 {
+        if self.numMaxPositionalArguments == -1 {
+            arg := parser.args[parser.pos]
+            // Check for a command argument; it has precedence over an optional positional argument
+            for _, commandArg := range self.commandArguments {
+                if arg == commandArg.String {
+                    // A little ugly, since stateCommandArgument is going to check self.commandArguments again
+                    return self.stateCommandArgument
+                }
+            }
+            // It was not a command argument; it wsas a positional argument
+            posArg := self.positionalArguments[parser.nextPositionalArgument]
+            parser.emitWithArgument(tokArgument, posArg, posArg.Name)
+            parser.emitWithValue(tokValue, arg)
+            parser.pos += 1
+            if posArg.NumArgs == '1' || posArg.NumArgs == '?' {
+                parser.nextPositionalArgument++
+            }
+            parser.numEvaluatedPositionalArguments++
+            return self.statePositionalArgument
+        }
+
+        // We still have required positional arguments to check
+        if parser.numEvaluatedPositionalArguments < self.numRequiredPositionalArguments {
                 arg := parser.args[parser.pos]
 		posArg := self.positionalArguments[parser.nextPositionalArgument]
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
@@ -371,6 +398,7 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
                 }
 		parser.emitWithValue(tokValue, arg)
 		parser.pos += 1
+                parser.numEvaluatedPositionalArguments++
 		return self.statePositionalArgument
         } else if len(self.commandArguments) > 0 {
             // Is it a command argument?
