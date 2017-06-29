@@ -9,8 +9,11 @@ import (
 
 type TestParseValues struct {
 	String      string
-	Strings		[]string
+	Strings     []string
 	PassThrough []string
+	J           int
+	X           bool
+	Y           bool
 }
 
 func (self *TestParseValues) Run(values []Destination) error {
@@ -75,8 +78,8 @@ func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
 		Destination: &TestParseValues{},
 	})
 	p1.AddArgument(&Argument{
-		Name:    "string",
-		Help:    "Required string value",
+		Name: "string",
+		Help: "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -95,8 +98,8 @@ func (s *MySuite) TestParseOneString(c *C) {
 		Destination:      values,
 	}
 	p0.AddArgument(&Argument{
-		Name:    "strings",
-		Help:    "Required string value",
+		Name: "strings",
+		Help: "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -137,12 +140,12 @@ func (s *MySuite) TestParsePassThroughAfterPositional(c *C) {
 	}
 	p0.AddArgument(&Argument{
 		ParseCommand: PassThrough,
-		String:        "--",
+		String:       "--",
 		Dest:         "PassThrough",
 	})
 	p0.AddArgument(&Argument{
-		Name:    "string",
-		Help:    "Required string value",
+		Name: "string",
+		Help: "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -164,12 +167,12 @@ func (s *MySuite) TestParsePassThroughAfterPositionalMultiValue(c *C) {
 	}
 	p0.AddArgument(&Argument{
 		ParseCommand: PassThrough,
-		String:        "--",
+		String:       "--",
 		Dest:         "PassThrough",
 	})
 	p0.AddArgument(&Argument{
 		Name:    "strings",
-                NumArgs:    '+',
+		NumArgs: '+',
 		Help:    "Required string value",
 	})
 
@@ -192,12 +195,12 @@ func (s *MySuite) TestParsePassThroughAfterSwitch(c *C) {
 	}
 	p0.AddArgument(&Argument{
 		ParseCommand: PassThrough,
-		String:        "--",
+		String:       "--",
 		Dest:         "PassThrough",
 	})
 	p0.AddArgument(&Argument{
-		Long:    "--string",
-		Help:    "Required string value",
+		Long: "--string",
+		Help: "Required string value",
 	})
 
 	// No string argument passed after subcommand
@@ -207,4 +210,83 @@ func (s *MySuite) TestParsePassThroughAfterSwitch(c *C) {
 	c.Check(values.String, Equals, "xxx")
 	c.Assert(len(values.PassThrough), Equals, 3)
 	c.Assert(values.PassThrough, DeepEquals, []string{"a", "b", "c"})
+}
+
+func (s *MySuite) TestParseShortWithNumber(c *C) {
+	values := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p.AddArgument(&Argument{
+		Short: "-j",
+	})
+
+	// Pass a number adjoined with "-j"
+	argv := []string{"-j4"}
+	err := p.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.J, Equals, 4)
+}
+
+func (s *MySuite) TestParseShortGroupedBooleans(c *C) {
+	values := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p.AddArgument(&Argument{
+		Short: "-x",
+	})
+	p.AddArgument(&Argument{
+		Short: "-y",
+	})
+
+	// Pass a number adjoined with "-j"
+	argv := []string{"-yx"}
+	err := p.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.X, Equals, true)
+	c.Check(values.Y, Equals, true)
+}
+
+func (s *MySuite) TestParseShortGroupedErrors(c *C) {
+	values := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p.AddArgument(&Argument{
+		Short: "-j",
+	})
+	p.AddArgument(&Argument{
+		Short: "-x",
+	})
+	p.AddArgument(&Argument{
+		Short: "-y",
+	})
+
+	// Illegal
+	argv := []string{"-jx"}
+	err := p.ParseArgv(argv)
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Equals, "While parsing value for -j: Cannot convert \"x\" to an integer")
+
+	// Illegal
+	argv = []string{"-xj"}
+	err = p.ParseArgv(argv)
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Equals, "The -j switch takes a value and cannot be adjoined to the -x switch")
+
+	// Illegal
+	argv = []string{"-xz"}
+	err = p.ParseArgv(argv)
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Equals, "The -x switch is adjoined to the -z switch, which does not exist")
 }

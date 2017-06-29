@@ -56,11 +56,11 @@ type parserState struct {
 	// subparsers can be accepted, so it's changed to false.
 	subParserAllowed bool
 
-	nextPositionalArgument int
-        numEvaluatedPositionalArguments int
+	nextPositionalArgument          int
+	numEvaluatedPositionalArguments int
 
-        // when we need to keep track of an *Argument across state transitions
-        stickyArg   *Argument
+	// when we need to keep track of an *Argument across state transitions
+	stickyArg *Argument
 }
 
 type stateFunc func(*parserState) stateFunc
@@ -123,7 +123,7 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 			lastArgument = argToken.argument
 			lastArgLabel = argToken.argumentLabel
 			if lastArgument.NumArgs == numArgs0 {
-                                // TODO - why this?
+				// TODO - why this?
 				lastArgument.seen()
 			}
 
@@ -214,22 +214,26 @@ func (self *ArgumentParser) stateArgument(parser *parserState) stateFunc {
 		}
 	}
 
-        // Is it a parse command?
-        for _, commandArg := range self.commandArguments {
-            if arg == commandArg.String {
-                // A little ugly, since stateCommandArgument is going to check self.commandArguments again
-                return self.stateCommandArgument
-            }
-        }
+	// Is it a parse command?
+	for _, commandArg := range self.commandArguments {
+		if arg == commandArg.String {
+			// A little ugly, since stateCommandArgument is going to check self.commandArguments again
+			return self.stateCommandArgument
+		}
+	}
 
+	// Is it a switch argument?
 	if len(arg) > 1 && arg[0] == '-' {
 		if len(arg) > 2 {
+			// It's a long switch argument
 			if arg[0:2] == "--" {
 				return self.stateLongOption
 			}
 
-			// Grouped short arguments
-			panic("Cannot handle grouped short arguments yet")
+			// It's a short argument with extra junk.
+			// If the short argument takes a value (string, intenger, etc.),
+			// then whatever is after this first character is the value.
+			return self.stateShortOption
 		} else {
 			// Short arguments, including "--" (two hyphens)
 			return self.stateShortOption
@@ -291,12 +295,12 @@ func (self *ArgumentParser) stateMultipleValues(parser *parserState) stateFunc {
 }
 
 func (self *ArgumentParser) stateLongOption(parser *parserState) stateFunc {
-	arg := parser.args[parser.pos]
-	if arg == "" {
+	text := parser.args[parser.pos]
+	if text == "" {
 		parser.emitWithValue(tokError, "<empty string>")
 		return nil
 	}
-	longName := arg[2:]
+	longName := text[2:]
 	if longName == "help" {
 		parser.emitToken(tokHelp)
 		return nil
@@ -326,32 +330,91 @@ func (self *ArgumentParser) stateLongOption(parser *parserState) stateFunc {
 	return nil
 }
 
+// Handle a short option
 func (self *ArgumentParser) stateShortOption(parser *parserState) stateFunc {
-	arg := parser.args[parser.pos]
-	if arg == "" {
+	text := parser.args[parser.pos]
+	if text == "" {
 		parser.emitWithValue(tokError, "<empty string>")
 		return nil
 	}
-	shortName := arg[1:2]
+	shortName := text[1:2]
 	for _, arg := range self.switchArguments {
 		if arg.Short == "-"+shortName {
-			parser.emitWithArgument(tokArgument, arg, arg.Short)
-			parser.pos += 1
-			parser.lastSwitch = "-" + shortName
-			switch arg.NumArgs {
-			case numArgs0:
-				return self.stateArgument
-			case numArgs1:
-				return self.stateOneValue
-			case numArgsStar:
-				return self.stateMultipleValues
-			default:
-				panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+			// Is the short option just a short option, or does it have a value
+			// adjoined to it, or is it a group of boolean short options?
+			if len(text) == 2 {
+				// Just a short option all by itself
+				parser.emitWithArgument(tokArgument, arg, arg.Short)
+				parser.pos += 1
+				parser.lastSwitch = "-" + shortName
+				switch arg.NumArgs {
+				case numArgs0:
+					return self.stateArgument
+				case numArgs1:
+					return self.stateOneValue
+				case numArgsStar:
+					return self.stateMultipleValues
+				default:
+					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+				}
+			} else {
+				// There's something adjoined to the short argument
+				switch arg.NumArgs {
+				case numArgs0:
+					// This argument is a boolean; the rest of the "junk"
+					// better be short boolean options as well.
+					parser.emitWithArgument(tokArgument, arg, arg.Short)
+					parser.lastSwitch = "-" + shortName
+					for _, r := range text[2:] {
+						found := false
+						for _, nextArg := range self.switchArguments {
+							if nextArg.Short == "-"+string(r) {
+								if nextArg.NumArgs == numArgs0 {
+									// Good; it's alos a boolean
+									parser.emitWithArgument(tokArgument, nextArg, nextArg.Short)
+									parser.lastSwitch = "-" + string(r)
+									found = true
+								} else {
+									parser.emitWithValue(tokError,
+										fmt.Sprintf("The -%s switch takes a value and cannot be adjoined to the -%s switch",
+											string(r), shortName))
+									return nil
+								}
+							}
+						}
+						if !found {
+							// Didn't find a short option with that name
+							parser.emitWithValue(tokError,
+								fmt.Sprintf("The -%s switch is adjoined to the -%s switch, which does not exist",
+									shortName, string(r)))
+							return nil
+						}
+					}
+					// All the junk was handled.
+					parser.pos += 1
+					return self.stateArgument
+				case numArgs1:
+					// The junk after the short option is its value
+					// First the argument
+					parser.emitWithArgument(tokArgument, arg, arg.Short)
+					parser.lastSwitch = "-" + shortName
+					// Then its value
+					parser.emitWithValue(tokValue, text[2:])
+					parser.pos += 1
+					return self.stateArgument
+				case numArgsStar:
+					// XXX - this should be impossible. A short option should not be allowed
+					// to have "*" num args; that's for positional arguments only. Need
+					// to add enforcement of this.
+					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+				default:
+					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+				}
 			}
 		}
 	}
 
-	parser.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", arg))
+	parser.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", text))
 	return nil
 }
 
@@ -361,84 +424,83 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 		return nil
 	}
 
-//        log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
-//            parser.nextPositionalArgument, parser.numEvaluatedPositionalArguments, self.numRequiredPositionalArguments, self.numMaxPositionalArguments)
+	//        log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
+	//            parser.nextPositionalArgument, parser.numEvaluatedPositionalArguments, self.numRequiredPositionalArguments, self.numMaxPositionalArguments)
 
-        // Is there more than enough required positional arguments, but there could be more?
-        //if parser.numEvaluatedPositionalArguments > self.numRequiredPositionalArguments && self.numMaxPositionalArguments == -1 {
-        if self.numMaxPositionalArguments == -1 {
-            arg := parser.args[parser.pos]
-            // Check for a command argument; it has precedence over an optional positional argument
-            for _, commandArg := range self.commandArguments {
-                if arg == commandArg.String {
-                    // A little ugly, since stateCommandArgument is going to check self.commandArguments again
-                    return self.stateCommandArgument
-                }
-            }
-            // It was not a command argument; it wsas a positional argument
-            posArg := self.positionalArguments[parser.nextPositionalArgument]
-            parser.emitWithArgument(tokArgument, posArg, posArg.Name)
-            parser.emitWithValue(tokValue, arg)
-            parser.pos += 1
-            if posArg.NumArgs == '1' || posArg.NumArgs == '?' {
-                parser.nextPositionalArgument++
-            }
-            parser.numEvaluatedPositionalArguments++
-            return self.statePositionalArgument
-        }
-
-        // We still have required positional arguments to check
-        if parser.numEvaluatedPositionalArguments < self.numRequiredPositionalArguments {
-                arg := parser.args[parser.pos]
+	// Is there more than enough required positional arguments, but there could be more?
+	//if parser.numEvaluatedPositionalArguments > self.numRequiredPositionalArguments && self.numMaxPositionalArguments == -1 {
+	if self.numMaxPositionalArguments == -1 {
+		arg := parser.args[parser.pos]
+		// Check for a command argument; it has precedence over an optional positional argument
+		for _, commandArg := range self.commandArguments {
+			if arg == commandArg.String {
+				// A little ugly, since stateCommandArgument is going to check self.commandArguments again
+				return self.stateCommandArgument
+			}
+		}
+		// It was not a command argument; it wsas a positional argument
 		posArg := self.positionalArguments[parser.nextPositionalArgument]
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
-                // If only one arg is allowed, then go to the next positional argument
-                if posArg.NumArgs == '1' {
-                    parser.nextPositionalArgument++
-                }
 		parser.emitWithValue(tokValue, arg)
 		parser.pos += 1
-                parser.numEvaluatedPositionalArguments++
+		if posArg.NumArgs == '1' || posArg.NumArgs == '?' {
+			parser.nextPositionalArgument++
+		}
+		parser.numEvaluatedPositionalArguments++
 		return self.statePositionalArgument
-        } else if len(self.commandArguments) > 0 {
-            // Is it a command argument?
-            return self.stateCommandArgument
+	}
+
+	// We still have required positional arguments to check
+	if parser.numEvaluatedPositionalArguments < self.numRequiredPositionalArguments {
+		arg := parser.args[parser.pos]
+		posArg := self.positionalArguments[parser.nextPositionalArgument]
+		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
+		// If only one arg is allowed, then go to the next positional argument
+		if posArg.NumArgs == '1' {
+			parser.nextPositionalArgument++
+		}
+		parser.emitWithValue(tokValue, arg)
+		parser.pos += 1
+		parser.numEvaluatedPositionalArguments++
+		return self.statePositionalArgument
+	} else if len(self.commandArguments) > 0 {
+		// Is it a command argument?
+		return self.stateCommandArgument
 	} else {
-                arg := parser.args[parser.pos]
+		arg := parser.args[parser.pos]
 		parser.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
 		return nil
 	}
 }
 
 func (self *ArgumentParser) stateCommandArgument(parser *parserState) stateFunc {
-        arg := parser.args[parser.pos]
+	arg := parser.args[parser.pos]
 
-        for _, commandArg := range self.commandArguments {
-            if arg == commandArg.String {
-                switch commandArg.ParseCommand {
-                case PassThrough:
-                    parser.stickyArg = commandArg
-                    parser.pos += 1
-                    return self.statePassThrough
-                default:
-                    parser.emitWithValue(tokError, fmt.Sprintf("Unexpected ParseCommand value %s = %d", arg,
-                        commandArg.ParseCommand))
-                    return nil
-                }
-            }
-        }
-        // Didn't match
-        parser.emitWithValue(tokError, fmt.Sprintf("Unexpected argument: %s", arg))
-        return nil
+	for _, commandArg := range self.commandArguments {
+		if arg == commandArg.String {
+			switch commandArg.ParseCommand {
+			case PassThrough:
+				parser.stickyArg = commandArg
+				parser.pos += 1
+				return self.statePassThrough
+			default:
+				parser.emitWithValue(tokError, fmt.Sprintf("Unexpected ParseCommand value %s = %d", arg,
+					commandArg.ParseCommand))
+				return nil
+			}
+		}
+	}
+	// Didn't match
+	parser.emitWithValue(tokError, fmt.Sprintf("Unexpected argument: %s", arg))
+	return nil
 }
-
 
 // Consume the rest of the args
 func (self *ArgumentParser) statePassThrough(parser *parserState) stateFunc {
-    for ; parser.pos < len(parser.args) ; parser.pos++ {
-        arg := parser.args[parser.pos]
-        parser.emitWithArgument(tokArgument, parser.stickyArg, parser.stickyArg.String)
-        parser.emitWithValue(tokValue, arg)
-    }
-    return nil
+	for ; parser.pos < len(parser.args); parser.pos++ {
+		arg := parser.args[parser.pos]
+		parser.emitWithArgument(tokArgument, parser.stickyArg, parser.stickyArg.String)
+		parser.emitWithValue(tokValue, arg)
+	}
+	return nil
 }
