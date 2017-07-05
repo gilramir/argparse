@@ -334,3 +334,41 @@ func (s *MySuite) TestParseChoicesInteger(c *C) {
 	err = p.ParseArgv([]string{"--integer", "22"})
 	c.Check(err, IsNil)
 }
+
+func (s *MySuite) TestParseEqualsValue(c *C) {
+	v := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      v,
+	}
+	p.AddArgument(&Argument{
+		Long: "--integer",
+	})
+	p.AddArgument(&Argument{
+		Long: "--boolean",
+		Dest: "X",
+	})
+	p.AddArgument(&Argument{
+		Long: "--string",
+	})
+
+	err := p.ParseArgv([]string{"--integer=222"})
+	c.Assert(err, IsNil)
+	c.Check(v.Integer, Equals, 222)
+
+	err = p.ParseArgv([]string{"--string=xyz"})
+	c.Assert(err, IsNil)
+	c.Check(v.String, Equals, "xyz")
+
+	// Error condition
+	err = p.ParseArgv([]string{"--="})
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Equals, "A switch name cannot begin with '='")
+
+	// Error condition
+	err = p.ParseArgv([]string{"--boolean=true"})
+	c.Assert(err, NotNil)
+	c.Check(err.Error(), Equals, "The --boolean switch does not take a value")
+}

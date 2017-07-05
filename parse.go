@@ -2,6 +2,7 @@ package argparse
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -321,32 +322,69 @@ func (self *ArgumentParser) stateLongOption(parser *parserState) stateFunc {
 		return nil
 	}
 	longName := text[2:]
-	if longName == "help" {
-		parser.emitToken(tokHelp)
+
+	// Check for '=', as in --value=foo
+	// XXX - add check to sanity check, ensureing '=' is not in switch name
+	equalsI := strings.Index(longName, "=")
+	var rhs string
+	if equalsI == 0 {
+		parser.emitWithValue(tokError, "A switch name cannot begin with '='")
 		return nil
+	} else if equalsI > 0 {
+		rhs = longName[equalsI+1:]
+		longName = longName[:equalsI]
+	}
+
+	if longName == "help" {
+		if rhs == "" {
+			parser.emitToken(tokHelp)
+			return nil
+		} else {
+			parser.emitWithValue(tokError, "--help does not accept a value")
+			return nil
+		}
 	}
 	for _, arg := range self.switchArguments {
 		if arg.Long == "--"+longName {
 			parser.emitWithArgument(tokArgument, arg, arg.Long)
-			parser.pos += 1
 			parser.lastSwitch = "--" + longName
-			switch arg.NumArgs {
-			case numArgs0:
-				return self.stateArgument
-			case numArgs1:
-				return self.stateOneValue
-			case numArgsMaybe:
-				return self.stateMaybeOneValue
-			case numArgsStar:
-				return self.stateMultipleValues
-			default:
-				panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+			if rhs == "" {
+				parser.pos += 1
+				switch arg.NumArgs {
+				case numArgs0:
+					return self.stateArgument
+				case numArgs1:
+					return self.stateOneValue
+				case numArgsMaybe:
+					panic("not reached")
+					//				return self.stateMaybeOneValue
+				case numArgsStar:
+					panic("not reached")
+					//				return self.stateMultipleValues
+				default:
+					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+				}
+			} else {
+				switch arg.NumArgs {
+				case numArgs0:
+					parser.emitWithValue(tokError, fmt.Sprintf("The --%s switch does not take a value", longName))
+					return nil
+				case numArgs1:
+					parser.emitWithValue(tokValue, rhs)
+					parser.pos += 1
+					return self.stateArgument
+				case numArgsMaybe:
+					panic("not reached")
+				case numArgsStar:
+					panic("not reached")
+				default:
+					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+				}
 			}
 		}
 	}
 	// Didn't find a long arg with that name
-	parser.emitWithValue(tokError,
-		fmt.Sprintf("No such switch: --%s", longName))
+	parser.emitWithValue(tokError, fmt.Sprintf("No such switch: --%s", longName))
 	return nil
 }
 
