@@ -52,11 +52,11 @@ type ArgumentParser struct {
 	subParsers          []*ArgumentParser
 	switchArguments     []*Argument
 	positionalArguments []*Argument
-        commandArguments    []*Argument
+	commandArguments    []*Argument
 
-        numRequiredPositionalArguments  int
-        // -1 if there is no max (i.e., if the final NumArgs is * or +)
-        numMaxPositionalArguments int
+	numRequiredPositionalArguments int
+	// -1 if there is no max (i.e., if the final NumArgs is * or +)
+	numMaxPositionalArguments int
 
 	// This causes a circular reference, keeping
 	// the tree of ArgumentParsers to NOT be garbage collected
@@ -80,29 +80,29 @@ func (self *ArgumentParser) AddArgument(arg *Argument) {
 	arg.sanityCheck(self.Destination)
 	if arg.isCommand() {
 		self.commandArguments = append(self.commandArguments, arg)
-        } else if arg.isPositional() {
-                if len(self.positionalArguments) > 0 {
-                    prevNumArgs := self.positionalArguments[len(self.positionalArguments)-1].NumArgs
-                    if prevNumArgs == '*' || prevNumArgs == '+' || prevNumArgs == '?' {
-                        panic(fmt.Sprintf("Cannot add an Argument after a NumArgs=%s Argument", prevNumArgs))
-                    }
-                }
+	} else if arg.isPositional() {
+		if len(self.positionalArguments) > 0 {
+			prevNumArgs := self.positionalArguments[len(self.positionalArguments)-1].NumArgs
+			if prevNumArgs == '*' || prevNumArgs == '+' || prevNumArgs == '?' {
+				panic(fmt.Sprintf("Cannot add an Argument after a NumArgs=%s Argument", prevNumArgs))
+			}
+		}
 
 		self.positionalArguments = append(self.positionalArguments, arg)
-                if arg.NumArgs == '1' || arg.NumArgs == '+' {
-                    self.numRequiredPositionalArguments++
-                }
+		if arg.NumArgs == '1' || arg.NumArgs == '+' {
+			self.numRequiredPositionalArguments++
+		}
 
-                if arg.NumArgs == '1' || arg.NumArgs == '?' {
-                    self.numMaxPositionalArguments++
-                } else {
-                    self.numMaxPositionalArguments = -1
-                }
-        } else if arg.isSwitch() {
+		if arg.NumArgs == '1' || arg.NumArgs == '?' {
+			self.numMaxPositionalArguments++
+		} else {
+			self.numMaxPositionalArguments = -1
+		}
+	} else if arg.isSwitch() {
 		self.switchArguments = append(self.switchArguments, arg)
 	} else {
-            panic(fmt.Sprintf("Cannot determine type for %v", arg))
-        }
+		panic(fmt.Sprintf("Cannot determine type for %v", arg))
+	}
 }
 
 func (self *ArgumentParser) ParseArgs() error {
@@ -131,17 +131,17 @@ func (self *ArgumentParser) ParseArgv(argv []string) error {
 	// The parser doesn't have a destination?
 	if results.triggeredParser.Destination == nil {
 		// show usage statement
-                if self.parentParser == nil {
-                    // The root command is allowed to have no Destination if it also
-                    // doesn't have any subcommands
-                    if len(self.subParsers) == 0 {
-                        return nil
-                    } else {
-                        return errors.New("The ArgumentParser needs a Destination")
-                    }
-                } else {
-                        return errors.Errorf("The ArgumentParser '%s' needs a Destination", self.Name)
-                }
+		if self.parentParser == nil {
+			// The root command is allowed to have no Destination if it also
+			// doesn't have any subcommands
+			if len(self.subParsers) == 0 {
+				return nil
+			} else {
+				return errors.New("The ArgumentParser needs a Destination")
+			}
+		} else {
+			return errors.Errorf("The ArgumentParser '%s' needs a Destination", self.Name)
+		}
 	}
 
 	err := results.triggeredParser.Destination.Run(results.ancestors)
@@ -254,6 +254,11 @@ func (self *ArgumentParser) helpString() string {
 			lhs := argument.helpString()
 			indent := startRHS - len(lhs)
 			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
+			// Show Choices if available
+			if len(argument.Choices) > 0 {
+				text += "\t" + strings.Repeat(" ", len(lhs)+indent) +
+					"Possible choices: " + argument.getChoicesString() + "\n"
+			}
 		}
 	}
 	if len(self.positionalArguments) > 0 {

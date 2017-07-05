@@ -12,7 +12,7 @@ type TestArgumentValues struct {
 	Integer int
 }
 
-func (self *TestArgumentValues) Run(values []Destination) (error) {
+func (self *TestArgumentValues) Run(values []Destination) error {
 	return nil
 }
 
@@ -43,8 +43,8 @@ func (s *MySuite) TestArgumentIsPositional(c *C) {
 
 func (s *MySuite) TestArgumentIsCommand(c *C) {
 	commandArg := &Argument{
-                ParseCommand: PassThrough,
-		Short: "--",
+		ParseCommand: PassThrough,
+		Short:        "--",
 	}
 	c.Check(commandArg.isSwitch(), Equals, false)
 	c.Check(commandArg.isPositional(), Equals, false)
@@ -88,7 +88,7 @@ func (s *MySuite) TestArgumentParseStringSlice(c *C) {
 
 	arg := &Argument{
 		Name: "strings",
-//		Type: []string{},
+		//		Type: []string{},
 	}
 	arg.sanityCheck(v)
 	arg.parse("foo")
@@ -103,7 +103,7 @@ func (s *MySuite) TestArgumentParseBool(c *C) {
 
 	arg := &Argument{
 		Name: "bool",
-//		Type: false,
+		//		Type: false,
 	}
 	arg.sanityCheck(v)
 	arg.parse("true")
@@ -115,9 +115,19 @@ func (s *MySuite) TestArgumentParseInt(c *C) {
 
 	arg := &Argument{
 		Name: "integer",
-//		Type: 0,
+		//		Type: 0,
 	}
 	arg.sanityCheck(v)
 	arg.parse("42")
 	c.Check(v.Integer, Equals, 42)
+}
+
+func (s *MySuite) TestNonQuotedListString(c *C) {
+	input := []string{"1", "5", "10"}
+	c.Check(nonQuotedListString(input), Equals, "1, 5, and 10")
+}
+
+func (s *MySuite) TestQuotedListString(c *C) {
+	input := []string{"a", "x", "zz"}
+	c.Check(quotedListString(input), Equals, "'a', 'x', and 'zz'")
 }

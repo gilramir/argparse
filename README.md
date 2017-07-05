@@ -147,6 +147,10 @@ The following fields can be set in Argument:
     This is not used for switch arguments. If the type of the value of a switch argument is a slice,
     then argparse allows the argument to occur more than once, and saves each value.
 
+* Choices: (optional) A slice of strings (even when the field value is an int) which lists the only
+    possible values for the argument value. If a user gives a value that is not in this list,
+    an error will be returned to the user.
+
 # ParseCommands
 
 ParseCommands are special types of Arguments that tell the ArgumentParser to change behavior while it's

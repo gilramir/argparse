@@ -122,8 +122,9 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 		case tokArgument:
 			lastArgument = argToken.argument
 			lastArgLabel = argToken.argumentLabel
+			// If the argument is a boolean argument (no value), then
+			// we mark it as seen and move on.
 			if lastArgument.NumArgs == numArgs0 {
-				// TODO - why this?
 				lastArgument.seen()
 			}
 
@@ -131,6 +132,24 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 			if lastArgument == nil {
 				panic("Found value without a preceding argument")
 			}
+			// Does the lastArgument have a Choices slice which limits
+			// the valid values?
+			if len(lastArgument.Choices) > 0 {
+				good := false
+				for _, choice := range lastArgument.Choices {
+					if argToken.value == choice {
+						good = true
+						break
+					}
+				}
+				if !good {
+					results.parseError = errors.Errorf(
+						"The possible values for %s are %s", lastArgLabel,
+						lastArgument.getChoicesString())
+					return results
+				}
+			}
+
 			err := lastArgument.parse(argToken.value)
 			if err != nil {
 				results.parseError = errors.Wrapf(err,
@@ -141,6 +160,7 @@ func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 			if lastArgument == nil {
 				panic("Found ValueNotPresent without a preceding argument")
 			}
+			// TODO - why?
 			err := lastArgument.seenWithoutValue()
 			if err != nil {
 				results.parseError = errors.Wrapf(err,

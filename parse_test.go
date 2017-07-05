@@ -11,6 +11,7 @@ type TestParseValues struct {
 	String      string
 	Strings     []string
 	PassThrough []string
+	Integer     int
 	J           int
 	X           bool
 	Y           bool
@@ -289,4 +290,23 @@ func (s *MySuite) TestParseShortGroupedErrors(c *C) {
 	err = p.ParseArgv(argv)
 	c.Assert(err, NotNil)
 	c.Check(err.Error(), Equals, "The -x switch is adjoined to the -z switch, which does not exist")
+}
+
+func (s *MySuite) TestParseChoicesString(c *C) {
+	v := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      v,
+	}
+	p.AddArgument(&Argument{
+		Long:    "--string",
+		Choices: []string{"x", "y", "z"},
+	})
+
+	err := p.ParseArgv([]string{"--string", "w"})
+	c.Check(err, NotNil)
+	c.Check(err.Error(), Equals, "The possible values for --string are 'x', 'y', and 'z'")
+
 }

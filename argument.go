@@ -18,21 +18,44 @@ const (
 )
 
 type Argument struct {
-	Short        string
-	Long         string
-	Name         string
-	Help         string
-	Metavar      string
-	Dest         string
+	// A single hyphen, followed by one character
+	Short string
 
-	ParseCommand    int
-        String          string
+	// Two hyphens, followed by one or more characters
+	Long string
+
+	// The name of the positional argument. No starting hyphens.
+	Name string
+
+	// The help string to display to the user
+	Help string
+
+	// The name of the value field to show in the usage statement,
+	// for non-boolean switches
+	Metavar string
+
+	// The name of the destination field for the value of the switch
+	// or positional argument, if it is named differently from Short, Long,
+	// or Name.
+	Dest string
+
+	// If this option is a parse command, which parse command is it.
+	ParseCommand int
+
+	// If this option is a parse command, the string that represents it on the CLI.
+	String string
 
 	// Number of arguments that can or should appear, only for positional arguments
 	NumArgs numArgsType
 
+	// For non-boolean options, the valid values that the user can provide.
+	// If Choices is given, and the user provides a value not in this list,
+	// the user will be presented with an error.
+	Choices []string
+
 	// The golang field type (Kind) where the parsed value will be stored
 	typeKind reflect.Kind
+
 	// If typeKind is a Slice, then it's a slice of what?
 	sliceKind reflect.Kind
 
@@ -62,19 +85,19 @@ func (self *Argument) sanityCheck(dest Destination) {
 
 func (self *Argument) _sanityCheckName() error {
 
-        if self.ParseCommand != 0 {
-            if self.Short != "" || self.Long != "" || self.Name != "" {
-                return errors.New("A ParseCommand cannot have a Short, Long, or Name field")
-            }
-            if self.String == "" {
-                return errors.New("A ParseCommand must have a String field")
-            }
-            return nil
-        }
+	if self.ParseCommand != 0 {
+		if self.Short != "" || self.Long != "" || self.Name != "" {
+			return errors.New("A ParseCommand cannot have a Short, Long, or Name field")
+		}
+		if self.String == "" {
+			return errors.New("A ParseCommand must have a String field")
+		}
+		return nil
+	}
 
-        if self.String != "" {
-                return errors.New("String cannot be set if ParseCommand is not set")
-        }
+	if self.String != "" {
+		return errors.New("String cannot be set if ParseCommand is not set")
+	}
 
 	if self.Short != "" && self.Short[0] != '-' {
 		return errors.New("The Short version of the argument must begin with '-'")
@@ -174,7 +197,7 @@ func argumentVariableName(orig string) string {
 // to this argument.
 func (self *Argument) _sanityCheckDestination(dest Destination) error {
 	// TODO - some sanity checks here would be great
-        // TODO - if PassThrough, check that it's a slice
+	// TODO - if PassThrough, check that it's a slice
 
 	ptrValue := reflect.ValueOf(dest)
 	structValue := reflect.Indirect(ptrValue)
@@ -298,7 +321,6 @@ func (self *Argument) isCommand() bool {
 func (self *Argument) parse(text string) error {
 	var err error
 
-	//switch reflect.TypeOf(self.Type).Kind() {
 	switch self.typeKind {
 	case reflect.Bool:
 		var boolValue bool
@@ -317,7 +339,6 @@ func (self *Argument) parse(text string) error {
 	case reflect.String:
 		self.value.SetString(text)
 	case reflect.Slice:
-		//switch reflect.TypeOf(self.Type).Elem().Kind() {
 		switch self.sliceKind {
 		case reflect.String:
 			newValue := reflect.ValueOf(text)
@@ -331,8 +352,71 @@ func (self *Argument) parse(text string) error {
 	return nil
 }
 
+func (self *Argument) getChoicesString() string {
+	switch self.typeKind {
+	case reflect.Bool:
+		panic("not reached")
+
+	case reflect.Int:
+		return nonQuotedListString(self.Choices)
+
+	case reflect.String:
+		return quotedListString(self.Choices)
+
+	case reflect.Slice:
+		switch self.sliceKind {
+		case reflect.String:
+			return quotedListString(self.Choices)
+		default:
+			panic("Should not reach")
+		}
+	default:
+		panic("Should not reach")
+	}
+	return ""
+}
+
+func nonQuotedListString(choices []string) string {
+	var text string
+
+	// Special handling for the 2-choice case
+	if len(choices) == 2 {
+		return choices[0] + " and " + choices[1]
+	}
+
+	for i := 0; i < len(choices); i++ {
+		if i == 0 {
+			text += choices[i]
+		} else if i == len(choices)-1 {
+			text += ", and " + choices[i]
+		} else {
+			text += ", " + choices[i]
+		}
+	}
+	return text
+}
+
+func quotedListString(choices []string) string {
+	var text string
+
+	// Special handling for the 2-choice case
+	if len(choices) == 2 {
+		return "'" + choices[0] + "' and '" + choices[1] + "'"
+	}
+
+	for i := 0; i < len(choices); i++ {
+		if i == 0 {
+			text += "'" + choices[i] + "'"
+		} else if i == len(choices)-1 {
+			text += ", and '" + choices[i] + "'"
+		} else {
+			text += ", '" + choices[i] + "'"
+		}
+	}
+	return text
+}
+
 func (self *Argument) seen() {
-	//switch reflect.TypeOf(self.Type).Kind() {
 	switch self.typeKind {
 	case reflect.Bool:
 		self.value.SetBool(true)
