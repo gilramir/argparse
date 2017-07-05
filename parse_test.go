@@ -309,4 +309,28 @@ func (s *MySuite) TestParseChoicesString(c *C) {
 	c.Check(err, NotNil)
 	c.Check(err.Error(), Equals, "The possible values for --string are 'x', 'y', and 'z'")
 
+	err = p.ParseArgv([]string{"--string", "x"})
+	c.Check(err, IsNil)
+
+}
+
+func (s *MySuite) TestParseChoicesInteger(c *C) {
+	v := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      v,
+	}
+	p.AddArgument(&Argument{
+		Long:    "--integer",
+		Choices: []string{"1", "22", "333"},
+	})
+
+	err := p.ParseArgv([]string{"--integer", "222"})
+	c.Check(err, NotNil)
+	c.Check(err.Error(), Equals, "The possible values for --integer are 1, 22, and 333")
+
+	err = p.ParseArgv([]string{"--integer", "22"})
+	c.Check(err, IsNil)
 }
