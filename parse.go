@@ -496,7 +496,7 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 				return self.stateCommandArgument
 			}
 		}
-		// It was not a command argument; it wsas a positional argument
+		// It was not a command argument; it was a positional argument
 		posArg := self.positionalArguments[parser.nextPositionalArgument]
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
 		parser.emitWithValue(tokValue, arg)
@@ -515,6 +515,18 @@ func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFu
 		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
 		// If only one arg is allowed, then go to the next positional argument
 		if posArg.NumArgs == '1' {
+			parser.nextPositionalArgument++
+		}
+		parser.emitWithValue(tokValue, arg)
+		parser.pos += 1
+		parser.numEvaluatedPositionalArguments++
+		return self.statePositionalArgument
+	} else if parser.numEvaluatedPositionalArguments < self.numMaxPositionalArguments {
+		arg := parser.args[parser.pos]
+		posArg := self.positionalArguments[parser.nextPositionalArgument]
+		parser.emitWithArgument(tokArgument, posArg, posArg.Name)
+		// If only one arg is allowed, then go to the next positional argument
+		if posArg.NumArgs == '?' {
 			parser.nextPositionalArgument++
 		}
 		parser.emitWithValue(tokValue, arg)

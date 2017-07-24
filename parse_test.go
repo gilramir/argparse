@@ -90,6 +90,57 @@ func (s *MySuite) TestParseRequiredPositionalArgument(c *C) {
 	c.Check(err.Error(), Equals, "Expected a required 'string' argument")
 }
 
+func (s *MySuite) TestParseOptionalPositionalArgumentPresent(c *C) {
+	values := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p.AddArgument(&Argument{
+		Name: "string",
+		Help: "Required string value",
+	})
+	p.AddArgument(&Argument{
+		Name:    "integer",
+		NumArgs: '?',
+		Help:    "Optional integer value",
+	})
+
+	// No string argument passed after subcommand
+	argv := []string{"string_value", "123"}
+	err := p.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.String, Equals, "string_value")
+	c.Check(values.Integer, Equals, 123)
+}
+
+func (s *MySuite) TestParseOptionalPositionalArgumentAbsent(c *C) {
+	values := &TestParseValues{}
+
+	p := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p.AddArgument(&Argument{
+		Name: "string",
+		Help: "Required string value",
+	})
+	p.AddArgument(&Argument{
+		Name:    "integer",
+		NumArgs: '?',
+		Help:    "Optional integer value",
+	})
+
+	// No string argument passed after subcommand
+	argv := []string{"string_value"}
+	err := p.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.String, Equals, "string_value")
+}
+
 func (s *MySuite) TestParseOneString(c *C) {
 	values := &TestParseValues{}
 
