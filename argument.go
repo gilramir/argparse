@@ -18,11 +18,8 @@ const (
 )
 
 type Argument struct {
-	// A single hyphen, followed by one character
-	Short string
-
-	// Two hyphens, followed by one or more characters
-	Long string
+	// Any number of switch patterns, each starting with at lease one hypen
+	Switches []string
 
 	// The name of the positional argument. No starting hyphens.
 	Name string
@@ -35,8 +32,8 @@ type Argument struct {
 	Metavar string
 
 	// The name of the destination field for the value of the switch
-	// or positional argument, if it is named differently from Short, Long,
-	// or Name.
+	// or positional argument, if it is named differently from any of the
+	// Switches, or Name.
 	Dest string
 
 	// If this option is a parse command, which parse command is it.
@@ -86,8 +83,8 @@ func (self *Argument) sanityCheck(dest Destination) {
 func (self *Argument) _sanityCheckName() error {
 
 	if self.ParseCommand != 0 {
-		if self.Short != "" || self.Long != "" || self.Name != "" {
-			return errors.New("A ParseCommand cannot have a Short, Long, or Name field")
+		if len(self.Switches) > 0 || self.Name != "" {
+			return errors.New("A ParseCommand cannot have a Switches or a Name")
 		}
 		if self.String == "" {
 			return errors.New("A ParseCommand must have a String field")
@@ -99,28 +96,24 @@ func (self *Argument) _sanityCheckName() error {
 		return errors.New("String cannot be set if ParseCommand is not set")
 	}
 
-	if self.Short != "" && self.Short[0] != '-' {
-		return errors.New("The Short version of the argument must begin with '-'")
+	for i, switchName := range self.Switches {
+		if len(switchName) == 0 {
+			return errors.Errorf("Switch #%d is an empty string", i+1)
+		}
+		if switchName[0] != '-' {
+			return errors.Errorf("Switch #%d '%s' begin with '-'", i+1, switchName)
+		}
 	}
-	if self.Long != "" && len(self.Long) < 2 {
-		return errors.New("The Long version of the argument must begin with '--'")
-	}
-	if self.Long != "" && self.Long[0:2] != "--" {
-		return errors.New("The Long version of the argument must begin with '--'")
-	}
+
 	if self.Name != "" && self.Name[0] == '-' {
 		return errors.New("The Name of a positional argument cannot begin with '-'")
 	}
 
-	if self.Short == "" && self.Long == "" {
-		if self.Name == "" {
-			return errors.New("No name/short/long given for Argument")
-		}
+	if len(self.Switches) == 0 && self.Name == "" {
+		return errors.New("No name/short/long given for Argument")
 	}
-	if self.Short != "" || self.Long != "" {
-		if self.Name != "" {
-			return errors.New("Name cannot be given if short/long is given")
-		}
+	if len(self.Switches) > 0 && self.Name != "" {
+		return errors.New("Name cannot be given if short/long is given")
 	}
 	return nil
 }
@@ -214,15 +207,13 @@ func (self *Argument) _sanityCheckDestination(dest Destination) error {
 				self.prettyName(), self.Dest))
 		}
 	} else {
-		if self.Short != "" {
-			shortStructName := argumentVariableName(self.Short[1:len(self.Short)])
-			needles = append(needles, shortStructName)
-			field, found = structType.FieldByName(shortStructName)
-		}
-		if !found && self.Long != "" {
-			longStructName := argumentVariableName(self.Long[2:len(self.Long)])
-			needles = append(needles, longStructName)
-			field, found = structType.FieldByName(longStructName)
+		for _, switchName := range(self.Switches) {
+			structName := argumentVariableName(switchName[1:])
+			needles = append(needles, structName)
+			field, found = structType.FieldByName(structName)
+			if found {
+				break
+			}
 		}
 		if !found && self.Name != "" {
 			structName := argumentVariableName(self.Name)
@@ -280,34 +271,16 @@ func (self *Argument) _sanityCheckNumArgs() error {
 }
 
 func (self *Argument) prettyName() string {
-	if self.Long == "" {
-		if self.Short != "" {
-			return self.Short
-		} else if self.Name != "" {
-			return self.Name
-		} else {
-			panic("Unexpected")
-		}
-	} else if self.Short == "" {
-		if self.Long != "" {
-			return self.Long
-		} else if self.Name != "" {
-			return self.Name
-		} else {
-			panic("Unexpected")
-		}
-	} else {
-		if self.Name != "" {
-			panic("Unexpected")
-		}
-		return self.Short + "/" + self.Long
+	if len(self.Switches) > 0 {
+		return strings.Join(self.Switches, "/")
+	} else if self.Name != "" {
+		return self.Name
 	}
-	panic("Not reached")
-	return ""
+	panic("Unexpected")
 }
 
 func (self *Argument) isSwitch() bool {
-	return !self.isCommand() && (self.Short != "" || self.Long != "")
+	return !self.isCommand() && len(self.Switches) > 0
 }
 
 func (self *Argument) isPositional() bool {
@@ -435,10 +408,13 @@ func (self *Argument) getMetavar() string {
 		return self.Metavar
 	} else if self.Name != "" {
 		return strings.ToUpper(self.Name)
-	} else if self.Long != "" {
-		return strings.ToUpper(self.Long[2:])
-	} else if self.Short != "" {
-		return strings.ToUpper(self.Short[1:])
+	} else if len(self.Switches) > 0 {
+		firstSwitch := strings.ToUpper(self.Switches[0])
+		if firstSwitch[1] == '-' {
+			return strings.ToUpper(firstSwitch[2:])
+		} else {
+			return strings.ToUpper(firstSwitch[1:])
+		}
 	} else {
 		panic("Should not reach")
 	}
@@ -448,14 +424,8 @@ func (self *Argument) getMetavar() string {
 func (self *Argument) helpString() string {
 	var text string
 
-	if self.Short != "" {
-		text = self.Short
-		if self.Long != "" {
-			text += ","
-		}
-	}
-	if self.Long != "" {
-		text += self.Long
+	if len(self.Switches) > 0 {
+		text += strings.Join(self.Switches, ",")
 	}
 	if self.NumArgs != numArgs0 {
 		text += "=" + self.getMetavar()
@@ -464,11 +434,9 @@ func (self *Argument) helpString() string {
 }
 
 func (self *Argument) dump(spaces string) {
-	if self.Short != "" {
-		fmt.Printf("%sShort: %s\n", spaces, self.Short)
-	}
-	if self.Long != "" {
-		fmt.Printf("%sLong: %s\n", spaces, self.Long)
+	if len(self.Switches) > 0 {
+		fmt.Printf("%sSwitches: %s\n", spaces,
+			strings.Join(self.Switches, ", "))
 	}
 	if self.Name != "" {
 		fmt.Printf("%sName: %s\n", spaces, self.Name)

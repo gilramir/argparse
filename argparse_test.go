@@ -101,7 +101,7 @@ func (s *MySuite) TestArgString(c *C) {
 		Destination:      v,
 	}
 	p.AddArgument(&Argument{
-		Long: "--string",
+		Switches: []string{"--string"},
 		//Type: "",
 	})
 
@@ -138,7 +138,7 @@ func (s *MySuite) TestArgDestinations(c *C) {
 		Destination:      v0,
 	}
 	p0.AddArgument(&Argument{
-		Long: "--string",
+		Switches: []string{"--string"},
 		//Type: "",
 	})
 
@@ -148,7 +148,7 @@ func (s *MySuite) TestArgDestinations(c *C) {
 		Destination:      v1,
 	})
 	p1.AddArgument(&Argument{
-		Long: "--string",
+		Switches: []string{"--string"},
 		//Type: "",
 	})
 

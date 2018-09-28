@@ -18,14 +18,14 @@ func (self *TestArgumentValues) Run(values []Destination) error {
 
 func (s *MySuite) TestArgumentIsSwitch(c *C) {
 	switchArgShort := &Argument{
-		Short: "-s",
+		Switches: []string{"-s"},
 	}
 	c.Check(switchArgShort.isSwitch(), Equals, true)
 	c.Check(switchArgShort.isPositional(), Equals, false)
 	c.Check(switchArgShort.isCommand(), Equals, false)
 
 	switchArgLong := &Argument{
-		Long: "--switch",
+		Switches: []string{"--switch"},
 	}
 	c.Check(switchArgLong.isSwitch(), Equals, true)
 	c.Check(switchArgLong.isPositional(), Equals, false)
@@ -44,7 +44,7 @@ func (s *MySuite) TestArgumentIsPositional(c *C) {
 func (s *MySuite) TestArgumentIsCommand(c *C) {
 	commandArg := &Argument{
 		ParseCommand: PassThrough,
-		Short:        "--",
+		Switches:        []string{"--"},
 	}
 	c.Check(commandArg.isSwitch(), Equals, false)
 	c.Check(commandArg.isPositional(), Equals, false)
@@ -53,7 +53,7 @@ func (s *MySuite) TestArgumentIsCommand(c *C) {
 
 func (s *MySuite) TestArgumentPrettyName(c *C) {
 	arg := &Argument{
-		Short: "-s",
+		Switches: []string{"-s"},
 	}
 	c.Check(arg.prettyName(), Equals, "-s")
 }

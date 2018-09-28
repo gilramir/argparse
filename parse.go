@@ -2,6 +2,7 @@ package argparse
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -245,21 +246,7 @@ func (self *ArgumentParser) stateArgument(parser *parserState) stateFunc {
 
 	// Is it a switch argument?
 	if len(arg) > 1 && arg[0] == '-' {
-		if len(arg) > 2 {
-			// It's a long switch argument
-			if arg[0:2] == "--" {
-				return self.stateLongOption
-			}
-
-			// It's a short argument with extra junk.
-			// If the short argument takes a value (string, intenger, etc.),
-			// then whatever is after this first character is the value.
-			return self.stateShortOption
-		} else {
-			// Short arguments, including "--" (two hyphens)
-			return self.stateShortOption
-		}
-
+		return self.stateOption
 		parser.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", arg))
 		return nil
 	}
@@ -315,166 +302,163 @@ func (self *ArgumentParser) stateMultipleValues(parser *parserState) stateFunc {
 	return self.stateMultipleValues
 }
 
-func (self *ArgumentParser) stateLongOption(parser *parserState) stateFunc {
+func (self *ArgumentParser) stateOption(parser *parserState) stateFunc {
 	text := parser.args[parser.pos]
 	if text == "" {
 		parser.emitWithValue(tokError, "<empty string>")
 		return nil
 	}
-	longName := text[2:]
 
 	// Check for '=', as in --value=foo
 	// XXX - add check to sanity check, ensureing '=' is not in switch name
-	equalsI := strings.Index(longName, "=")
+	equalsIndex := strings.Index(text, "=")
 	var rhs string
-	if equalsI == 0 {
+	if equalsIndex == 0 {
 		parser.emitWithValue(tokError, "A switch name cannot begin with '='")
 		return nil
-	} else if equalsI > 0 {
-		rhs = longName[equalsI+1:]
-		longName = longName[:equalsI]
+	} else if equalsIndex > 0 {
+		rhs = text[equalsIndex+1:]
+		text = text[:equalsIndex]
 	}
 
-	if longName == "help" {
+	if text == "--help" || text == "-h" {
 		if rhs == "" {
 			parser.emitToken(tokHelp)
 			return nil
 		} else {
-			parser.emitWithValue(tokError, "--help does not accept a value")
+			parser.emitWithValue(tokError, "-h/--help does not accept a value")
 			return nil
 		}
 	}
-	for _, arg := range self.switchArguments {
-		if arg.Long == "--"+longName {
-			parser.emitWithArgument(tokArgument, arg, arg.Long)
-			parser.lastSwitch = "--" + longName
-			if rhs == "" {
-				parser.pos += 1
-				switch arg.NumArgs {
-				case numArgs0:
-					return self.stateArgument
-				case numArgs1:
-					return self.stateOneValue
-				case numArgsMaybe:
-					panic("not reached")
-					//				return self.stateMaybeOneValue
-				case numArgsStar:
-					panic("not reached")
-					//				return self.stateMultipleValues
-				default:
-					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
-				}
-			} else {
-				switch arg.NumArgs {
-				case numArgs0:
-					parser.emitWithValue(tokError, fmt.Sprintf("The --%s switch does not take a value", longName))
-					return nil
-				case numArgs1:
-					parser.emitWithValue(tokValue, rhs)
-					parser.pos += 1
-					return self.stateArgument
-				case numArgsMaybe:
-					panic("not reached")
-				case numArgsStar:
-					panic("not reached")
-				default:
-					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
-				}
+	match := false
+	var arg *Argument
+	for _, arg = range self.switchArguments {
+		for _, possibility := range arg.Switches {
+			// Does it directly match a switch?
+			if text == possibility {
+				match = true
+				break
 			}
-		}
-	}
-	// Didn't find a long arg with that name
-	parser.emitWithValue(tokError, fmt.Sprintf("No such switch: --%s", longName))
-	return nil
-}
+			// We could still have -j4, which is a short option
+			// with an adjoining number; this is only valid for short options
+			// with  numeric arguments
+			if arg.typeKind == reflect.Int &&		// dest is an Int
+				text[1] != '-' &&			// short option
+				rhs == "" &&				// There wasn't an =
+				len(possibility) < len(text) &&
+				text[:len(possibility)] == possibility {
 
-// Handle a short option
-func (self *ArgumentParser) stateShortOption(parser *parserState) stateFunc {
-	text := parser.args[parser.pos]
-	if text == "" {
-		parser.emitWithValue(tokError, "<empty string>")
-		return nil
-	}
-	shortName := text[1:2]
-	for _, arg := range self.switchArguments {
-		if arg.Short == "-"+shortName {
-			// Is the short option just a short option, or does it have a value
-			// adjoined to it, or is it a group of boolean short options?
-			if len(text) == 2 {
-				// Just a short option all by itself
-				parser.emitWithArgument(tokArgument, arg, arg.Short)
-				parser.pos += 1
-				parser.lastSwitch = "-" + shortName
-				switch arg.NumArgs {
-				case numArgs0:
-					return self.stateArgument
-				case numArgs1:
-					return self.stateOneValue
-				case numArgsStar:
-					return self.stateMultipleValues
-				default:
-					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
-				}
-			} else {
-				// There's something adjoined to the short argument
-				switch arg.NumArgs {
-				case numArgs0:
-					// This argument is a boolean; the rest of the "junk"
-					// better be short boolean options as well.
-					parser.emitWithArgument(tokArgument, arg, arg.Short)
-					parser.lastSwitch = "-" + shortName
-					for _, r := range text[2:] {
-						found := false
-						for _, nextArg := range self.switchArguments {
-							if nextArg.Short == "-"+string(r) {
-								if nextArg.NumArgs == numArgs0 {
-									// Good; it's alos a boolean
-									parser.emitWithArgument(tokArgument, nextArg, nextArg.Short)
-									parser.lastSwitch = "-" + string(r)
+				rhs = text[len(possibility):]
+				text = text[:len(possibility)]
+				match = true
+				break
+			}
+			// TODO - this might be too early to do this
+			// Or we could have a group of short booleans IFF the option name is
+			// onlyone character long; if -x is a boolean
+			// and -y is a boolan, than -xy (and -yx) are valid
+			if arg.typeKind == reflect.Bool &&		// dest is an Boolean
+				len(possibility) == 2 &&		// switch is 2 chars long
+				text[1] != '-' &&			// short option given
+				rhs == "" &&				// There wasn't an =
+				text[:2] == possibility {
+
+				// Emit this one
+				parser.emitWithArgument(tokArgument, arg, text[:2])
+				parser.lastSwitch = text[:2]
+
+				// All other characters in the given switch must also be one-character
+				// short-option booleans
+				// TODO- think about utf-8 here
+				all_others_good := true
+				for _, r := range text[2:] {
+					found := false
+					for _, iArg := range self.switchArguments {
+						if iArg.NumArgs == numArgs0 {
+							for _, iSwitch := range iArg.Switches {
+								if len(iSwitch) == 2 && rune(iSwitch[1]) == r {
 									found = true
-								} else {
-									parser.emitWithValue(tokError,
-										fmt.Sprintf("The -%s switch takes a value and cannot be adjoined to the -%s switch",
-											string(r), shortName))
-									return nil
+									// Emit this one
+									parser.emitWithArgument(tokArgument, iArg, iSwitch)
+									parser.lastSwitch = iSwitch
+									break
 								}
 							}
 						}
-						if !found {
-							// Didn't find a short option with that name
-							parser.emitWithValue(tokError,
-								fmt.Sprintf("The -%s switch is adjoined to the -%s switch, which does not exist",
-									shortName, string(r)))
-							return nil
+						if found {
+							break
 						}
 					}
-					// All the junk was handled.
-					parser.pos += 1
-					return self.stateArgument
-				case numArgs1:
-					// The junk after the short option is its value
-					// First the argument
-					parser.emitWithArgument(tokArgument, arg, arg.Short)
-					parser.lastSwitch = "-" + shortName
-					// Then its value
-					parser.emitWithValue(tokValue, text[2:])
-					parser.pos += 1
-					return self.stateArgument
-				case numArgsStar:
-					// XXX - this should be impossible. A short option should not be allowed
-					// to have "*" num args; that's for positional arguments only. Need
-					// to add enforcement of this.
-					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
-				default:
-					panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+					if ! found {
+						all_others_good = false
+						break
+					}
 				}
+				if !all_others_good {
+					parser.emitWithValue(tokError,
+						fmt.Sprintf("The %s switch is valid but not as '%s'",
+							text[:2], text))
+					return nil
+				}
+
+				// We finished the parse and need to return successfully now
+				parser.pos += 1
+				return self.stateArgument
 			}
+			
 		}
+
+		if match {
+			break
+		}
+	}	
+	// Didn't match ?
+	if ! match {
+		// Didn't find a switch with that name
+		parser.emitWithValue(tokError, fmt.Sprintf("No such switch: %s", text))
+		return nil
 	}
 
-	parser.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", text))
-	return nil
+	parser.emitWithArgument(tokArgument, arg, text)
+	parser.lastSwitch = text
+	if rhs == "" {
+		parser.pos += 1
+		switch arg.NumArgs {
+		case numArgs0:
+			return self.stateArgument
+		case numArgs1:
+			return self.stateOneValue
+		case numArgsMaybe:
+			panic("not reached")
+			//				return self.stateMaybeOneValue
+		case numArgsStar:
+			panic("not reached")
+			//				return self.stateMultipleValues
+		default:
+			panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+		}
+	} else {
+		switch arg.NumArgs {
+		case numArgs0:
+			parser.emitWithValue(tokError,
+				fmt.Sprintf("The %s switch does not take a value", text))
+			return nil
+		case numArgs1:
+			parser.emitWithValue(tokValue, rhs)
+			parser.pos += 1
+			return self.stateArgument
+		case numArgsMaybe:
+			panic("not reached")
+		case numArgsStar:
+			panic("not reached")
+		default:
+			panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
+		}
+	}
+	panic("not reached")
+	//return nil
 }
+
 
 func (self *ArgumentParser) statePositionalArgument(parser *parserState) stateFunc {
 	if parser.pos == len(parser.args) {

@@ -52,7 +52,7 @@ func (s *MySuite) TestParseHelpOptions(c *C) {
 		Stdout:           &buffer,
 	}
 	p.AddArgument(&Argument{
-		Long: "--string",
+		Switches: []string{"--string"},
 		Help: "Pass a string value",
 	})
 
@@ -251,7 +251,7 @@ func (s *MySuite) TestParsePassThroughAfterSwitch(c *C) {
 		Dest:         "PassThrough",
 	})
 	p0.AddArgument(&Argument{
-		Long: "--string",
+		Switches: []string{"--string"},
 		Help: "Required string value",
 	})
 
@@ -273,7 +273,7 @@ func (s *MySuite) TestParseShortWithNumber(c *C) {
 		Destination:      values,
 	}
 	p.AddArgument(&Argument{
-		Short: "-j",
+		Switches: []string{"-j"},
 	})
 
 	// Pass a number adjoined with "-j"
@@ -292,10 +292,10 @@ func (s *MySuite) TestParseShortGroupedBooleans(c *C) {
 		Destination:      values,
 	}
 	p.AddArgument(&Argument{
-		Short: "-x",
+		Switches: []string{"-x"},
 	})
 	p.AddArgument(&Argument{
-		Short: "-y",
+		Switches: []string{"-y"},
 	})
 
 	// Pass a number adjoined with "-j"
@@ -315,13 +315,13 @@ func (s *MySuite) TestParseShortGroupedErrors(c *C) {
 		Destination:      values,
 	}
 	p.AddArgument(&Argument{
-		Short: "-j",
+		Switches: []string{"-j"},
 	})
 	p.AddArgument(&Argument{
-		Short: "-x",
+		Switches: []string{"-x"},
 	})
 	p.AddArgument(&Argument{
-		Short: "-y",
+		Switches: []string{"-y"},
 	})
 
 	// Illegal
@@ -334,13 +334,13 @@ func (s *MySuite) TestParseShortGroupedErrors(c *C) {
 	argv = []string{"-xj"}
 	err = p.ParseArgv(argv)
 	c.Assert(err, NotNil)
-	c.Check(err.Error(), Equals, "The -j switch takes a value and cannot be adjoined to the -x switch")
+	c.Check(err.Error(), Equals, "The -x switch is valid but not as '-xj'")
 
 	// Illegal
 	argv = []string{"-xz"}
 	err = p.ParseArgv(argv)
 	c.Assert(err, NotNil)
-	c.Check(err.Error(), Equals, "The -x switch is adjoined to the -z switch, which does not exist")
+	c.Check(err.Error(), Equals, "The -x switch is valid but not as '-xz'")
 }
 
 func (s *MySuite) TestParseChoicesString(c *C) {
@@ -352,7 +352,7 @@ func (s *MySuite) TestParseChoicesString(c *C) {
 		Destination:      v,
 	}
 	p.AddArgument(&Argument{
-		Long:    "--string",
+		Switches:    []string{"--string"},
 		Choices: []string{"x", "y", "z"},
 	})
 
@@ -374,7 +374,7 @@ func (s *MySuite) TestParseChoicesInteger(c *C) {
 		Destination:      v,
 	}
 	p.AddArgument(&Argument{
-		Long:    "--integer",
+		Switches:    []string{"--integer"},
 		Choices: []string{"1", "22", "333"},
 	})
 
@@ -395,14 +395,14 @@ func (s *MySuite) TestParseEqualsValue(c *C) {
 		Destination:      v,
 	}
 	p.AddArgument(&Argument{
-		Long: "--integer",
+		Switches: []string{"--integer"},
 	})
 	p.AddArgument(&Argument{
-		Long: "--boolean",
+		Switches: []string{"--boolean"},
 		Dest: "X",
 	})
 	p.AddArgument(&Argument{
-		Long: "--string",
+		Switches: []string{"--string"},
 	})
 
 	err := p.ParseArgv([]string{"--integer=222"})
@@ -416,10 +416,37 @@ func (s *MySuite) TestParseEqualsValue(c *C) {
 	// Error condition
 	err = p.ParseArgv([]string{"--="})
 	c.Assert(err, NotNil)
-	c.Check(err.Error(), Equals, "A switch name cannot begin with '='")
+	c.Check(err.Error(), Equals, "No such switch: --")
 
 	// Error condition
 	err = p.ParseArgv([]string{"--boolean=true"})
 	c.Assert(err, NotNil)
 	c.Check(err.Error(), Equals, "The --boolean switch does not take a value")
+}
+
+func (s *MySuite) TestParseMultipleSwitches(c *C) {
+	values := &TestParseValues{}
+
+	p0 := &ArgumentParser{
+		Name:             "progname",
+		ShortDescription: "This is a simple program",
+		Destination:      values,
+	}
+	p0.AddArgument(&Argument{
+		Switches:    []string{"-a", "--b", "-cd", "-w", "--x", "-yz"},
+		Dest: "Strings",
+	})
+
+	// No string argument passed after subcommand
+	argv := []string{
+		"-yz", "YZ",
+		"--x", "X",
+		"-w", "W",
+		"-cd", "CD",
+		"--b", "B",
+		"-a", "A",
+	}
+	err := p0.ParseArgv(argv)
+	c.Assert(err, IsNil)
+	c.Check(values.Strings, DeepEquals, []string{"YZ", "X", "W", "CD", "B", "A"})
 }

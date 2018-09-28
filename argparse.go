@@ -84,7 +84,7 @@ func (self *ArgumentParser) AddArgument(arg *Argument) {
 		if len(self.positionalArguments) > 0 {
 			prevNumArgs := self.positionalArguments[len(self.positionalArguments)-1].NumArgs
 			if prevNumArgs == '*' || prevNumArgs == '+' || prevNumArgs == '?' {
-				panic(fmt.Sprintf("Cannot add an Argument after a NumArgs=%s Argument", prevNumArgs))
+				panic(fmt.Sprintf("Cannot add an Argument after a NumArgs=%d Argument", prevNumArgs))
 			}
 		}
 

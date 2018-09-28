@@ -26,14 +26,12 @@ func main() {
 	}
 
 	p.AddArgument(&argparse.Argument{
-		Short: "-p",
-		Long: "--pattern",
+		Switches: []string{"-p", "--pattern"},
 		Help: "The pattern to look for",
 	})
 
 	p.AddArgument(&argparse.Argument{
-		Short: "-f",
-		Long: "--filename",
+		Switches: []string{"-f", "--filename"},
 		Help: "The file to look at. Can be given more than once.",
 	})
 

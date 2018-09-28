@@ -37,15 +37,13 @@ interface requires a "Run" method, which is triggered when the parse is finished
         }
 
         p.AddArgument(&argparse.Argument{
-            Short: "-i",
-            Long: "--input",
+            Switches: []string{"-i", "--input"},
             Description: "The input file",
             Metavar: "FILE",
         })
 
         p.AddArgument(&argparse.Argument{
-            Short: "-o",
-            Long: "--output",
+            Switches: []string{"-o", "--output"},
             Description: "The output file",
             Metavar: "FILE",
         })
@@ -120,9 +118,8 @@ with the helper functions argparse.ParseError() or argparse.ParseErrorf().
 
 The following fields can be set in Argument:
 
-* Short: (optional) The short (one-dash) version of this argument. You must supply the "-".
-
-* Long: (optional) The long (two-dash) version of this argument. You must supply the "--".
+* Switches: (optional) All the accepted versions for this switch. Each one must start
+	with at least one hyphen.
 
 * Name: (optional) For positional arguments (after all switch arguments, which start with dashes), the name of
     the argument. While this name is not used by the user when giving the CLI string,
@@ -154,7 +151,7 @@ The following fields can be set in Argument:
 # ParseCommands
 
 ParseCommands are special types of Arguments that tell the ArgumentParser to change behavior while it's
-parsing. If an Argument is a ParseCommand, then instead of Short, Long, or Name, the String field is used
+parsing. If an Argument is a ParseCommand, then instead of Switches or Name, the String field is used
 to denote what to expect on the command-line.
 
 The only ParseCommand available right now is *PassThrough*. This tells argparse that all the remaining
@@ -354,14 +351,12 @@ See [ex4.go](examples/ex4.go)
             }
 
             p.AddArgument(&argparse.Argument{
-                    Short: "-p",
-                    Long: "--pattern",
+                    Switches: []string{"-p", "--pattern},
                     Help: "The pattern to look for",
             })
 
             p.AddArgument(&argparse.Argument{
-                    Short: "-f",
-                    Long: "--filename",
+                    Switches: []string{"-f", "--filename"},
                     Help: "The file to look at. Can be given more than once.",
             })
 
