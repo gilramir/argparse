@@ -7,7 +7,18 @@ import (
 	"github.com/gilramir/argparse"
 )
 
+type ArgparseOptions interface {
+	_Run(ArgparseOptions) (error)
+}
+
+type CommonOptions struct {
+	Verbose	bool
+	Debug bool
+	_Run argparse.CannotRun
+}
+
 type Options struct {
+	CommonOptions
 	Filenames []string
 }
 
@@ -19,8 +30,14 @@ func main() {
 	p := &argparse.ArgumentParser{
 		Name:             "my_program",
 		ShortDescription: "This program takes positional arguments",
-		Destination:      &Options{},
+		Options: 	  &CommonOptions{},
 	}
+
+	p2 := p.AddArgumentParser({&argparse.ArgumentParser{
+		Name:             "my_program",
+		ShortDescription: "This program takes positional arguments",
+		Options: 	  &CommonOptions{},
+	})
 
 	p.AddArgument(&argparse.Argument{
 		Name:    "filenames",

@@ -39,5 +39,6 @@ func main() {
 	err := p.ParseArgs()
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
 	}
 }

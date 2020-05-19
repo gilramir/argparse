@@ -8,6 +8,9 @@ import (
 )
 
 func main() {
+	p := &argparse.RootArgumentParser{
+	})
+
 	p := &argparse.ArgumentParser{
 		Name:             "my_program",
 		ShortDescription: "This program takes no arguments",

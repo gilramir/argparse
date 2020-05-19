@@ -1,8 +1,3 @@
-// The argparse module is a simple way to add a command-line
-// parser to your CLI program. It is modeled somewhat after the
-// Python module of the same name. Noticeably, it keeps you organized by
-// requiring that the fields whose values are set from the command-line are
-// members of a struct, instead of global or local-scope variables.
 package argparse
 
 // Copyright (c) 2017 by Gilbert Ramirez <gram@alumni.rice.edu>
@@ -11,35 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
-
-	"github.com/pkg/errors"
 )
 
-type Destination interface {
-	Run([]Destination) (err error)
-}
-
-// The ArgumentParser struct is the top-level, root node of
-// the command-line option parsing.
 type ArgumentParser struct {
-	// The name of the program or subcommand
-	Name string
-
-	// One-line description of the program
-	ShortDescription string
-
-	// This can be a multi-line, longer explanation of
-	// the program.
-	LongDescription string
-
-	// This can be a multi-line string that is shown
-	// after all the options in the --help output
-	Epilog string
-
-	// The struct that will receive the values after parsing
-	Destination Destination
-
 	// If this is set, instead of printing the help statement,
 	// when --help is requested, to os.Stdout, the output goes here.
 	Stdout io.Writer
@@ -48,272 +17,154 @@ type ArgumentParser struct {
 	// when a ParseErr is encountered, to os.Stderr, the output goes here.
 	Stderr io.Writer
 
-	// Internal fields
-	subParsers          []*ArgumentParser
-	switchArguments     []*Argument
-	positionalArguments []*Argument
-	commandArguments    []*Argument
+	// Allow the user to modify strings produced by argparse.
+	// This is essential for i18n 
+	Messages Messages
 
-	numRequiredPositionalArguments int
-	// -1 if there is no max (i.e., if the final NumArgs is * or +)
-	numMaxPositionalArguments int
+	// The switch strings that can invoke help
+	HelpSwitches []string
 
-	// This causes a circular reference, keeping
-	// the tree of ArgumentParsers to NOT be garbage collected
-	parentParser *ArgumentParser
+	// The root Command object.
+	Root *Command
 }
 
-func (self *ArgumentParser) AddParser(p *ArgumentParser) *ArgumentParser {
-	if p.Stdout != nil {
-		panic("Only the root parser can set Stdout")
+
+// Create a new ArgumentParser, with the Command as its root Command
+func New( cmd *Command ) (*ArgumentParser) {
+	cmd.init()
+	if cmd.Name == "" {
+		cmd.Name = os.Args[0]
 	}
-
-	self.subParsers = append(self.subParsers, p)
-	p.parentParser = self
-	return p
-}
-
-func (self *ArgumentParser) AddArgument(arg *Argument) {
-	if self.Destination == nil {
-		panic(fmt.Sprintf("There is no Destination set for ArgumentParser %s", self.Name))
-	}
-	arg.sanityCheck(self.Destination)
-	if arg.isCommand() {
-		self.commandArguments = append(self.commandArguments, arg)
-	} else if arg.isPositional() {
-		if len(self.positionalArguments) > 0 {
-			prevNumArgs := self.positionalArguments[len(self.positionalArguments)-1].NumArgs
-			if prevNumArgs == '*' || prevNumArgs == '+' || prevNumArgs == '?' {
-				panic(fmt.Sprintf("Cannot add an Argument after a NumArgs=%d Argument", prevNumArgs))
-			}
-		}
-
-		self.positionalArguments = append(self.positionalArguments, arg)
-		if arg.NumArgs == '1' || arg.NumArgs == '+' {
-			self.numRequiredPositionalArguments++
-		}
-
-		if arg.NumArgs == '1' || arg.NumArgs == '?' {
-			self.numMaxPositionalArguments++
-		} else {
-			self.numMaxPositionalArguments = -1
-		}
-	} else if arg.isSwitch() {
-		self.switchArguments = append(self.switchArguments, arg)
-	} else {
-		panic(fmt.Sprintf("Cannot determine type for %v", arg))
+	return &ArgumentParser{
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+		Messages: DefaultMessages_en,
+		HelpSwitches: []string{"-h", "--help"},
+		Root: cmd,
 	}
 }
 
-func (self *ArgumentParser) ParseArgs() error {
-	return self.ParseArgv(os.Args[1:])
+
+// Add an argument to the root command
+func (self *ArgumentParser) Add(arg *Argument) {
+	self.Root.Add(arg)
 }
 
-func (self *ArgumentParser) ParseArgv(argv []string) error {
+// Add a command to the root command
+func (self *ArgumentParser) New(c *Command) *Command {
+	return self.Root.New(c)
+}
 
-	results := self.parseArgv(argv)
+// Parse the os.Argv arguments and return, having filled out Values.
+// On a request for help (-h), print the help and exit with os.Exit(0).
+// On a user input error, print the error message and exit with os.Exit(1).
+func (self *ArgumentParser) Parse() {
+	results := self.ParseArgv( os.Args[1:] )
+/*
+	if results. != "" {
+		fmt.FPrintln( self.Stdout, helpString )
+		os.Exit(0)
+	} else if err != nil {
+		fmt.Fprintln( self.Stderr, err.Error() )
+		os.Exit(1)
+	}
+	*/
 	if results.parseError != nil {
-		// XXX - usage statement
-		return results.parseError
+		fmt.Fprintln( self.Stderr, results.parseError.Error() )
+		os.Exit(1)
 	}
-	if results.helpRequested {
-		var output io.Writer
+}
 
-		if self.Stdout == nil {
-			output = os.Stdout
-		} else {
-			output = self.Stdout
-		}
-		fmt.Fprintf(output, results.triggeredParser.helpString())
+/*
+func (self *ArgumentParser) ParseOsArgs() (Values) {
+	// Sanity check
+	*/
+	/*
+	if self.root.Function != nil {
+		panic fmt.Sprintf("ParseOsArgv can't be used with a root ArgumentParser "\
+			"that has a callback Function. Use ExecuteOsArgv instead.")
+	}
+	*/
+	/*
+	return self.ParseArgv( os.Args[1:] )
+}
+*/
+
+/*
+	// Is there a function?
+	if results.triggeredParser.Function == nil {
 		return nil
 	}
 
-	// The parser doesn't have a destination?
-	if results.triggeredParser.Destination == nil {
-		// show usage statement
-		if self.parentParser == nil {
-			// The root command is allowed to have no Destination if it also
-			// doesn't have any subcommands
-			if len(self.subParsers) == 0 {
-				return nil
-			} else {
-				return errors.New("The ArgumentParser needs a Destination")
-			}
-		} else {
-			return errors.Errorf("The ArgumentParser '%s' needs a Destination", self.Name)
-		}
-	}
-
-	err := results.triggeredParser.Destination.Run(results.ancestors)
+	err := results.triggeredParser.Function(nil)
 	switch err.(type) {
-	case ParseErr:
-		var output io.Writer
-
-		if self.Stderr == nil {
-			output = os.Stderr
-		} else {
-			output = self.Stderr
-		}
-		fmt.Fprintf(output, "\n%s\n", results.triggeredParser.helpString())
+	case ParseError:
+		fmt.Fprintf(pt.Stderr, "\n%s\n",
+			results.triggeredParser.helpString(pt.rootParser, 0))
 	}
 	return err
 }
+*/
 
-func (self *ArgumentParser) usageString() string {
-	var usage string
+func (self *ArgumentParser) ParseArgv(argv []string) (*parseResults) {
 
-	var rootParser *ArgumentParser
-	for rootParser = self; rootParser.parentParser != nil; {
-		rootParser = rootParser.parentParser
+	parser := parserState{}
+	results := parser.runParser(self, argv)
+	return results
+}
+/*
+	valueStack := make([]Values, 0, 1)
+	err := self.root.startParseArgv(self, argv, &valueStack)
+
+	if err != nil {
+		fmt.Fprint(os.Stderr, err)
+		os.Exit(1)
 	}
-
-	// The name of the program
-	if rootParser.Name == "" {
-		usage += os.Args[0]
-	} else {
-		usage += rootParser.Name
+	return valueStack[len(valueStack)-1]
+}*/
+/*
+func (self *ArgumentParser) CommandParseOsArgs() (*Command, Values, error) {
+	// Sanity check
+	/*
+	if self.root.Function != nil {
+		panic fmt.Sprintf("ParseOsArgv can't be used with a root ArgumentParser "\
+			"that has a callback Function. Use ExecuteOsArgv instead.")
 	}
-
-	// Are we a subcommand?
-	if self.parentParser != nil {
-		var subcommandNames string
-		for parser := self; parser.parentParser != nil; {
-			if subcommandNames == "" {
-				subcommandNames = parser.Name
-			} else {
-				subcommandNames = parser.Name + " " + subcommandNames
-			}
-			parser = parser.parentParser
-		}
-		usage += " " + subcommandNames
-	}
-	usage += "\n\n"
-
-	return usage
+	return self.ParseArgv( os.Args[1:] )
 }
 
-func (self *ArgumentParser) helpString() string {
-	var text string
-
-	text = self.usageString()
-
-	if len(self.subParsers) > 0 {
-		text += "Sub-Commands:\n\n"
-
-		longestSubcommandLen := 0
-
-		// Find the longest length of a subcommand name
-		for _, subParser := range self.subParsers {
-			if len(subParser.Name) > longestSubcommandLen {
-				longestSubcommandLen = len(subParser.Name)
-			}
-		}
-
-		indentation := longestSubcommandLen + 4
-
-		for _, subParser := range self.subParsers {
-			padding := strings.Repeat(" ", indentation-len(subParser.Name))
-			text += fmt.Sprintf("    %s%s%s\n", subParser.Name, padding,
-				subParser.ShortDescription)
-		}
+func (self *ArgumentParser) CommandParseArgv(argv []string) (*Command, Values, error) {
+	// Sanity check
+	/*
+	if self.root.Function != nil {
+		panic fmt.Sprintf("ParseArgv can't be used with a root ArgumentParser "\
+			"that has a callback Function. Use ExecuteArgv instead.")
 	}
 
-	argumentsLabelPrinted := false
+	valueStack := make([]Values, 0, 1)
+	err := self.root.startParseArgv(self, argv, &valueStack)
+	return valueStack[len(valueStack)-1], err
+}
+*/
 
-	maxLHS := 0
-	for _, argument := range self.switchArguments {
-		length := len(argument.helpString())
-		if length > maxLHS {
-			maxLHS = length
-		}
+/*
+func (self *ArgumentParser) ExecuteOsArgs() (error) {
+	// Sanity check
+	if self.root.Function == nil {
+		panic fmt.Sprintf("ExecuteOsArgs can't be used with a root ArgumentParser "\
+			"that has no callback Function. Use ParseOsArgs instead.")
 	}
-	for _, argument := range self.positionalArguments {
-		length := len(argument.Metavar)
-		if argument.NumArgs == numArgsMaybe {
-			length += 2
-		}
-		if length > maxLHS {
-			maxLHS = length
-		}
-	}
-	var startRHS int
-	if maxLHS < 20 {
-		startRHS = 20
-	} else if maxLHS < 30 {
-		startRHS = 30
-	} else if maxLHS < 40 {
-		startRHS = 40
-	} else {
-		startRHS = maxLHS + 2
-	}
-
-	if len(self.switchArguments) > 0 {
-		text += "Options:\n"
-		argumentsLabelPrinted = true
-		for _, argument := range self.switchArguments {
-			lhs := argument.helpString()
-			indent := startRHS - len(lhs)
-			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
-			// Show Choices if available
-			if len(argument.Choices) > 0 {
-				text += "\t" + strings.Repeat(" ", len(lhs)+indent) +
-					"Possible choices: " + argument.getChoicesString() + "\n"
-			}
-		}
-	}
-	if len(self.positionalArguments) > 0 {
-		if argumentsLabelPrinted {
-			text += "\n"
-			argumentsLabelPrinted = true
-		}
-		text += "Positional Arguments:\n"
-		for _, argument := range self.positionalArguments {
-			lhs := argument.getMetavar()
-			if argument.NumArgs == numArgsMaybe {
-				lhs = "[" + lhs + "]"
-			}
-			indent := startRHS - len(lhs)
-			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
-		}
-	}
-
-	if len(self.subParsers)+len(self.switchArguments)+len(self.positionalArguments) == 0 {
-		text += "No options\n"
-	}
-
-	return text
+	return self.ExecuteArgv( os.Args[1:] )
 }
 
-// Print a textual representation of the parser tree to stdout.
-// This can be useful for developers if they have issues with their parser.
-func (self *ArgumentParser) Dump() {
-	self.dump("")
+func (self *ArgumentParser) ExeuteArgv(argv []string) (error) {
+	// Sanity check
+	if self.root.Function == nil {
+		panic fmt.Sprintf("ExecuteArgv can't be used with a root ArgumentParser "\
+			"that has no callback Function. Use ParseArgv instead.")
+	}
+
+	valueStack := make([]OptionValues, 0, 1)
+	return self.root.startParseArgv(self, argv, &valueStack)
 }
-
-func (self *ArgumentParser) dump(spaces string) {
-	fmt.Printf("%sName: %s\n", spaces, self.Name)
-	if self.ShortDescription != "" {
-		fmt.Printf("%sShortDescription: %s\n", spaces, self.ShortDescription)
-	}
-	if self.LongDescription != "" {
-		fmt.Printf("%sLongDescription: %s\n", spaces, self.LongDescription)
-	}
-	if self.Epilog != "" {
-		fmt.Printf("%sEpilog: %s\n", spaces, self.Epilog)
-	}
-	fmt.Printf("%sDestination: %v\n", spaces, self.Destination)
-
-	var subSpaces string = spaces + "    "
-	for _, arg := range self.switchArguments {
-		arg.dump(subSpaces)
-	}
-	for _, arg := range self.positionalArguments {
-		arg.dump(subSpaces)
-	}
-	fmt.Printf("\n")
-
-	subSpaces += "    "
-	for _, subParser := range self.subParsers {
-		subParser.dump(subSpaces)
-	}
-}
+*/

@@ -1,20 +1,12 @@
 package argparse
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	//        "log"
 	"reflect"
-	"strconv"
+//	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
-)
-
-const (
-	kNilRune = '\x00'
-
-	PassThrough = 1
 )
 
 type Argument struct {
@@ -29,27 +21,37 @@ type Argument struct {
 
 	// The name of the value field to show in the usage statement,
 	// for non-boolean switches
-	Metavar string
+	MetaVar string
 
 	// The name of the destination field for the value of the switch
 	// or positional argument, if it is named differently from any of the
 	// Switches, or Name.
 	Dest string
 
-	// If this option is a parse command, which parse command is it.
-	ParseCommand int
+	// Number of arguments that can or should appear
+	// If NumArgs is 0 (never initialized), and NumArgsGlob is "",
+	// the value of NumArgs is set to 1, unless this is a Bool, in which case
+	// it's set to 0.
+	// If NumArgs is not 0 or 1, then NumArgsGlob must be "", in which case
+	// the number of args is exactly NumArgs.
+	// If NumArgs is 0, and NumArgsGlob is not "", then it must be one
+	// of "+" ("one or more"), "?" ("zero or one"), or "*" ("zero or more"),
+	// and then NumArgs is set to -1
+	NumArgs int
+	NumArgsGlob string
 
-	// If this option is a parse command, the string that represents it on the CLI.
-	String string
-
-	// Number of arguments that can or should appear, only for positional arguments
-	NumArgs numArgsType
+	// Is the user required to provide this argument? This is only
+	// checked for Switch arguments; positional arguments make use of
+	// NumArgs or NumArgsGlob
+	Required bool
 
 	// For non-boolean options, the valid values that the user can provide.
 	// If Choices is given, and the user provides a value not in this list,
 	// the user will be presented with an error.
-	Choices []string
+//	Choices []string
 
+	value valueType
+/*
 	// The golang field type (Kind) where the parsed value will be stored
 	typeKind reflect.Kind
 
@@ -58,50 +60,43 @@ type Argument struct {
 
 	// A "pointer" to where to store the parsed value
 	value reflect.Value
+	*/
 }
 
-func (self *Argument) sanityCheck(dest Destination) {
+/*
+type Bool struct {
+	Argument
+}
+*/
+
+func (self *Argument) init(dest Values) {
 	var err error
 	// Ensure that there is some name field set
-	err = self._sanityCheckName()
+	err = self.sanityCheckNameAndSwitches()
 	if err != nil {
 		panic(err.Error())
 	}
 	// Check the type of value in the destination struct
 	// This is the side-effect of setting self.typeKind and self.value
-	err = self._sanityCheckDestination(dest)
+	err = self.sanityCheckValueType(dest)
 	if err != nil {
 		panic(err.Error())
 	}
-
-	err = self._sanityCheckNumArgs()
+	/*
+	err = self.sanityCheckNumArgs()
 	if err != nil {
 		panic(err.Error())
 	}
+	*/
 }
 
-func (self *Argument) _sanityCheckName() error {
-
-	if self.ParseCommand != 0 {
-		if len(self.Switches) > 0 || self.Name != "" {
-			return errors.New("A ParseCommand cannot have a Switches or a Name")
-		}
-		if self.String == "" {
-			return errors.New("A ParseCommand must have a String field")
-		}
-		return nil
-	}
-
-	if self.String != "" {
-		return errors.New("String cannot be set if ParseCommand is not set")
-	}
-
+func (self *Argument) sanityCheckNameAndSwitches() error {
 	for i, switchName := range self.Switches {
 		if len(switchName) == 0 {
-			return errors.Errorf("Switch #%d is an empty string", i+1)
+			return fmt.Errorf("Switch #%d is an empty string", i+1)
 		}
 		if switchName[0] != '-' {
-			return errors.Errorf("Switch #%d '%s' begin with '-'", i+1, switchName)
+			return fmt.Errorf("Switch #%d '%s' should begin with '-'", i+1, switchName)
 		}
 	}
 
@@ -110,10 +105,10 @@ func (self *Argument) _sanityCheckName() error {
 	}
 
 	if len(self.Switches) == 0 && self.Name == "" {
-		return errors.New("No name/short/long given for Argument")
+		return errors.New("No Switches or Name given for Argument")
 	}
 	if len(self.Switches) > 0 && self.Name != "" {
-		return errors.New("Name cannot be given if short/long is given")
+		return errors.New("Name cannot be given if Switches is given")
 	}
 	return nil
 }
@@ -188,7 +183,7 @@ func argumentVariableName(orig string) string {
 
 // Check that there is a field in the destination struct that correponds
 // to this argument.
-func (self *Argument) _sanityCheckDestination(dest Destination) error {
+func (self *Argument) sanityCheckValueType(dest Values) error {
 	// TODO - some sanity checks here would be great
 	// TODO - if PassThrough, check that it's a slice
 
@@ -204,7 +199,7 @@ func (self *Argument) _sanityCheckDestination(dest Destination) error {
 		field, found = structType.FieldByName(self.Dest)
 		if !found {
 			return errors.New(fmt.Sprintf("Could not find destination field for argument %s, given as %s",
-				self.prettyName(), self.Dest))
+				self.PrettyName(), self.Dest))
 		}
 	} else {
 		for _, switchName := range(self.Switches) {
@@ -212,6 +207,7 @@ func (self *Argument) _sanityCheckDestination(dest Destination) error {
 			needles = append(needles, structName)
 			field, found = structType.FieldByName(structName)
 			if found {
+				self.Dest = field.Name
 				break
 			}
 		}
@@ -219,111 +215,84 @@ func (self *Argument) _sanityCheckDestination(dest Destination) error {
 			structName := argumentVariableName(self.Name)
 			needles = append(needles, structName)
 			field, found = structType.FieldByName(structName)
+			if found {
+				self.Dest = field.Name
+			}
 		}
 		if !found {
 			return errors.New(fmt.Sprintf("Could not find destination field for argument %s; checked %s",
-				self.prettyName(), strings.Join(needles, ",")))
+				self.PrettyName(), strings.Join(needles, ",")))
 		}
 	}
 
 	// By using the index of the field within the struct type,
 	// we can get the corresponding struct value
-	self.value = structValue.FieldByIndex(field.Index)
-	self.typeKind = field.Type.Kind()
-	if self.typeKind == reflect.Slice {
-		// Get the type of slice
-		self.sliceKind = self.value.Type().Elem().Kind()
-	}
-	//        log.Printf("field=%v index=%d typeKind=%v value=%v sliceKind=%v",
-	//            field, field.Index, self.typeKind, self.value, self.sliceKind)
-	return nil
-}
+	valueP := structValue.FieldByIndex(field.Index)
+	typeKind := field.Type.Kind()
 
-func (self *Argument) _sanityCheckNumArgs() error {
-	// Was NumArgs not given?
-	if self.NumArgs == kNilRune {
-		//switch reflect.TypeOf(self.Type).Kind() {
-		switch self.typeKind {
-		case reflect.Bool:
-			self.NumArgs = '0'
-		case reflect.Int:
-			self.NumArgs = '1'
-		case reflect.String:
-			self.NumArgs = '1'
-		case reflect.Slice:
-			// What kind of slice is it?
-			switch self.sliceKind {
+	switch typeKind  {
+	case reflect.Bool:
+		self.value = NewBoolValueT( valueP )
+	case reflect.String:
+		self.value = NewStringValueT( valueP )
+	case reflect.Int:
+		self.value = NewIntValueT( valueP )
+	case reflect.Float64:
+		self.value = NewFloatValueT( valueP )
+	case reflect.Slice:
+		sliceKind := valueP.Type().Elem().Kind()
+		switch sliceKind {
+			case reflect.Bool:
+				self.value = NewBoolSliceValueT( valueP )
+			case reflect.Int:
+				self.value = NewIntSliceValueT( valueP )
 			case reflect.String:
-				self.NumArgs = '1'
+				self.value = NewStringSliceValueT( valueP )
+			case reflect.Float64:
+				self.value = NewFloatSliceValueT( valueP )
 			default:
-				return errors.New(fmt.Sprintf("Argument %s cannot be of type []%s",
-					self.prettyName(), self.sliceKind.String()))
-			}
-		default:
-			return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
-				self.prettyName(), self.typeKind.String()))
+				return fmt.Errorf("Argument %s cannot be of type []%s",
+					self.PrettyName(), sliceKind.String())
 		}
-	} else {
-		// TODO - only allow setting NumArgs for positional arguments
-		/// check short/long/named
+	default:
+		return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
+			self.PrettyName(), typeKind.String()))
 	}
 	return nil
 }
 
-func (self *Argument) prettyName() string {
+func (self *Argument) PrettyName() string {
 	if len(self.Switches) > 0 {
 		return strings.Join(self.Switches, "/")
 	} else if self.Name != "" {
 		return self.Name
 	}
-	panic("Unexpected")
+	panic("Argument has neither Switches or Name.")
 }
 
 func (self *Argument) isSwitch() bool {
-	return !self.isCommand() && len(self.Switches) > 0
+	if len(self.Switches) > 0 {
+		if self.Name == "" {
+			return true
+		} else {
+			panic(fmt.Sprintf("Argument %s has Switches and Name",
+				self.PrettyName()))
+		}
+	} else {
+		if self.Name == "" {
+			panic(fmt.Sprintf("Argument %s has neither Switches nor Name",
+				self.PrettyName()))
+		} else {
+			return false
+		}
+	}
 }
 
 func (self *Argument) isPositional() bool {
-	return !self.isCommand() && !(self.isSwitch())
+	return ! self.isSwitch()
 }
 
-func (self *Argument) isCommand() bool {
-	return self.ParseCommand != 0
-}
-
-func (self *Argument) parse(text string) error {
-	var err error
-
-	switch self.typeKind {
-	case reflect.Bool:
-		var boolValue bool
-		boolValue, err = strconv.ParseBool(text)
-		if err != nil {
-			return errors.Errorf("Cannot convert \"%s\" to a boolean", text)
-		}
-		self.value.SetBool(boolValue)
-	case reflect.Int:
-		var i int
-		i, err = strconv.Atoi(text)
-		if err != nil {
-			return errors.Errorf("Cannot convert \"%s\" to an integer", text)
-		}
-		self.value.SetInt(int64(i))
-	case reflect.String:
-		self.value.SetString(text)
-	case reflect.Slice:
-		switch self.sliceKind {
-		case reflect.String:
-			newValue := reflect.ValueOf(text)
-			self.value.Set(reflect.Append(self.value, newValue))
-		default:
-			panic("Should not reach")
-		}
-	default:
-		panic("Should not reach")
-	}
-	return nil
-}
+/*
 
 func (self *Argument) getChoicesString() string {
 	switch self.typeKind {
@@ -389,20 +358,6 @@ func quotedListString(choices []string) string {
 	return text
 }
 
-func (self *Argument) seen() {
-	switch self.typeKind {
-	case reflect.Bool:
-		self.value.SetBool(true)
-	default:
-		panic("Should not reach")
-	}
-}
-
-func (self *Argument) seenWithoutValue() error {
-	panic("not yet implemented")
-	return nil
-}
-
 func (self *Argument) getMetavar() string {
 	if self.Metavar != "" {
 		return self.Metavar
@@ -433,21 +388,19 @@ func (self *Argument) helpString() string {
 	return text
 }
 
-func (self *Argument) dump(spaces string) {
-	if len(self.Switches) > 0 {
-		fmt.Printf("%sSwitches: %s\n", spaces,
-			strings.Join(self.Switches, ", "))
+func (self *Argument) helpStrings() []string {
+	strings := make([]string, 0, len(self.Switches))
+
+	for i, switchText := range self.Switches {
+		text := switchText
+		if self.NumArgs != numArgs0 {
+			text += "=" + self.getMetavar()
+		}
+		if i < len(self.Switches) - 1 {
+			text = text + ","
+		}
+		strings = append(strings, text)
 	}
-	if self.Name != "" {
-		fmt.Printf("%sName: %s\n", spaces, self.Name)
-	}
-	//	fmt.Printf("%sType: %q\n", spaces, self.Type)
-	fmt.Printf("%sHelp: %s\n", spaces, self.Help)
-	if self.Metavar != "" {
-		fmt.Printf("%sMetavar: %s\n", spaces, self.Metavar)
-	}
-	if self.NumArgs != '0' && self.NumArgs != '1' {
-		fmt.Printf("%sNumArgs: %s\n", spaces, string(self.NumArgs))
-	}
-	fmt.Printf("\n")
+	return strings
 }
+*/
