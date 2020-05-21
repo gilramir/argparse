@@ -36,17 +36,18 @@ type ArgumentParser struct {
 
 // Create a new ArgumentParser, with the Command as its root Command
 func New( cmd *Command ) (*ArgumentParser) {
-	cmd.init(nil)
-	if cmd.Name == "" {
-		cmd.Name = os.Args[0]
-	}
-	return &ArgumentParser{
+	ap := &ArgumentParser{
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 		Messages: DefaultMessages_en,
 		HelpSwitches: []string{"-h", "--help"},
 		Root: cmd,
 	}
+	cmd.init(nil, ap)
+	if cmd.Name == "" {
+		cmd.Name = os.Args[0]
+	}
+	return ap
 }
 
 

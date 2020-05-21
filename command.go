@@ -49,11 +49,15 @@ type Command struct {
 	numRequiredPositionalArguments int
 	// -1 if there is no max (i.e., if the final NumArgsGlob is "*" or "+")
 	numMaxPositionalArguments int
+
+	// Pointer to the ArgumentParser
+	ap *ArgumentParser
 }
 
-func (self *Command) init(parent *Command) {
+func (self *Command) init(parent *Command, ap *ArgumentParser) {
 	self.Seen = make(map[string]bool)
 	self.CommandSeen = make(map[string]bool)
+	self.ap = ap
 
 	// Nothing futher for the root Command
 	if parent == nil {
@@ -115,7 +119,7 @@ func (self *Command) propagateInherited(cmds []*Command, myIndex int) {
 
 
 func (self *Command) New(cmd *Command) *Command {
-	cmd.init(self)
+	cmd.init(self, self.ap)
 	self.subCommands = append(self.subCommands, cmd)
 	return cmd
 }
@@ -136,7 +140,8 @@ func (self *Command) Add(arg *Argument) {
 	if self.Values == nil {
 		panic(fmt.Sprintf("There is no Values field set for Command %s", self.Name))
 	}
-	arg.init(self.Values)
+	// set arg.value
+	arg.init(self.Values, &self.ap.Messages)
 
 	if arg.isPositional() {
 		if len(self.positionalArguments) > 0 {

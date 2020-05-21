@@ -53,7 +53,7 @@ type Argument struct {
 	// For non-boolean options, the valid values that the user can provide.
 	// If Choices is given, and the user provides a value not in this list,
 	// the user will be presented with an error.
-//	Choices []string
+	Choices interface{}
 
 	// The methods for the specific storage type of this value of the Argument
 	// (bool, int, string, float64, etc.)
@@ -71,13 +71,13 @@ func (self *Argument) deepCopy() (*Argument) {
 		NumArgsGlob: self.NumArgsGlob,
 //		Required: self.Required,
 		Inherit: self.Inherit,
-//		Choices := make([]string, len(self.Choices),
+		Choices: self.Choices,
 	}
 	copy(arg.Switches, self.Switches)
 	return arg
 }
 
-func (self *Argument) init(dest Values) {
+func (self *Argument) init(dest Values, messages *Messages) {
 	var err error
 	// Ensure that there is some name field set
 	err = self.sanityCheckNameAndSwitches()
@@ -90,12 +90,15 @@ func (self *Argument) init(dest Values) {
 	if err != nil {
 		panic(err.Error())
 	}
-	/*
-	err = self.sanityCheckNumArgs()
-	if err != nil {
-		panic(err.Error())
+
+	// Any Choices?
+	if self.Choices != nil {
+		err = self.value.setChoices( messages, self.Choices )
+		if err != nil {
+			panic(fmt.Sprintf("Argument %s: %s", self.PrettyName(),
+				err.Error()))
+		}
 	}
-	*/
 }
 
 func (self *Argument) sanityCheckNameAndSwitches() error {

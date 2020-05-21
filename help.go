@@ -7,7 +7,7 @@ import (
 	"github.com/gilramir/consolesize"
 )
 
-
+// TODO - the help should show Choices, if available
 
 // This should honor width too
 func (self *ArgumentParser) usageString(ap *ArgumentParser) string {
@@ -38,7 +38,7 @@ func (self *ArgumentParser) usageString(ap *ArgumentParser) string {
 			}
 			parser = parser.parentParser
 		}
-		usage += " " + subcommandNames
+		jusage += " " + subcommandNames
 	}
 */
 

@@ -47,6 +47,19 @@ func (s *MySuite) TestValueBool(c *C) {
 
 	err = parserVal.parse(&DefaultMessages_en, "incorrect")
 	c.Assert( err, NotNil )
+
+	// Set Choices
+	err = parserVal.setChoices(&DefaultMessages_en, []bool{ true })
+	c.Assert( err, IsNil )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "true")
+	c.Assert( err, IsNil )
+	c.Check( v.Bool, Equals, true )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "false")
+	c.Check( err, NotNil )
 }
 
 func (s *MySuite) TestValueString(c *C) {
@@ -81,6 +94,24 @@ func (s *MySuite) TestValueString(c *C) {
 	err = parserVal.parse(&DefaultMessages_en, "a b c")
 	c.Assert( err, IsNil )
 	c.Check( v.String, Equals, "a b c" )
+
+	// Set Choices
+	err = parserVal.setChoices(&DefaultMessages_en, []string{"x", "y"})
+	c.Assert( err, IsNil )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "x")
+	c.Assert( err, IsNil )
+	c.Check( v.String, Equals, "x" )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "y")
+	c.Assert( err, IsNil )
+	c.Check( v.String, Equals, "y" )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "z")
+	c.Check( err, NotNil )
 }
 
 func (s *MySuite) TestValueInt(c *C) {
@@ -117,6 +148,24 @@ func (s *MySuite) TestValueInt(c *C) {
 
 	err = parserVal.parse(&DefaultMessages_en, "5.7")
 	c.Assert( err, NotNil )
+
+	// Set Choices
+	err = parserVal.setChoices(&DefaultMessages_en, []int{3, 5})
+	c.Assert( err, IsNil )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "3")
+	c.Assert( err, IsNil )
+	c.Check( v.Int, Equals, 3 )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "5")
+	c.Assert( err, IsNil )
+	c.Check( v.Int, Equals, 5 )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "17")
+	c.Check( err, NotNil )
 }
 
 func (s *MySuite) TestValueFloat(c *C) {
@@ -151,4 +200,27 @@ func (s *MySuite) TestValueFloat(c *C) {
 
 	err = parserVal.parse(&DefaultMessages_en, "abc")
 	c.Assert( err, NotNil )
+
+	// Set Choices
+	err = parserVal.setChoices(&DefaultMessages_en, []float64{33.3, 55.0})
+	c.Assert( err, IsNil )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "33.3")
+	c.Assert( err, IsNil )
+	c.Check( v.Float, Equals, 33.3 )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "33.300")
+	c.Assert( err, IsNil )
+	c.Check( v.Float, Equals, 33.3 )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "55")
+	c.Assert( err, IsNil )
+	c.Check( v.Float, Equals, 55.0 )
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "17.22")
+	c.Check( err, NotNil )
 }

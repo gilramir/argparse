@@ -137,24 +137,9 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			if lastArgument == nil {
 				panic("Found value without a preceding argument")
 			}
-			// Does the lastArgument have a Choices slice which limits
-			// the valid values?
-//			if len(lastArgument.Choices) > 0 {
-//				good := false
-//				for _, choice := range lastArgument.Choices {
-//					if argToken.value == choice {
-//						good = true
-//						break
-//					}
-//				}
-//				if !good {
-//					results.parseError = fmt.Errorf(
-//						"The possible values for %s are %s", lastArgLabel,
-//						lastArgument.getChoicesString())
-//					return results
-//				}
-//			}
 
+			// Parse the text and validate against the Choices, if there
+			// are any set for this Argument
 			err := lastArgument.value.parse(&ap.Messages, argToken.value)
 			if err != nil {
 				results.parseError = fmt.Errorf(

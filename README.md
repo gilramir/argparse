@@ -165,9 +165,10 @@ how many values can or must be provided:
 	sub-command will panic. if you Add() a new Inherited argument after already adding
 	a sub-command with New(), then the Add() will panic.
 
-* Choices: (optional) A slice of strings (even when the field value is an int) which lists the only
+* Choices: (optional) A slice (even when the field value is an int) which lists the only
     possible values for the argument value. If a user gives a value that is not in this list,
-    an error will be returned to the user.
+    an error will be returned to the user. The slice type must match the Value type for
+    this Argument: []bool, []string, []int, or []float64
 
 # Examples
 

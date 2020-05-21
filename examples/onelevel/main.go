@@ -12,6 +12,7 @@ type MyOptions struct {
 	Debug bool
 	Verbose	bool
 	Names []string
+	N int
 }
 
 func main() {
@@ -32,6 +33,12 @@ func main() {
 	})
 
 	ap.Add(&argparse.Argument{
+		Switches:	[]string{"-n" },
+		Help:		"Number",
+		Choices:	[]int{1, 2, 5},
+	})
+
+	ap.Add(&argparse.Argument{
 		Name:		"names",
 		Help:		"Some names passed into the program",
 		NumArgsGlob:	"+",
@@ -42,6 +49,7 @@ func main() {
 
 	fmt.Printf("Verbose is %v\n", opts.Verbose)
 	fmt.Printf("Debug is %v\n", opts.Debug)
+	fmt.Printf("N is %v\n", opts.N)
 	fmt.Printf("Number of names: %d\n", len(opts.Names))
 
 	for i := 0 ; i < len(opts.Names) ; i++ {
