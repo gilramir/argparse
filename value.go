@@ -20,6 +20,9 @@ type valueType interface {
 	seenWithoutValue() error
 
 	defaultSwitchNumArgs() int
+
+	setValue( reflect.Value )
+	getValue() reflect.Value
 }
 
 type valueT struct {
@@ -31,6 +34,15 @@ type valueT struct {
 
 	// A "pointer" to where to store the parsed value
 	value reflect.Value
+}
+
+func (self valueT) getValue() (reflect.Value) {
+	return self.value
+}
+
+// Does this work for slices? Does it matter?
+func (self valueT) setValue( valueP reflect.Value) {
+	self.value.Set( valueP )
 }
 
 // =========================================================== bool
@@ -61,7 +73,6 @@ func (self boolValueT) parse(m *Messages, text string) error {
 	self.value.SetBool(val)
 	return nil
 }
-
 
 // =========================================================== string
 
@@ -169,7 +180,6 @@ func (self boolSliceValueT) parse(m *Messages, text string) error {
 	self.value.Set(reflect.Append(self.value, itemValue))
 	return nil
 }
-
 
 // =========================================================== string slice
 

@@ -26,12 +26,17 @@ type ArgumentParser struct {
 
 	// The root Command object.
 	Root *Command
+
+	// The first time a parse is run, a finalization step need to be
+	// performed to fill out inherited Arguments. This flag ensures
+	// we do that only once.
+	finalized bool
 }
 
 
 // Create a new ArgumentParser, with the Command as its root Command
 func New( cmd *Command ) (*ArgumentParser) {
-	cmd.init()
+	cmd.init(nil)
 	if cmd.Name == "" {
 		cmd.Name = os.Args[0]
 	}
@@ -60,16 +65,13 @@ func (self *ArgumentParser) New(c *Command) *Command {
 // On a user input error, print the error message and exit with os.Exit(1).
 func (self *ArgumentParser) Parse() {
 	results := self.ParseArgv( os.Args[1:] )
-/*
-	if results. != "" {
-		fmt.FPrintln( self.Stdout, helpString )
+
+	if results.helpRequested {
+		// TODO - per Command! This needs to change!
+		helpString := self.helpString(self, 0)
+		fmt.Fprintln( self.Stdout, helpString )
 		os.Exit(0)
-	} else if err != nil {
-		fmt.Fprintln( self.Stderr, err.Error() )
-		os.Exit(1)
-	}
-	*/
-	if results.parseError != nil {
+	} else if results.parseError != nil {
 		fmt.Fprintln( self.Stderr, results.parseError.Error() )
 		os.Exit(1)
 	}
@@ -107,11 +109,11 @@ func (self *ArgumentParser) ParseOsArgs() (Values) {
 */
 
 func (self *ArgumentParser) ParseArgv(argv []string) (*parseResults) {
-
 	parser := parserState{}
 	results := parser.runParser(self, argv)
 	return results
 }
+
 /*
 	valueStack := make([]Values, 0, 1)
 	err := self.root.startParseArgv(self, argv, &valueStack)

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 //	"log"
-//	"reflect"
 	"strings"
 )
 
@@ -13,7 +12,7 @@ type parseResults struct {
 	parseError		error
 	helpRequested		bool
 	triggeredCommand	*Command
-	ancestorValues		[]Values
+	//ancestorValues		[]Values
 	ancestorCommands        []*Command
 }
 
@@ -174,9 +173,8 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 				return results
 			}
 		case tokSubParser:
-// FIXME 
-//			results.ancestors = append(results.ancestors,
-//				results.triggeredParser.Destination) 
+			results.ancestorCommands = append(results.ancestorCommands,
+				results.triggeredCommand)
 			results.triggeredCommand = argToken.command
 		case tokHelp:
 			results.helpRequested = true
@@ -192,7 +190,8 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 	}
 
 	// No need to wait for the goroutine to finish. The closing of the
-	// channel means the goroutine finished.
+	// channel means the goroutine finished. umm.. what about the early returns
+	// for help and errors
 
 	// Did we find all required parameters?
 	// TODO - switchArgumants
@@ -205,6 +204,14 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			results.parseError = fmt.Errorf("Expected a required '%s' argument", arg.PrettyName())
 			return results
 		}
+	}
+
+	// Propagate inherited argument values
+	if len( results.ancestorCommands ) > 0 {
+		cmdStack := make([]*Command, len(results.ancestorCommands) + 1)
+		copy(cmdStack, results.ancestorCommands)
+		cmdStack[len(cmdStack)-1] = cmd
+		cmdStack[0].propagateInherited(cmdStack, 0)
 	}
 
 	return results
@@ -234,10 +241,11 @@ func (self *parserState) stateArgument() stateFunc {
 		return nil
 	}
 
-	// Is it a subparser?
+	// Is it a sub-command?
 	if self.subCommandAllowed {
 		for _, subCommand := range self.cmd.subCommands {
 			if arg == subCommand.Name {
+				self.cmd.CommandSeen[ arg ] = true
 				self.emitParser(subCommand)
 				self.pos += 1
 				// The subparser can have its own subparsers
@@ -248,16 +256,6 @@ func (self *parserState) stateArgument() stateFunc {
 			}
 		}
 	}
-
-	/*
-	// Is it a parse command?
-	for _, commandArg := range self.commandArguments {
-		if arg == commandArg.String {
-			// A little ugly, since stateCommandArgument is going to check self.commandArguments again
-			return self.stateCommandArgument
-		}
-	}
-	*/
 
 	// Is it a switch argument?
 	if len(arg) > 1 && arg[0] == '-' {

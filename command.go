@@ -38,28 +38,101 @@ type Command struct {
 	// of the destination variable.
 	Seen map[string]bool
 
+	// Was a sub-command seen during the parse?
+	CommandSeen map[string]bool
+
 	// Internal fields
 	subCommands         []*Command
 	switchArguments     []*Argument
 	positionalArguments []*Argument
 
 	numRequiredPositionalArguments int
-	// -1 if there is no max (i.e., if the final NumArgs is * or +)
+	// -1 if there is no max (i.e., if the final NumArgsGlob is "*" or "+")
 	numMaxPositionalArguments int
 }
 
-func (self *Command) init() {
+func (self *Command) init(parent *Command) {
 	self.Seen = make(map[string]bool)
+	self.CommandSeen = make(map[string]bool)
+
+	// Nothing futher for the root Command
+	if parent == nil {
+		return
+	}
+
+	// Does the parent have any arguments to inherit?
+	for _, arg := range parent.switchArguments {
+		if arg.Inherit {
+			newArg := arg.deepCopy()
+			self.Add(newArg)
+		}
+	}
 }
 
+func (self *Command) propagateInherited(cmds []*Command, myIndex int) {
+	if self != cmds[myIndex] {
+		panic(fmt.Sprintf("Expected %v at %d but got %v", self, myIndex,
+			cmds[myIndex]))
+	}
+	if len(self.switchArguments) == 0 {
+		return
+	}
+
+	nextIndex := myIndex + 1
+	if len(cmds) <= nextIndex {
+		return
+	}
+	nextCmd := cmds[nextIndex]
+
+	if len(nextCmd.switchArguments) == 0 {
+		return
+	}
+
+	for _, arg := range self.switchArguments {
+		if arg.Inherit && self.Seen[arg.Dest] && !nextCmd.Seen[arg.Dest] {
+			// Propagate
+			found := false
+			for _, nextCmdArg := range nextCmd.switchArguments {
+				if nextCmdArg.Dest == arg.Dest {
+					found = true
+					nextCmdArg.value.setValue( arg.value.getValue() )
+					nextCmd.Seen[arg.Dest] = true
+					break
+				}
+			}
+			if !found {
+				panic(fmt.Sprintf("Arg %s inherited from %s to %s can't be found",
+					arg.Dest, self.Name, nextCmd.Name))
+			}
+		}
+	}
+
+	if len(cmds) > nextIndex {
+		nextCmd.propagateInherited(cmds, nextIndex)
+	}
+}
+
+
+
 func (self *Command) New(cmd *Command) *Command {
-	cmd.init()
+	cmd.init(self)
 	self.subCommands = append(self.subCommands, cmd)
 	return cmd
 }
 
 // TODO - check that it's not a HelpSwitch; Command will need to know HelpSwitches
+// TODO - check that Arguments are duplicated or collide within a Command
 func (self *Command) Add(arg *Argument) {
+
+	// Arguments with Inherit == true cannot be added after a sub-command is already
+	// added
+	if arg.Inherit && len(self.subCommands) > 0 {
+		panic(fmt.Sprintf("Cannot add argument %s because it's Inhert is true " +
+			"and the Command %s already has sub-commands", arg.PrettyName(),
+			self.Name))
+	}
+
+	// Sanity check
 	if self.Values == nil {
 		panic(fmt.Sprintf("There is no Values field set for Command %s", self.Name))
 	}
@@ -86,13 +159,16 @@ func (self *Command) Add(arg *Argument) {
 			self.numRequiredPositionalArguments += arg.NumArgs
 			self.numMaxPositionalArguments += arg.NumArgs
 		} else if arg.NumArgsGlob == "+" {
+			// + : one or more
 			arg.NumArgs = -1
 			self.numRequiredPositionalArguments++
-			self.numMaxPositionalArguments += 2
+			self.numMaxPositionalArguments = -1
 		} else if arg.NumArgsGlob == "?" {
+			// ? : zero or one
 			arg.NumArgs = -1
 			self.numMaxPositionalArguments++
 		} else if arg.NumArgsGlob == "*" {
+			// * : zero or more
 			arg.NumArgs = -1
 			self.numMaxPositionalArguments = -1
 		} else {
@@ -112,4 +188,3 @@ func (self *Command) Add(arg *Argument) {
 		panic(fmt.Sprintf("Cannot determine argument type for %v", arg))
 	}
 }
-

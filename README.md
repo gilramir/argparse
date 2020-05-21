@@ -1,83 +1,100 @@
 # argparse
-CLI argument parsing for Go, that follows the model of the Python argparse module.
+A Go module to parse CLI argument, that loosely follows the model of the Python
+argparse module.
 
-You create a parser object and add arguments to it. The parser object is associated
-with a struct of your own design, and each argument is associated with a field
-in that struct. The struct holds the values from the command-line after the
-parser object is done parsing them.
+Highlights:
 
-A parser object chan have children parser objects. This is how sub-commands are
-implemented.
+* You can have nested subcommands.
+* The values for a parser are stored in a struct.
+* Argparse can deduce the name of the value field in the struct by looking
+	at the name of the option.
+* Argparse fills in the struct with values from the command-line, and also
+	tells you all the options that were seen.
 
 See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse)
 
 # Usage
 
-Instantiate the parser object with argparse.ArgumentParser. Every ArgumentParser
-needs a "destination struct" which has field names which are similar to the
-argument names that will be added to that parser. The argparse.Destination
-interface requires a "Run" method, which is triggered when the parse is finished.
+1. Define the struct that will hold the values from the parse of the command-line.
 
-    include "github.com/gilramir/argparse"
+	type MyOptions struct {
+		Debug bool
+		Verbose	bool
+		Names []string
+	}
 
-    type MyProgramOptions struct {
-        Input   string
-        Output  string
-    }
+2. Instantiate an Argparse object with a root Command object. This lets
+you describe your program, and points argparse to the value struct object.
 
-    func (self *MyProgramOptions) Run(parents []Destination) (error) {
-        return doSomething(self.Input, self.Output)
-    }
+	opts := &MyOptions{}
+	ap := argparse.New(&argparse.Command{
+		Description:	"This is an example program",
+		Values:		opts,
+	})
 
-    func example() (error) {
-        p := &argparse.ArgumentParser{
-            Name: "my_program",
-            ShortDescription: "A utility program",
-            Destination: &MyProgramOptions{},
-        }
+3. Add options to root Command object (via the Argparse object):
 
-        p.AddArgument(&argparse.Argument{
-            Switches: []string{"-i", "--input"},
-            Description: "The input file",
-            Metavar: "FILE",
-        })
+	ap.Add(&argparse.Argument{
+		Switches:	[]string{"--debug"},
+		Help:		"Set debug mode",
+	})
 
-        p.AddArgument(&argparse.Argument{
-            Switches: []string{"-o", "--output"},
-            Description: "The output file",
-            Metavar: "FILE",
-        })
+	ap.Add(&argparse.Argument{
+		Switches:	[]string{"-v", "--verbose"},
+		Help:		"Set verbose mode",
+	})
 
-        err := p.ParseArgs()
-        return err
-    }
+	ap.Add(&argparse.String{
+		Name:		"names",
+		Help:		"Some names passed into the program",
+		NumArgsGlob:	'+',
+	})
 
-When each Argument is added, the argparse logic looks for a name in the Destination
-struct associated with the ArgumentParser that matches either the short name or
-the long name of the argument.  If it fails to find a matching field, the code
-will panic().
+When each Argument is added, the argparse logic looks in the Command's
+Value struct for a field name that matches either "switch" or "name" of the
+argument.  If it fails to find a matching field, the code will panic().
+
+4. Finally, perform the parse.
+
+	ap.Parse()
+
+If the user requests help, the help text will be given, and the program exits.
+If the users gives an illegal command-line, the error message is shown, and the
+program exits. Otherwise, on success, the program continues to the next statement.
 
 # ArgumentParser
 
-The following fields can be set in ArgumentParser:
+* Stdout - an io.Writer to send the output of "--help" to instead of os.Stdout.
 
-* Name - the name of the program
+* Stderr - an io.Writer to send error messages to instead of os.Stderr.
 
-* ShortDescription - a one-line description of the program
+* Messages - a struct of all the messages that argparse can print to users.
+	You can override this to provide translations. The default is the built-in
+	English version of these messages. This is still a work in progress.
 
-* LongDescription - (optional) this can be a multi-line description of the program
+* HelpSwitches - the switches that arpgarse will interpret as a request for help.
+	The default is: []string{"-h", "--help"}
+
+* Root  - a pointer to the root Command object. This is set by argparse for you,
+	for convenience.
+
+# Command
+
+The following fields can be set in a Command:
+
+* Name - (optional) the name of the program
+
+* Description - (optional) a short description of the program
 
 * Epilog - (optional) this can be a multi-line string. It is shown after all
     the options in the "--help" output
 
-* Destination - the struct that receives the values after parsing
+* Values - the struct that receives the values after parsing
 
-* Stdout - an io.Writer to send the output of "--help" to instead of os.Stdout
+# Values struct
 
-# Destination interface
-
-The Destination interface needs to have field names that match either the short
-name or the long name of the Arguments added to an ArgumentParser.  Because the
+The Values struct needs to have field names that match either the short
+name or the long name of the Arguments added to a Command.  Because the
 field name needs to be inspected by "argparse", it must start with an upper case
 character (so that Go exports those field names to other modules). Also, any embedded
 dashes are removed and the field name is expected to be in CamelCase. For example
@@ -88,31 +105,26 @@ dashes are removed and the field name is expected to be in CamelCase. For exampl
 
 * "--no-verify": the field name is NoVerify
 
-The fields for switch or positional arguments can be of the following types:
+The fields for switch or positional arguments can be of the scalar types:
 
 * bool - For a switch, if the switch is present, the value is set to true.
 
 * string
 
+* float64
+
 * int
 
-* []string - indicates a switch is accepted more than one, or a positional argument can be
-    appear more than once.
+Or they can be the following sclice types. A slice indicates a switch is accepted
+more than one, or a positional argument can be appear more than once.
 
-The Destination interface requires a Run() method. It receives a slice of
-Destination objects, which are the Destinations for any parent ArgumentParsers. If there
-is only one ArgumentParser object (no sub-commands), then this slice will be empty.
+* []bool
 
-    func (self *MyProgramOptions) Run(parents []Destination) (error) {
-        err := dosomething(self.Input, self.Output)
-        return err
-    }
+* []string
 
-The return value is an error. The error is simply passed back as the return value of
-Argument.ParseArgs() or Argument.ParseArgv(). There is a special error type named
-argparse.ParseErr, which if returned, causes ArgumentParser to print the usage statement to
-stderr before returning the error back to the caller. You can create a ParseErr
-with the helper functions argparse.ParseError() or argparse.ParseErrorf().
+* []float64
+
+* []int
 
 # Argument
 
@@ -130,238 +142,33 @@ The following fields can be set in Argument:
 
 * Description: A description of the argument. Can be multi-line.
 
-* Metavar: The text to use as the name of the value in the --help output.
+* MetaVar: The text to use as the name of the value in the --help output.
 
-* NumArgs: (optional) For positional arguments, a rune that specifies how many values can or must be
-    provided. If not given, then only one value can be given:
+* NumArgs: (optional) For positional and switch arguments, speficies how many
+	arguments _must_ follow the option.
 
-    * '\*' - zero or more
+* NumArgsGlob: (optional) For positional arguments only, a string that specifies
+how many values can or must be provided:
 
-    * '+' - one or more
+    * "\*" - zero or more
 
-    * '?' - one or zero
+    * "+" - one or more
 
-    This is not used for switch arguments. If the type of the value of a switch argument is a slice,
-    then argparse allows the argument to occur more than once, and saves each value.
+    * "?" - one or zero
+
+    This is not allowed for switch arguments. If neither NumArgs nor NumArgsGlob is given,
+    then NumArgs is set to 1.
+
+* Inherit: If true, then all sub-commands of this Command will automatically inherit a copy
+	of this Argument. This also means that the Value struct must have a field whose name
+	and type work for this Argument. If that is not true, then the New() which adds the
+	sub-command will panic. if you Add() a new Inherited argument after already adding
+	a sub-command with New(), then the Add() will panic.
 
 * Choices: (optional) A slice of strings (even when the field value is an int) which lists the only
     possible values for the argument value. If a user gives a value that is not in this list,
     an error will be returned to the user.
 
-# ParseCommands
+# Examples
 
-ParseCommands are special types of Arguments that tell the ArgumentParser to change behavior while it's
-parsing. If an Argument is a ParseCommand, then instead of Switches or Name, the String field is used
-to denote what to expect on the command-line.
-
-The only ParseCommand available right now is *PassThrough*. This tells argparse that all the remaining
-arguments on the command-line should be added to the slice that "Dest" names.
-
-You can AddArgument the ParseCommand Argument in any order. It does not have to be added via AddArgument
-in any order in relation to any switch arguments or positional arguments.
-
-See [ex5.go](examples/ex5.go)
-
-    type Options struct {
-            Filename        []string
-            OtherArguments  []string
-    }
-
-    func (self *Options) Run([]argparse.Destination) error {
-            fmt.Printf("Filenames: %v\n", self.Filename)
-            fmt.Printf("Other Arguments: %v\n", self.OtherArguments)
-            return nil
-    }
-
-    func main() {
-            p := &argparse.ArgumentParser{
-                    Name:             "my_program",
-                    ShortDescription: "This program takes positional arguments",
-                    Destination:      &Options{},
-            }
-
-            p.AddArgument(&argparse.Argument{
-                    Name: "filename",
-                    Help: "The file to look at. Can be given more than once.",
-            })
-
-            p.AddArgument(&argparse.Argument{
-                    ParseCommand: argparse.PassThrough,
-                    String:        "--",
-                    Dest:         "OtherArguments",
-            })
-
-            err := p.ParseArgs()
-            if err != nil {
-                    fmt.Fprint(os.Stderr, err)
-            }
-    }
-
-
-
-# Tutorial and Examples
-
-## How to structure your CLI program
-
-A good way to stay organized is to have a very simple main() function, and
-a subdirectory of all the source files related to the command-line, then a sibling
-subdirectory for non-CLI (non-UI) logic that the CLI code should call.
-
-    PROJECT/
-        main.go
-        cmd/
-            root.go
-            subcommand1.go
-            subcommand2.go
-        lib/
-            real_logic1.go
-            real_logic2.go
-
-The main.go is as simple as:
-
-    package main
-
-    import "MY_URL/PROJECT/cmd"
-
-    func main() {
-        cmd.Execute()
-    }
-
-If you have sub-commands, can define your ArgumentParsers with global-scope variables:
-
-    import "github.com/gilramir/argparse"
-
-    var rootParser = &argparse.ArgumentParser{
-        .....
-    }
-
-The Execute() function in "cmd/" is as simple as:
-
-    func Execute() {
-        err := rootParser.ParseArgs()
-        if err != nil {
-            fmt.Fprintln(os.Stderr, err)
-            os.Exit(1)
-        }
-    }
-
-## Create a CLI that accepts no options
-
-See [ex1.go](examples/ex1.go)
-
-    func main() () {
-        p := &argparse.ArgumentParser{
-            Name: "my_program",
-            ShortDescription: "A utility program",
-        }
-        p.ParseArgs()
-    }
-
-## Create a CLI with two positional arguments
-
-See [ex2.go](examples/ex2.go)
-
-    type Options struct {
-        Pattern     string
-        Filenames   []string
-    }
-
-    func (self *Options) Run([]argparse.Destination) (error) {
-            fmt.Printf("Pattern: %s\n", self.Pattern)
-            fmt.Printf("Filenames: %v\n", self.Filenames)
-            return nil
-    }
-
-    func main() () {
-        p := &argparse.ArgumentParser{
-            Name: "my_program",
-            ShortDescription: "This program takes positional arguments",
-            Destination: &Options{},
-        }
-
-        p.AddArgument(&argparse.Argument{
-            Name: "pattern",
-            Help: "The pattern to look for",
-        })
-
-        p.AddArgument(&argparse.Argument{
-            Name: "filenames",
-            Help: "The file(s) to look at",
-            NumArgs: '+',
-        })
-
-        err := p.ParseArgs()
-        if err != nil {
-            fmt.Fprint(os.Stderr, err)
-        }
-    }
-
-## Return a ParseErr, indicating a CLI problem
-
-See [ex3.go](examples/ex3.go)
-
-    type Options struct {
-            Filenames []string
-    }
-
-    func (self *Options) Run([]argparse.Destination) error {
-            return argparse.ParseError("The CLI syntax is bad")
-    }
-
-    func main() {
-            p := &argparse.ArgumentParser{
-                    Name:             "my_program",
-                    ShortDescription: "This program takes positional arguments",
-                    Destination: &Options{},
-            }
-
-            p.AddArgument(&argparse.Argument{
-                    Name:    "filenames",
-                    Help:    "The file(s) to look at",
-                    NumArgs: '+',
-            })
-
-            err := p.ParseArgs()
-            if err != nil {
-                    fmt.Fprint(os.Stderr, err)
-            }
-            fmt.Printf("Done.\n")
-    }
-
-## Create a CLI with two switch arguments
-
-See [ex4.go](examples/ex4.go)
-
-    type Options struct {
-            Pattern     string
-            Filename    []string
-    }
-
-    func (self *Options) Run([]argparse.Destination) error {
-            fmt.Printf("Pattern: %s\n", self.Pattern)
-            fmt.Printf("Filenames: %v\n", self.Filename)
-            return nil
-    }
-
-    func main() {
-            p := &argparse.ArgumentParser{
-                    Name:             "my_program",
-                    ShortDescription: "This program takes positional arguments",
-                    Destination:      &Options{},
-            }
-
-            p.AddArgument(&argparse.Argument{
-                    Switches: []string{"-p", "--pattern},
-                    Help: "The pattern to look for",
-            })
-
-            p.AddArgument(&argparse.Argument{
-                    Switches: []string{"-f", "--filename"},
-                    Help: "The file to look at. Can be given more than once.",
-            })
-
-            err := p.ParseArgs()
-            if err != nil {
-                    fmt.Fprint(os.Stderr, err)
-            }
-    }
+For working examples, see the examples/ directory in the source code.

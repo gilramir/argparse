@@ -538,6 +538,75 @@ func (s *MySuite) TestRootPositionalFloatSlice2(c *C) {
 	c.Check( ap.Root.Seen["PosFloatSlice"], Equals, true )
 }
 
+// ====================================================== NumArgsGlob +
+func (s *MySuite) TestNumArgsGlobPlusZero(c *C) {
+	_, ap := createPTestParser()
+
+	// No NumArgs or NumArgsGlob is legal; == 1
+	ap.Add(&Argument{
+		Name:		"PosStringSlice",
+		NumArgsGlob:	"+",
+	})
+
+	argv := []string{}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, NotNil)
+}
+func (s *MySuite) TestNumArgsGlobPlusOne(c *C) {
+	opts, ap := createPTestParser()
+
+	// No NumArgs or NumArgsGlob is legal; == 1
+	ap.Add(&Argument{
+		Name:		"PosStringSlice",
+		NumArgsGlob:	"+",
+	})
+
+	argv := []string{"a" }
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check( opts.PosStringSlice, DeepEquals, []string{"a"} )
+
+	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+}
+
+func (s *MySuite) TestNumArgsGlobPlusTwo(c *C) {
+	opts, ap := createPTestParser()
+
+	// No NumArgs or NumArgsGlob is legal; == 1
+	ap.Add(&Argument{
+		Name:		"PosStringSlice",
+		NumArgsGlob:	"+",
+	})
+
+	argv := []string{"a", "b" }
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check( opts.PosStringSlice, DeepEquals, []string{"a", "b"} )
+
+	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+}
+
+func (s *MySuite) TestNumArgsGlobPlusThree(c *C) {
+	opts, ap := createPTestParser()
+
+	// No NumArgs or NumArgsGlob is legal; == 1
+	ap.Add(&Argument{
+		Name:		"PosStringSlice",
+		NumArgsGlob:	"+",
+	})
+
+	argv := []string{"a", "b", "c" }
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check( opts.PosStringSlice, DeepEquals, []string{"a", "b", "c"} )
+
+	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+}
+
 /*
 import (
 	"bytes"

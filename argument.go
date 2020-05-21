@@ -43,31 +43,39 @@ type Argument struct {
 	// Is the user required to provide this argument? This is only
 	// checked for Switch arguments; positional arguments make use of
 	// NumArgs or NumArgsGlob
-	Required bool
+//	Required bool
+
+	// Will a sub-command inherit this argument definition if one is not
+	// defined for that sub-command, *and* if the Value struct for that
+	// Command has a suitable field?
+	Inherit bool
 
 	// For non-boolean options, the valid values that the user can provide.
 	// If Choices is given, and the user provides a value not in this list,
 	// the user will be presented with an error.
 //	Choices []string
 
+	// The methods for the specific storage type of this value of the Argument
+	// (bool, int, string, float64, etc.)
 	value valueType
-/*
-	// The golang field type (Kind) where the parsed value will be stored
-	typeKind reflect.Kind
-
-	// If typeKind is a Slice, then it's a slice of what?
-	sliceKind reflect.Kind
-
-	// A "pointer" to where to store the parsed value
-	value reflect.Value
-	*/
 }
 
-/*
-type Bool struct {
-	Argument
+func (self *Argument) deepCopy() (*Argument) {
+	arg := &Argument{
+		Switches : make([]string, len(self.Switches)),
+		Name: self.Name,
+		Help: self.Help,
+		MetaVar: self.MetaVar,
+		Dest: self.Dest,
+		NumArgs: self.NumArgs,
+		NumArgsGlob: self.NumArgsGlob,
+//		Required: self.Required,
+		Inherit: self.Inherit,
+//		Choices := make([]string, len(self.Choices),
+	}
+	copy(arg.Switches, self.Switches)
+	return arg
 }
-*/
 
 func (self *Argument) init(dest Values) {
 	var err error
@@ -181,14 +189,13 @@ func argumentVariableName(orig string) string {
 	return newString
 }
 
-// Check that there is a field in the destination struct that correponds
+// Check that there is a field in the Values struct that corresponds
 // to this argument.
 func (self *Argument) sanityCheckValueType(dest Values) error {
-	// TODO - some sanity checks here would be great
-	// TODO - if PassThrough, check that it's a slice
 
 	ptrValue := reflect.ValueOf(dest)
 	structValue := reflect.Indirect(ptrValue)
+	// TODO - some sanity checks here would be great
 	structType := structValue.Type()
 
 	var field reflect.StructField
