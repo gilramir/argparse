@@ -76,6 +76,15 @@ func (self *ArgumentParser) Parse() {
 		fmt.Fprintln( self.Stderr, results.parseError.Error() )
 		os.Exit(1)
 	}
+
+	cmd := results.triggeredCommand
+	if cmd.Function != nil {
+		err := cmd.Function( cmd.Values )
+		if err != nil {
+			fmt.Fprintln( self.Stderr, results.parseError.Error() )
+			os.Exit(1)
+		}
+	}
 }
 
 /*

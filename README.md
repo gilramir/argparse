@@ -170,6 +170,12 @@ how many values can or must be provided:
     an error will be returned to the user. The slice type must match the Value type for
     this Argument: []bool, []string, []int, or []float64
 
+* Function: If this is not nil, then if this is the "triggered" command or sub-command,
+	then this function is called. The type is:
+
+	type ParserCallback func (Values) error
+
+
 # Examples
 
 For working examples, see the examples/ directory in the source code.

@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/gilramir/argparse"
 )
@@ -28,71 +27,86 @@ type CloseOptions struct {
 	Reason	string
 }
 
+func DoOpen( values argparse.Values ) error {
+	opts := values.(*OpenOptions)
+
+	fmt.Printf("Open: Verbose is %v\n", opts.Verbose)
+	fmt.Printf("Open: Debug is %v\n", opts.Debug)
+	fmt.Printf("Open: Name is %v\n", opts.Name)
+	fmt.Printf("Open: Reason is %v\n", opts.Reason)
+
+	return nil
+}
+
+func DoClose( values argparse.Values ) error {
+	opts := values.(*CloseOptions)
+
+	fmt.Printf("Close: Verbose is %v\n", opts.Verbose)
+	fmt.Printf("Close: Debug is %v\n", opts.Debug)
+	fmt.Printf("Close: Name is %v\n", opts.Name)
+	fmt.Printf("Close: Reason is %v\n", opts.Reason)
+
+	return nil
+}
+
 func main() {
-	ap := argparse.NewArgumentParser( &argparse.Program{
-		ShortDescription:	"This is an example program",
-		Values:			&RootOptions{},
+	opts := &RootOptions{}
+	ap := argparse.New( &argparse.Command{
+		Description:	"This is an example program",
+		Values:		opts,
 	})
 
-	ap.AddArgument(&argparse.Bool{
+	ap.Add(&argparse.Argument{
 		Switches:	[]string{"--debug"},
 		Help:		"Set debug mode",
+		Inherit:	true,
 	})
 
-	ap.AddArgument(&argparse.Bool{
+	ap.Add(&argparse.Argument{
 		Switches:	[]string{"-v", "--verbose"},
 		Help:		"Set verbose mode",
+		Inherit:	true,
 	})
 
 	// open
-	open_ap := ap.AddSubCommand( &argparse.SubCommand {
+	open_ap := ap.New( &argparse.Command {
 		Name:			"open",
-		ShortDescription:	"Open something",
-		Function:		do_open,
+		Description:		"Open something",
+		Function:		DoOpen,
+		Values:			&OpenOptions{},
 	})
 
-	open_ap.AddArgument(&argparse.String{
+	open_ap.Add(&argparse.Argument{
 		Switches:	[]string{"-r", "--reason"},
 		Help:		"Why you are opening this",
 	})
 
-	open_ap.AddArgument(&argparse.String{
+	open_ap.Add(&argparse.Argument{
 		Name:		"name",
 		Help:		"The thing you are opening",
 	})
 
 	// close
-/*
-	close_ap := ap.AddParser( &argparse.ArgumentParser{
+	close_ap := ap.New( &argparse.Command {
 		Name:			"close",
-		ShortDescription:	"Close something",
-		Function:		do_close,
+		Description:		"Close something",
+		Function:		DoClose,
+		Values:			&CloseOptions{},
 	})
 
-	close_ap.AddArgument(&argparse.Argument{
+	close_ap.Add(&argparse.Argument{
 		Switches:	[]string{"-r", "--reason"},
 		Help:		"Why you are closing this",
 	})
 
-	close_ap.AddArgument(&argparse.Argument{
+	close_ap.Add(&argparse.Argument{
 		Name:		"name",
 		Help:		"The thing you are closing",
 	})
-*/
 
-	err := ap.ExecuteOsArgs()
-	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-}
+	ap.Parse()
 
-func do_open( opts_ OptionValues ) error {
-
-	opts := opts_.(*OpenOptions)
-
-	fmt.Printf("(open) Verbose is %v\n", opts.Verbose)
-	fmt.Printf("(open) Debug is %v\n", opts.Debug)
-	fmt.Printf("(open) Reason is %s\n", opts.Reason)
-	fmt.Printf("(open) name is %s\n", opts.Name)
+	fmt.Println("After Parse")
+	fmt.Printf("root: Verbose is %v\n", opts.Verbose)
+	fmt.Printf("root: Debug is %v\n", opts.Debug)
 }
