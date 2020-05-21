@@ -4,12 +4,12 @@ package argparse
 
 import (
 	"fmt"
-//	"log"
+	//	"log"
 )
 
-type Values interface {}
+type Values interface{}
 
-type ParserCallback func (Values) error
+type ParserCallback func(Values) error
 
 type Command struct {
 	// The name of the program or subcommand
@@ -17,13 +17,13 @@ type Command struct {
 
 	Description string
 	/*
-	// One-line description of the program
-	ShortDescription string
+		// One-line description of the program
+		ShortDescription string
 
-	// This can be a multi-line, longer explanation of
-	// the program.
-	LongDescription string
-*/
+		// This can be a multi-line, longer explanation of
+		// the program.
+		LongDescription string
+	*/
 	// This can be a multi-line string that is shown
 	// after all the options in the --help output
 	Epilog string
@@ -99,7 +99,7 @@ func (self *Command) propagateInherited(cmds []*Command, myIndex int) {
 			for _, nextCmdArg := range nextCmd.switchArguments {
 				if nextCmdArg.Dest == arg.Dest {
 					found = true
-					nextCmdArg.value.setValue( arg.value.getValue() )
+					nextCmdArg.value.setValue(arg.value.getValue())
 					nextCmd.Seen[arg.Dest] = true
 					break
 				}
@@ -116,8 +116,6 @@ func (self *Command) propagateInherited(cmds []*Command, myIndex int) {
 	}
 }
 
-
-
 func (self *Command) New(cmd *Command) *Command {
 	cmd.init(self, self.ap)
 	self.subCommands = append(self.subCommands, cmd)
@@ -131,7 +129,7 @@ func (self *Command) Add(arg *Argument) {
 	// Arguments with Inherit == true cannot be added after a sub-command is already
 	// added
 	if arg.Inherit && len(self.subCommands) > 0 {
-		panic(fmt.Sprintf("Cannot add argument %s because it's Inhert is true " +
+		panic(fmt.Sprintf("Cannot add argument %s because it's Inhert is true "+
 			"and the Command %s already has sub-commands", arg.PrettyName(),
 			self.Name))
 	}
@@ -147,10 +145,10 @@ func (self *Command) Add(arg *Argument) {
 		if len(self.positionalArguments) > 0 {
 			prevArg := self.positionalArguments[len(self.positionalArguments)-1]
 			if prevArg.NumArgsGlob == "*" || prevArg.NumArgsGlob == "+" ||
-					prevArg.NumArgsGlob == "?" {
+				prevArg.NumArgsGlob == "?" {
 				panic(fmt.Sprintf(
-					"Cannot add a positional argument after argument " +
-					"'%s' which has a variable number of values.",
+					"Cannot add a positional argument after argument "+
+						"'%s' which has a variable number of values.",
 					prevArg.PrettyName()))
 			}
 		}
@@ -182,8 +180,8 @@ func (self *Command) Add(arg *Argument) {
 	} else if arg.isSwitch() {
 		if arg.NumArgsGlob != "" {
 			panic(fmt.Sprintf(
-				"Cannot add a switch argument (%s) with a NumArgGlobs " +
-				"pattern (%s)", arg.PrettyName(), arg.NumArgsGlob))
+				"Cannot add a switch argument (%s) with a NumArgGlobs "+
+					"pattern (%s)", arg.PrettyName(), arg.NumArgsGlob))
 		}
 		if arg.NumArgs == 0 {
 			arg.NumArgs = arg.value.defaultSwitchNumArgs()

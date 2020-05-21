@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
-//	"strconv"
+	//	"strconv"
 	"strings"
 )
 
@@ -37,13 +37,13 @@ type Argument struct {
 	// If NumArgs is 0, and NumArgsGlob is not "", then it must be one
 	// of "+" ("one or more"), "?" ("zero or one"), or "*" ("zero or more"),
 	// and then NumArgs is set to -1
-	NumArgs int
+	NumArgs     int
 	NumArgsGlob string
 
 	// Is the user required to provide this argument? This is only
 	// checked for Switch arguments; positional arguments make use of
 	// NumArgs or NumArgsGlob
-//	Required bool
+	//	Required bool
 
 	// Will a sub-command inherit this argument definition if one is not
 	// defined for that sub-command, *and* if the Value struct for that
@@ -60,16 +60,16 @@ type Argument struct {
 	value valueType
 }
 
-func (self *Argument) deepCopy() (*Argument) {
+func (self *Argument) deepCopy() *Argument {
 	arg := &Argument{
-		Switches : make([]string, len(self.Switches)),
-		Name: self.Name,
-		Help: self.Help,
-		MetaVar: self.MetaVar,
-		Dest: self.Dest,
-		NumArgs: self.NumArgs,
+		Switches:    make([]string, len(self.Switches)),
+		Name:        self.Name,
+		Help:        self.Help,
+		MetaVar:     self.MetaVar,
+		Dest:        self.Dest,
+		NumArgs:     self.NumArgs,
 		NumArgsGlob: self.NumArgsGlob,
-//		Required: self.Required,
+		//		Required: self.Required,
 		Inherit: self.Inherit,
 		Choices: self.Choices,
 	}
@@ -93,7 +93,7 @@ func (self *Argument) init(dest Values, messages *Messages) {
 
 	// Any Choices?
 	if self.Choices != nil {
-		err = self.value.setChoices( messages, self.Choices )
+		err = self.value.setChoices(messages, self.Choices)
 		if err != nil {
 			panic(fmt.Sprintf("Argument %s: %s", self.PrettyName(),
 				err.Error()))
@@ -212,7 +212,7 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 				self.PrettyName(), self.Dest))
 		}
 	} else {
-		for _, switchName := range(self.Switches) {
+		for _, switchName := range self.Switches {
 			structName := argumentVariableName(switchName[1:])
 			needles = append(needles, structName)
 			field, found = structType.FieldByName(structName)
@@ -240,29 +240,29 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 	valueP := structValue.FieldByIndex(field.Index)
 	typeKind := field.Type.Kind()
 
-	switch typeKind  {
+	switch typeKind {
 	case reflect.Bool:
-		self.value = NewBoolValueT( valueP )
+		self.value = NewBoolValueT(valueP)
 	case reflect.String:
-		self.value = NewStringValueT( valueP )
+		self.value = NewStringValueT(valueP)
 	case reflect.Int:
-		self.value = NewIntValueT( valueP )
+		self.value = NewIntValueT(valueP)
 	case reflect.Float64:
-		self.value = NewFloatValueT( valueP )
+		self.value = NewFloatValueT(valueP)
 	case reflect.Slice:
 		sliceKind := valueP.Type().Elem().Kind()
 		switch sliceKind {
-			case reflect.Bool:
-				self.value = NewBoolSliceValueT( valueP )
-			case reflect.Int:
-				self.value = NewIntSliceValueT( valueP )
-			case reflect.String:
-				self.value = NewStringSliceValueT( valueP )
-			case reflect.Float64:
-				self.value = NewFloatSliceValueT( valueP )
-			default:
-				return fmt.Errorf("Argument %s cannot be of type []%s",
-					self.PrettyName(), sliceKind.String())
+		case reflect.Bool:
+			self.value = NewBoolSliceValueT(valueP)
+		case reflect.Int:
+			self.value = NewIntSliceValueT(valueP)
+		case reflect.String:
+			self.value = NewStringSliceValueT(valueP)
+		case reflect.Float64:
+			self.value = NewFloatSliceValueT(valueP)
+		default:
+			return fmt.Errorf("Argument %s cannot be of type []%s",
+				self.PrettyName(), sliceKind.String())
 		}
 	default:
 		return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
@@ -299,7 +299,7 @@ func (self *Argument) isSwitch() bool {
 }
 
 func (self *Argument) isPositional() bool {
-	return ! self.isSwitch()
+	return !self.isSwitch()
 }
 
 /*

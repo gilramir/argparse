@@ -30,13 +30,11 @@ type Messages struct {
 }
 
 var DefaultMessages_en = Messages{
-	SubCommands: "Sub-Commands",
-	Options: "Options",
+	SubCommands:     "Sub-Commands",
+	Options:         "Options",
 	HelpDescription: "See this list of options",
 
-	CannotParseBooleanFmt: "Cannot convert \"%s\" to a boolean",
-	ChoicesOfWrongTypeFmt: "Choices should be []%s",
+	CannotParseBooleanFmt:   "Cannot convert \"%s\" to a boolean",
+	ChoicesOfWrongTypeFmt:   "Choices should be []%s",
 	ShouldBeAValidChoiceFmt: "Not a valid choice. Should be one of: %v",
 }
-
-

@@ -6,14 +6,14 @@ import (
 )
 
 type CTestCommon struct {
-	Verbose	bool
-	Debug	bool
+	Verbose bool
+	Debug   bool
 }
 
 type CTestOptionsRoot struct {
 	CTestCommon
-	Int1	int
-	String1	string
+	Int1    int
+	String1 string
 }
 
 type CTestOptionsSubA struct {
@@ -30,63 +30,63 @@ type CTestOptionsSubB struct {
 // the createCTestParser function friendlier to use.
 type CTestOptions struct {
 	root CTestOptionsRoot
-	a CTestOptionsSubA
-	b CTestOptionsSubB
+	a    CTestOptionsSubA
+	b    CTestOptionsSubB
 }
 
 func createCTestParser() (*CTestOptions, *ArgumentParser, *Command, *Command) {
 	opts := &CTestOptions{}
 	ap := New(&Command{
-		Description:	"This is a test program",
-		Values:		&opts.root,
+		Description: "This is a test program",
+		Values:      &opts.root,
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--verbose", "-v"},
-		Inherit:	true,
+		Switches: []string{"--verbose", "-v"},
+		Inherit:  true,
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--debug", "-d"},
+		Switches: []string{"--debug", "-d"},
 		//Inherit:	true,
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--int1"},
+		Switches: []string{"--int1"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--string1"},
+		Switches: []string{"--string1"},
 	})
 
 	subA := ap.New(&Command{
-		Name:	"sub-a",
+		Name:        "sub-a",
 		Description: "Sub-command A",
-		Values:		&opts.a,
+		Values:      &opts.a,
 	})
 	/*
-	subA.Add(&Argument{
-		Switches:	[]string{"--verbose", "-v"},
-	})
-	subA.Add(&Argument{
-		Switches:	[]string{"--debug", "-d"},
-	})
+		subA.Add(&Argument{
+			Switches:	[]string{"--verbose", "-v"},
+		})
+		subA.Add(&Argument{
+			Switches:	[]string{"--debug", "-d"},
+		})
 	*/
 	subA.Add(&Argument{
-		Switches:	[]string{"--string2"},
+		Switches: []string{"--string2"},
 	})
 
 	subB := ap.New(&Command{
-		Name:	"sub-b",
+		Name:        "sub-b",
 		Description: "Sub-command B",
-		Values:		&opts.b,
+		Values:      &opts.b,
 	})
 	/*
-	subB.Add(&Argument{
-		Switches:	[]string{"--verbose", "-v"},
-	})
-	subB.Add(&Argument{
-		Switches:	[]string{"--debug", "-d"},
-	})
+		subB.Add(&Argument{
+			Switches:	[]string{"--verbose", "-v"},
+		})
+		subB.Add(&Argument{
+			Switches:	[]string{"--debug", "-d"},
+		})
 	*/
 	subB.Add(&Argument{
-		Switches:	[]string{"--string2"},
+		Switches: []string{"--string2"},
 	})
 
 	return opts, ap, subA, subB
@@ -101,9 +101,9 @@ func (s *MySuite) TestSubCommandRoot(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.root.Verbose, Equals, true )
+	c.Check(opts.root.Verbose, Equals, true)
 
-	c.Check( ap.Root.Seen["Verbose"], Equals, true )
+	c.Check(ap.Root.Seen["Verbose"], Equals, true)
 }
 
 func (s *MySuite) TestSubCommandSubAPre(c *C) {
@@ -115,13 +115,13 @@ func (s *MySuite) TestSubCommandSubAPre(c *C) {
 
 	c.Assert(results.parseError, IsNil)
 
-	c.Check( ap.Root.CommandSeen["sub-a"], Equals, true )
+	c.Check(ap.Root.CommandSeen["sub-a"], Equals, true)
 
-	c.Check( opts.a.Verbose, Equals, true )
-	c.Check( opts.a.String2, Equals, "foo" )
+	c.Check(opts.a.Verbose, Equals, true)
+	c.Check(opts.a.String2, Equals, "foo")
 
-	c.Check( suba.Seen["Verbose"], Equals, true )
-	c.Check( suba.Seen["String2"], Equals, true )
+	c.Check(suba.Seen["Verbose"], Equals, true)
+	c.Check(suba.Seen["String2"], Equals, true)
 }
 
 func (s *MySuite) TestSubCommandSubAPost(c *C) {
@@ -133,11 +133,11 @@ func (s *MySuite) TestSubCommandSubAPost(c *C) {
 
 	c.Assert(results.parseError, IsNil)
 
-	c.Check( ap.Root.CommandSeen["sub-a"], Equals, true )
+	c.Check(ap.Root.CommandSeen["sub-a"], Equals, true)
 
-	c.Check( opts.a.Verbose, Equals, true )
-	c.Check( opts.a.String2, Equals, "foo" )
+	c.Check(opts.a.Verbose, Equals, true)
+	c.Check(opts.a.String2, Equals, "foo")
 
-	c.Check( suba.Seen["Verbose"], Equals, true )
-	c.Check( suba.Seen["String2"], Equals, true )
+	c.Check(suba.Seen["Verbose"], Equals, true)
+	c.Check(suba.Seen["String2"], Equals, true)
 }

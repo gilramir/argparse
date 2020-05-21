@@ -3,9 +3,9 @@
 package argparse
 
 import (
-//	"fmt"
-	"strings"
+	//	"fmt"
 	"github.com/gilramir/unicodemonowidth"
+	"strings"
 )
 
 type rowData struct {
@@ -18,16 +18,16 @@ type rowData struct {
 type HelpFormatter struct {
 	rows []rowData
 
-	leftPadding int
-	optionWidth int
-	middlePadding int
+	leftPadding      int
+	optionWidth      int
+	middlePadding    int
 	descriptionWidth int
 }
 
 func (s *HelpFormatter) addOption(lhs []string, rhs string) {
 	s.rows = append(s.rows, rowData{
 		lhs: lhs,
-		rhs : unicodemonowidth.WhitespaceSplit(rhs),
+		rhs: unicodemonowidth.WhitespaceSplit(rhs),
 	})
 }
 
@@ -35,10 +35,10 @@ func (s *HelpFormatter) produceString(width int) string {
 	s.analyze(width)
 
 	/*
-	fmt.Println("leftPadding", s.leftPadding)
-	fmt.Println("optionWidth", s.optionWidth)
-	fmt.Println("middlePadding", s.middlePadding)
-	fmt.Println("descriptionWidth", s.descriptionWidth)
+		fmt.Println("leftPadding", s.leftPadding)
+		fmt.Println("optionWidth", s.optionWidth)
+		fmt.Println("middlePadding", s.middlePadding)
+		fmt.Println("descriptionWidth", s.descriptionWidth)
 	*/
 
 	textRows := s.makeOptionRows(width)
@@ -64,7 +64,7 @@ func (s *HelpFormatter) makeOptionRows(width int) []string {
 		for _, lhsItem := range pair.lhs {
 			lhsItemWidth := unicodemonowidth.MonoWidth(lhsItem)
 			if lhsWidth > 0 {
-				if lhsWidth + lhsItemWidth > s.optionWidth {
+				if lhsWidth+lhsItemWidth > s.optionWidth {
 					lhsRows = append(lhsRows, lhs)
 					lhs = lhsItem
 					lhsWidth = lhsItemWidth
@@ -96,7 +96,7 @@ func (s *HelpFormatter) makeOptionRows(width int) []string {
 			var rhsText string
 			if i < len(lhsRows) {
 				lhsText = lhsRows[i] + strings.Repeat(" ",
-					s.optionWidth - unicodemonowidth.MonoWidth(lhsRows[i]))
+					s.optionWidth-unicodemonowidth.MonoWidth(lhsRows[i]))
 			} else {
 				lhsText = emptyOption
 			}
@@ -106,7 +106,7 @@ func (s *HelpFormatter) makeOptionRows(width int) []string {
 			} else {
 				rhsText = ""
 			}
-			textRows = append(textRows, leftPad + lhsText + middlePad + rhsText)
+			textRows = append(textRows, leftPad+lhsText+middlePad+rhsText)
 		}
 	}
 
@@ -128,7 +128,7 @@ func (s *HelpFormatter) analyze(width int) {
 			printedWidth := unicodemonowidth.MonoWidth(text)
 			// Possibly alter printedWidth, to count a command between
 			// versions of an option
-			if i < len(text) - 1 {
+			if i < len(text)-1 {
 				printedWidth += 1
 			}
 			combinedWidth += printedWidth
@@ -152,11 +152,11 @@ func (s *HelpFormatter) analyze(width int) {
 	}
 
 	/*
-	fmt.Println("width", width)
-	fmt.Println("lhsSingleMin", lhsSingleMin)
-	fmt.Println("lhsSingleMax", lhsSingleMax)
-	fmt.Println("lhsCombinedMax", lhsCombinedMax)
-	fmt.Println("rhsSingleMax", rhsSingleMax)
+		fmt.Println("width", width)
+		fmt.Println("lhsSingleMin", lhsSingleMin)
+		fmt.Println("lhsSingleMax", lhsSingleMax)
+		fmt.Println("lhsCombinedMax", lhsCombinedMax)
+		fmt.Println("rhsSingleMax", rhsSingleMax)
 	*/
 
 	// Is the width so narrow as to be impossible? The absolute minimum
@@ -178,5 +178,3 @@ func (s *HelpFormatter) analyze(width int) {
 	rightPadding := width / 40
 	s.descriptionWidth = width - lhsCombinedMax - s.leftPadding - s.middlePadding - rightPadding
 }
-
-

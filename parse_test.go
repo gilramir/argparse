@@ -6,57 +6,57 @@ import (
 )
 
 type PTestOptions struct {
-	Bool1	bool
-	Bool2	bool
-	Int1	int
-	Int2	int
-	String1	string
-	String2	string
-	Float1	float64
-	Float2	float64
+	Bool1   bool
+	Bool2   bool
+	Int1    int
+	Int2    int
+	String1 string
+	String2 string
+	Float1  float64
+	Float2  float64
 
-	PosBool1	bool
-	PosBool2	bool
+	PosBool1 bool
+	PosBool2 bool
 
-	PosInt		int
-	PosString	string
-	PosFloat	float64
+	PosInt    int
+	PosString string
+	PosFloat  float64
 
-	PosBoolSlice	[]bool
-	PosIntSlice	[]int
-	PosStringSlice	[]string
-	PosFloatSlice	[]float64
+	PosBoolSlice   []bool
+	PosIntSlice    []int
+	PosStringSlice []string
+	PosFloatSlice  []float64
 }
 
-func createPTestParser() (*PTestOptions,*ArgumentParser) {
+func createPTestParser() (*PTestOptions, *ArgumentParser) {
 	opts := &PTestOptions{}
 	ap := New(&Command{
-		Description:	"This is a test program",
-		Values:		opts,
+		Description: "This is a test program",
+		Values:      opts,
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--bool1"},
+		Switches: []string{"--bool1"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--bool2"},
+		Switches: []string{"--bool2"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--int1"},
+		Switches: []string{"--int1"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--int2"},
+		Switches: []string{"--int2"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--string1"},
+		Switches: []string{"--string1"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--string2"},
+		Switches: []string{"--string2"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--float1"},
+		Switches: []string{"--float1"},
 	})
 	ap.Add(&Argument{
-		Switches:	[]string{"--float2"},
+		Switches: []string{"--float2"},
 	})
 	return opts, ap
 }
@@ -70,10 +70,10 @@ func (s *MySuite) TestRootSwitchesBool1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Bool1, Equals, true )
+	c.Check(opts.Bool1, Equals, true)
 
-	c.Check( ap.Root.Seen["Bool1"], Equals, true )
-	c.Check( ap.Root.Seen["Bool2"], Equals, false )
+	c.Check(ap.Root.Seen["Bool1"], Equals, true)
+	c.Check(ap.Root.Seen["Bool2"], Equals, false)
 }
 
 func (s *MySuite) TestRootSwitchesBool2(c *C) {
@@ -83,11 +83,11 @@ func (s *MySuite) TestRootSwitchesBool2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Bool1, Equals, true )
-	c.Check( opts.Bool2, Equals, true )
+	c.Check(opts.Bool1, Equals, true)
+	c.Check(opts.Bool2, Equals, true)
 
-	c.Check( ap.Root.Seen["Bool1"], Equals, true )
-	c.Check( ap.Root.Seen["Bool2"], Equals, true )
+	c.Check(ap.Root.Seen["Bool1"], Equals, true)
+	c.Check(ap.Root.Seen["Bool2"], Equals, true)
 }
 
 // ====================================================== string
@@ -99,10 +99,10 @@ func (s *MySuite) TestRootSwitchesString1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.String1, Equals, "abc" )
+	c.Check(opts.String1, Equals, "abc")
 
-	c.Check( ap.Root.Seen["String1"], Equals, true )
-	c.Check( ap.Root.Seen["String2"], Equals, false )
+	c.Check(ap.Root.Seen["String1"], Equals, true)
+	c.Check(ap.Root.Seen["String2"], Equals, false)
 }
 
 func (s *MySuite) TestRootSwitchesString2(c *C) {
@@ -112,11 +112,11 @@ func (s *MySuite) TestRootSwitchesString2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.String1, Equals, "mno" )
-	c.Check( opts.String2, Equals, "xyz" )
+	c.Check(opts.String1, Equals, "mno")
+	c.Check(opts.String2, Equals, "xyz")
 
-	c.Check( ap.Root.Seen["String1"], Equals, true )
-	c.Check( ap.Root.Seen["String2"], Equals, true )
+	c.Check(ap.Root.Seen["String1"], Equals, true)
+	c.Check(ap.Root.Seen["String2"], Equals, true)
 }
 
 func (s *MySuite) TestRootSwitchesString3(c *C) {
@@ -126,10 +126,10 @@ func (s *MySuite) TestRootSwitchesString3(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.String1, Equals, "abc" )
+	c.Check(opts.String1, Equals, "abc")
 
-	c.Check( ap.Root.Seen["String1"], Equals, true )
-	c.Check( ap.Root.Seen["String2"], Equals, false )
+	c.Check(ap.Root.Seen["String1"], Equals, true)
+	c.Check(ap.Root.Seen["String2"], Equals, false)
 }
 
 // ====================================================== int
@@ -141,10 +141,10 @@ func (s *MySuite) TestRootSwitchesInt1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Int1, Equals, 500 )
+	c.Check(opts.Int1, Equals, 500)
 
-	c.Check( ap.Root.Seen["Int1"], Equals, true )
-	c.Check( ap.Root.Seen["Int2"], Equals, false )
+	c.Check(ap.Root.Seen["Int1"], Equals, true)
+	c.Check(ap.Root.Seen["Int2"], Equals, false)
 }
 
 func (s *MySuite) TestRootSwitchesInt2(c *C) {
@@ -154,11 +154,11 @@ func (s *MySuite) TestRootSwitchesInt2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Int1, Equals, 77 )
-	c.Check( opts.Int2, Equals, -3 )
+	c.Check(opts.Int1, Equals, 77)
+	c.Check(opts.Int2, Equals, -3)
 
-	c.Check( ap.Root.Seen["Int1"], Equals, true )
-	c.Check( ap.Root.Seen["Int2"], Equals, true )
+	c.Check(ap.Root.Seen["Int1"], Equals, true)
+	c.Check(ap.Root.Seen["Int2"], Equals, true)
 }
 
 func (s *MySuite) TestRootSwitchesInt3(c *C) {
@@ -168,10 +168,10 @@ func (s *MySuite) TestRootSwitchesInt3(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Int1, Equals, 500 )
+	c.Check(opts.Int1, Equals, 500)
 
-	c.Check( ap.Root.Seen["Int1"], Equals, true )
-	c.Check( ap.Root.Seen["Int2"], Equals, false )
+	c.Check(ap.Root.Seen["Int1"], Equals, true)
+	c.Check(ap.Root.Seen["Int2"], Equals, false)
 }
 
 // ====================================================== float
@@ -183,10 +183,10 @@ func (s *MySuite) TestRootSwitchesFloat1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Float1, Equals, 500.2 )
+	c.Check(opts.Float1, Equals, 500.2)
 
-	c.Check( ap.Root.Seen["Float1"], Equals, true )
-	c.Check( ap.Root.Seen["Float2"], Equals, false )
+	c.Check(ap.Root.Seen["Float1"], Equals, true)
+	c.Check(ap.Root.Seen["Float2"], Equals, false)
 }
 
 func (s *MySuite) TestRootSwitchesFloat2(c *C) {
@@ -196,11 +196,11 @@ func (s *MySuite) TestRootSwitchesFloat2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Float1, Equals, 0.02 )
-	c.Check( opts.Float2, Equals, -30.0 )
+	c.Check(opts.Float1, Equals, 0.02)
+	c.Check(opts.Float2, Equals, -30.0)
 
-	c.Check( ap.Root.Seen["Float1"], Equals, true )
-	c.Check( ap.Root.Seen["Float2"], Equals, true )
+	c.Check(ap.Root.Seen["Float1"], Equals, true)
+	c.Check(ap.Root.Seen["Float2"], Equals, true)
 }
 
 func (s *MySuite) TestRootSwitchesFloat3(c *C) {
@@ -210,10 +210,10 @@ func (s *MySuite) TestRootSwitchesFloat3(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.Float1, Equals, 500.0 )
+	c.Check(opts.Float1, Equals, 500.0)
 
-	c.Check( ap.Root.Seen["Float1"], Equals, true )
-	c.Check( ap.Root.Seen["Float2"], Equals, false )
+	c.Check(ap.Root.Seen["Float1"], Equals, true)
+	c.Check(ap.Root.Seen["Float2"], Equals, false)
 }
 
 // ====================================================== bool positional
@@ -222,22 +222,22 @@ func (s *MySuite) TestRootPositionalBool1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosBool1",
+		Name: "PosBool1",
 	})
 
 	ap.Add(&Argument{
-		Name:	"PosBool2",
+		Name: "PosBool2",
 	})
 
 	argv := []string{"false", "true"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosBool1, Equals, false )
-	c.Check( opts.PosBool2, Equals, true )
+	c.Check(opts.PosBool1, Equals, false)
+	c.Check(opts.PosBool2, Equals, true)
 
-	c.Check( ap.Root.Seen["PosBool1"], Equals, true )
-	c.Check( ap.Root.Seen["PosBool2"], Equals, true )
+	c.Check(ap.Root.Seen["PosBool1"], Equals, true)
+	c.Check(ap.Root.Seen["PosBool2"], Equals, true)
 }
 
 // ====================================================== int positional
@@ -246,16 +246,16 @@ func (s *MySuite) TestRootPositionalInt1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosInt",
+		Name: "PosInt",
 	})
 
 	argv := []string{"333"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosInt, Equals, 333 )
+	c.Check(opts.PosInt, Equals, 333)
 
-	c.Check( ap.Root.Seen["PosInt"], Equals, true )
+	c.Check(ap.Root.Seen["PosInt"], Equals, true)
 }
 
 // ====================================================== float positional
@@ -264,18 +264,17 @@ func (s *MySuite) TestRootPositionalFloat1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosFloat",
+		Name: "PosFloat",
 	})
 
 	argv := []string{"400.04"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosFloat, Equals, 400.04 )
+	c.Check(opts.PosFloat, Equals, 400.04)
 
-	c.Check( ap.Root.Seen["PosFloat"], Equals, true )
+	c.Check(ap.Root.Seen["PosFloat"], Equals, true)
 }
-
 
 // ====================================================== string positional
 
@@ -283,16 +282,16 @@ func (s *MySuite) TestRootPositionalString1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosString",
+		Name: "PosString",
 	})
 
 	argv := []string{"foo"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosString, Equals, "foo" )
+	c.Check(opts.PosString, Equals, "foo")
 
-	c.Check( ap.Root.Seen["PosString"], Equals, true )
+	c.Check(ap.Root.Seen["PosString"], Equals, true)
 }
 
 // ====================================================== bool slice positional
@@ -301,7 +300,7 @@ func (s *MySuite) TestRootPositionalBoolSlice1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosBoolSlice",
+		Name:    "PosBoolSlice",
 		NumArgs: 1,
 	})
 
@@ -309,16 +308,16 @@ func (s *MySuite) TestRootPositionalBoolSlice1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosBoolSlice, DeepEquals, []bool{true} )
+	c.Check(opts.PosBoolSlice, DeepEquals, []bool{true})
 
-	c.Check( ap.Root.Seen["PosBoolSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosBoolSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalBoolSliceQuestion0(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosBoolSlice",
+		Name:        "PosBoolSlice",
 		NumArgsGlob: "?",
 	})
 
@@ -326,16 +325,16 @@ func (s *MySuite) TestRootPositionalBoolSliceQuestion0(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( len(opts.PosBoolSlice), Equals, 0 )
+	c.Check(len(opts.PosBoolSlice), Equals, 0)
 
-	c.Check( ap.Root.Seen["PosBoolSlice"], Equals, false )
+	c.Check(ap.Root.Seen["PosBoolSlice"], Equals, false)
 }
 
 func (s *MySuite) TestRootPositionalBoolSliceQuestion1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosBoolSlice",
+		Name:        "PosBoolSlice",
 		NumArgsGlob: "?",
 	})
 
@@ -343,16 +342,16 @@ func (s *MySuite) TestRootPositionalBoolSliceQuestion1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosBoolSlice, DeepEquals, []bool{true} )
+	c.Check(opts.PosBoolSlice, DeepEquals, []bool{true})
 
-	c.Check( ap.Root.Seen["PosBoolSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosBoolSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalBoolSliceQuestion2(c *C) {
 	_, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosBoolSlice",
+		Name:        "PosBoolSlice",
 		NumArgsGlob: "?",
 	})
 
@@ -369,16 +368,16 @@ func (s *MySuite) TestRootPositionalStringSlice1(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:	"PosStringSlice",
+		Name: "PosStringSlice",
 	})
 
 	argv := []string{"foo"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosStringSlice, DeepEquals, []string{"foo"} )
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"foo"})
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalStringSliceStar0(c *C) {
@@ -386,7 +385,7 @@ func (s *MySuite) TestRootPositionalStringSliceStar0(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:	"PosStringSlice",
+		Name:        "PosStringSlice",
 		NumArgsGlob: "*",
 	})
 
@@ -394,9 +393,9 @@ func (s *MySuite) TestRootPositionalStringSliceStar0(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( len(opts.PosStringSlice), Equals, 0 )
+	c.Check(len(opts.PosStringSlice), Equals, 0)
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, false )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, false)
 }
 
 func (s *MySuite) TestRootPositionalStringSliceStar1(c *C) {
@@ -404,7 +403,7 @@ func (s *MySuite) TestRootPositionalStringSliceStar1(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:	"PosStringSlice",
+		Name:        "PosStringSlice",
 		NumArgsGlob: "*",
 	})
 
@@ -412,9 +411,9 @@ func (s *MySuite) TestRootPositionalStringSliceStar1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosStringSlice, DeepEquals, []string{"z"} )
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"z"})
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalStringSliceStar2(c *C) {
@@ -422,7 +421,7 @@ func (s *MySuite) TestRootPositionalStringSliceStar2(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:	"PosStringSlice",
+		Name:        "PosStringSlice",
 		NumArgsGlob: "*",
 	})
 
@@ -430,9 +429,9 @@ func (s *MySuite) TestRootPositionalStringSliceStar2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosStringSlice, DeepEquals, []string{"a", "b"} )
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"a", "b"})
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
 
 // ====================================================== int slice positional
@@ -442,23 +441,23 @@ func (s *MySuite) TestRootPositionalIntSlice1(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:	"PosIntSlice",
+		Name: "PosIntSlice",
 	})
 
 	argv := []string{"101"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosIntSlice, DeepEquals, []int{101} )
+	c.Check(opts.PosIntSlice, DeepEquals, []int{101})
 
-	c.Check( ap.Root.Seen["PosIntSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosIntSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalIntSlicePlus0(c *C) {
 	_, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosIntSlice",
+		Name:        "PosIntSlice",
 		NumArgsGlob: "+",
 	})
 
@@ -472,7 +471,7 @@ func (s *MySuite) TestRootPositionalIntSlicePlus1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosIntSlice",
+		Name:        "PosIntSlice",
 		NumArgsGlob: "+",
 	})
 
@@ -480,16 +479,16 @@ func (s *MySuite) TestRootPositionalIntSlicePlus1(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosIntSlice, DeepEquals, []int{101} )
+	c.Check(opts.PosIntSlice, DeepEquals, []int{101})
 
-	c.Check( ap.Root.Seen["PosIntSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosIntSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalIntSlicePlus2(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosIntSlice",
+		Name:        "PosIntSlice",
 		NumArgsGlob: "+",
 	})
 
@@ -497,9 +496,9 @@ func (s *MySuite) TestRootPositionalIntSlicePlus2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosIntSlice, DeepEquals, []int{101, 202} )
+	c.Check(opts.PosIntSlice, DeepEquals, []int{101, 202})
 
-	c.Check( ap.Root.Seen["PosIntSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosIntSlice"], Equals, true)
 }
 
 // ====================================================== float slice positional
@@ -509,23 +508,23 @@ func (s *MySuite) TestRootPositionalFloatSlice1(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:	"PosFloatSlice",
+		Name: "PosFloatSlice",
 	})
 
 	argv := []string{"101.2"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosFloatSlice, DeepEquals, []float64{101.2} )
+	c.Check(opts.PosFloatSlice, DeepEquals, []float64{101.2})
 
-	c.Check( ap.Root.Seen["PosFloatSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosFloatSlice"], Equals, true)
 }
 
 func (s *MySuite) TestRootPositionalFloatSlice2(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
-		Name:	"PosFloatSlice",
+		Name:    "PosFloatSlice",
 		NumArgs: 2,
 	})
 
@@ -533,9 +532,9 @@ func (s *MySuite) TestRootPositionalFloatSlice2(c *C) {
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosFloatSlice, DeepEquals, []float64{101.2, 202.4} )
+	c.Check(opts.PosFloatSlice, DeepEquals, []float64{101.2, 202.4})
 
-	c.Check( ap.Root.Seen["PosFloatSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosFloatSlice"], Equals, true)
 }
 
 // ====================================================== NumArgsGlob +
@@ -544,8 +543,8 @@ func (s *MySuite) TestNumArgsGlobPlusZero(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:		"PosStringSlice",
-		NumArgsGlob:	"+",
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
 	})
 
 	argv := []string{}
@@ -558,17 +557,17 @@ func (s *MySuite) TestNumArgsGlobPlusOne(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:		"PosStringSlice",
-		NumArgsGlob:	"+",
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
 	})
 
-	argv := []string{"a" }
+	argv := []string{"a"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosStringSlice, DeepEquals, []string{"a"} )
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"a"})
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
 
 func (s *MySuite) TestNumArgsGlobPlusTwo(c *C) {
@@ -576,17 +575,17 @@ func (s *MySuite) TestNumArgsGlobPlusTwo(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:		"PosStringSlice",
-		NumArgsGlob:	"+",
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
 	})
 
-	argv := []string{"a", "b" }
+	argv := []string{"a", "b"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosStringSlice, DeepEquals, []string{"a", "b"} )
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"a", "b"})
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
 
 func (s *MySuite) TestNumArgsGlobPlusThree(c *C) {
@@ -594,17 +593,17 @@ func (s *MySuite) TestNumArgsGlobPlusThree(c *C) {
 
 	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
-		Name:		"PosStringSlice",
-		NumArgsGlob:	"+",
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
 	})
 
-	argv := []string{"a", "b", "c" }
+	argv := []string{"a", "b", "c"}
 	results := ap.ParseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
-	c.Check( opts.PosStringSlice, DeepEquals, []string{"a", "b", "c"} )
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"a", "b", "c"})
 
-	c.Check( ap.Root.Seen["PosStringSlice"], Equals, true )
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
 
 /*

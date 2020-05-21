@@ -6,16 +6,16 @@ import (
 )
 
 type APTestOptions struct {
-	Bool1	bool
-	String1	string
+	Bool1   bool
+	String1 string
 }
 
 func (s *MySuite) TestChooseHelpLongAtRoot(c *C) {
 
 	opts := &APTestOptions{}
 	ap := New(&Command{
-		Description:	"This is a test program",
-		Values:		opts,
+		Description: "This is a test program",
+		Values:      opts,
 	})
 
 	argv := []string{"--help"}
@@ -30,8 +30,8 @@ func (s *MySuite) TestChooseHelpShortAtRoot(c *C) {
 
 	opts := &APTestOptions{}
 	ap := New(&Command{
-		Description:	"This is a test program",
-		Values:		opts,
+		Description: "This is a test program",
+		Values:      opts,
 	})
 
 	argv := []string{"-h"}
@@ -46,11 +46,10 @@ func (s *MySuite) TestChooseHelpCustomAtRoot(c *C) {
 
 	opts := &APTestOptions{}
 	ap := New(&Command{
-		Description:	"This is a test program",
-		Values:		opts,
+		Description: "This is a test program",
+		Values:      opts,
 	})
 	ap.HelpSwitches = []string{"--custom-help"}
-
 
 	argv := []string{"--custom-help"}
 	results := ap.ParseArgv(argv)

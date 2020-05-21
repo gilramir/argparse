@@ -18,7 +18,7 @@ type ArgumentParser struct {
 	Stderr io.Writer
 
 	// Allow the user to modify strings produced by argparse.
-	// This is essential for i18n 
+	// This is essential for i18n
 	Messages Messages
 
 	// The switch strings that can invoke help
@@ -33,15 +33,14 @@ type ArgumentParser struct {
 	finalized bool
 }
 
-
 // Create a new ArgumentParser, with the Command as its root Command
-func New( cmd *Command ) (*ArgumentParser) {
+func New(cmd *Command) *ArgumentParser {
 	ap := &ArgumentParser{
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-		Messages: DefaultMessages_en,
+		Stdout:       os.Stdout,
+		Stderr:       os.Stderr,
+		Messages:     DefaultMessages_en,
 		HelpSwitches: []string{"-h", "--help"},
-		Root: cmd,
+		Root:         cmd,
 	}
 	cmd.init(nil, ap)
 	if cmd.Name == "" {
@@ -49,7 +48,6 @@ func New( cmd *Command ) (*ArgumentParser) {
 	}
 	return ap
 }
-
 
 // Add an argument to the root command
 func (self *ArgumentParser) Add(arg *Argument) {
@@ -65,23 +63,23 @@ func (self *ArgumentParser) New(c *Command) *Command {
 // On a request for help (-h), print the help and exit with os.Exit(0).
 // On a user input error, print the error message and exit with os.Exit(1).
 func (self *ArgumentParser) Parse() {
-	results := self.ParseArgv( os.Args[1:] )
+	results := self.ParseArgv(os.Args[1:])
 
 	if results.helpRequested {
 		// TODO - per Command! This needs to change!
 		helpString := self.helpString(self, 0)
-		fmt.Fprintln( self.Stdout, helpString )
+		fmt.Fprintln(self.Stdout, helpString)
 		os.Exit(0)
 	} else if results.parseError != nil {
-		fmt.Fprintln( self.Stderr, results.parseError.Error() )
+		fmt.Fprintln(self.Stderr, results.parseError.Error())
 		os.Exit(1)
 	}
 
 	cmd := results.triggeredCommand
 	if cmd.Function != nil {
-		err := cmd.Function( cmd.Values )
+		err := cmd.Function(cmd.Values)
 		if err != nil {
-			fmt.Fprintln( self.Stderr, results.parseError.Error() )
+			fmt.Fprintln(self.Stderr, results.parseError.Error())
 			os.Exit(1)
 		}
 	}
@@ -90,14 +88,14 @@ func (self *ArgumentParser) Parse() {
 /*
 func (self *ArgumentParser) ParseOsArgs() (Values) {
 	// Sanity check
-	*/
-	/*
+*/
+/*
 	if self.root.Function != nil {
 		panic fmt.Sprintf("ParseOsArgv can't be used with a root ArgumentParser "\
 			"that has a callback Function. Use ExecuteOsArgv instead.")
 	}
-	*/
-	/*
+*/
+/*
 	return self.ParseArgv( os.Args[1:] )
 }
 */
@@ -118,7 +116,7 @@ func (self *ArgumentParser) ParseOsArgs() (Values) {
 }
 */
 
-func (self *ArgumentParser) ParseArgv(argv []string) (*parseResults) {
+func (self *ArgumentParser) ParseArgv(argv []string) *parseResults {
 	parser := parserState{}
 	results := parser.runParser(self, argv)
 	return results

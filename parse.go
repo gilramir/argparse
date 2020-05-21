@@ -3,17 +3,17 @@ package argparse
 import (
 	"errors"
 	"fmt"
-//	"log"
+	//	"log"
 	"strings"
 )
 
 // This is returned by the parser
 type parseResults struct {
-	parseError		error
-	helpRequested		bool
-	triggeredCommand	*Command
+	parseError       error
+	helpRequested    bool
+	triggeredCommand *Command
 	//ancestorValues		[]Values
-	ancestorCommands        []*Command
+	ancestorCommands []*Command
 }
 
 type tokenType int
@@ -43,14 +43,14 @@ type argToken struct {
 
 // This is the parser
 type parserState struct {
-	ap		*ArgumentParser
-	pos		int
-	args		[]string
-	tokenChan	chan argToken
-	tokens		[]argToken
-	lastSwitch	string
+	ap         *ArgumentParser
+	pos        int
+	args       []string
+	tokenChan  chan argToken
+	tokens     []argToken
+	lastSwitch string
 
-	cmd		*Command
+	cmd *Command
 	// If there are sub commands that could be present,
 	// this starts as true. Once an arg is parsed, no
 	// subparsers can be accepted, so it's changed to false.
@@ -84,8 +84,8 @@ func (self *parserState) emitWithValue(typ tokenType, value string) {
 }
 func (self *parserState) emitParser(cmd *Command) {
 	self.tokenChan <- argToken{
-		typ:    tokSubParser,
-		pos:    self.pos,
+		typ:     tokSubParser,
+		pos:     self.pos,
 		command: cmd,
 	}
 }
@@ -120,7 +120,7 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 	for argToken := range self.tokenChan {
 		switch argToken.typ {
 		case tokArgument:
-			self.cmd.Seen[ argToken.argument.Dest ] = true
+			self.cmd.Seen[argToken.argument.Dest] = true
 			lastArgument = argToken.argument
 			lastArgLabel = argToken.argumentLabel
 			// If the argument is a boolean argument (no value), then
@@ -128,8 +128,8 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			if lastArgument.NumArgs == 0 {
 				err := lastArgument.value.seenWithoutValue()
 				if err != nil {
-					panic( fmt.Sprintf("not reached for arg %s: %s",
-						lastArgLabel, err) )
+					panic(fmt.Sprintf("not reached for arg %s: %s",
+						lastArgLabel, err))
 				}
 			}
 
@@ -192,8 +192,8 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 	}
 
 	// Propagate inherited argument values
-	if len( results.ancestorCommands ) > 0 {
-		cmdStack := make([]*Command, len(results.ancestorCommands) + 1)
+	if len(results.ancestorCommands) > 0 {
+		cmdStack := make([]*Command, len(results.ancestorCommands)+1)
 		copy(cmdStack, results.ancestorCommands)
 		cmdStack[len(cmdStack)-1] = cmd
 		cmdStack[0].propagateInherited(cmdStack, 0)
@@ -230,7 +230,7 @@ func (self *parserState) stateArgument() stateFunc {
 	if self.subCommandAllowed {
 		for _, subCommand := range self.cmd.subCommands {
 			if arg == subCommand.Name {
-				self.cmd.CommandSeen[ arg ] = true
+				self.cmd.CommandSeen[arg] = true
 				self.emitParser(subCommand)
 				self.pos += 1
 				// The subparser can have its own subparsers
@@ -245,8 +245,8 @@ func (self *parserState) stateArgument() stateFunc {
 	// Is it a switch argument?
 	if len(arg) > 1 && arg[0] == '-' {
 		return self.stateOption
-/*		self.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", arg))
-		return nil*/
+		/*		self.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", arg))
+				return nil*/
 	}
 
 	// Positional argument?
@@ -326,7 +326,7 @@ func (self *parserState) stateOption() stateFunc {
 				self.emitToken(tokHelp)
 				return nil
 			} else {
-				self.emitWithValue(tokError, hw + " does not accept a value")
+				self.emitWithValue(tokError, hw+" does not accept a value")
 				return nil
 			}
 		}
@@ -341,72 +341,72 @@ func (self *parserState) stateOption() stateFunc {
 				break
 			}
 			/*
-			// We could still have -j4, which is a short option
-			// with an adjoining number; this is only valid for short options
-			// with  numeric arguments
-			if arg.typeKind == reflect.Int &&		// dest is an Int
-				text[1] != '-' &&			// short option
-				rhs == "" &&				// There wasn't an =
-				len(possibility) < len(text) &&
-				text[:len(possibility)] == possibility {
+				// We could still have -j4, which is a short option
+				// with an adjoining number; this is only valid for short options
+				// with  numeric arguments
+				if arg.typeKind == reflect.Int &&		// dest is an Int
+					text[1] != '-' &&			// short option
+					rhs == "" &&				// There wasn't an =
+					len(possibility) < len(text) &&
+					text[:len(possibility)] == possibility {
 
-				rhs = text[len(possibility):]
-				text = text[:len(possibility)]
-				match = true
-				break
-			}
-			// TODO - this might be too early to do this
-			// Or we could have a group of short booleans IFF the option name is
-			// onlyone character long; if -x is a boolean
-			// and -y is a boolan, than -xy (and -yx) are valid
-			if arg.typeKind == reflect.Bool &&		// dest is an Boolean
-				len(possibility) == 2 &&		// switch is 2 chars long
-				text[1] != '-' &&			// short option given
-				rhs == "" &&				// There wasn't an =
-				text[:2] == possibility {
+					rhs = text[len(possibility):]
+					text = text[:len(possibility)]
+					match = true
+					break
+				}
+				// TODO - this might be too early to do this
+				// Or we could have a group of short booleans IFF the option name is
+				// onlyone character long; if -x is a boolean
+				// and -y is a boolan, than -xy (and -yx) are valid
+				if arg.typeKind == reflect.Bool &&		// dest is an Boolean
+					len(possibility) == 2 &&		// switch is 2 chars long
+					text[1] != '-' &&			// short option given
+					rhs == "" &&				// There wasn't an =
+					text[:2] == possibility {
 
-				// Emit this one
-				self.emitWithArgument(tokArgument, arg, text[:2])
-				self.lastSwitch = text[:2]
+					// Emit this one
+					self.emitWithArgument(tokArgument, arg, text[:2])
+					self.lastSwitch = text[:2]
 
-				// All other characters in the given switch must also be one-character
-				// short-option booleans
-				// TODO- think about utf-8 here
-				all_others_good := true
-				for _, r := range text[2:] {
-					found := false
-					for _, iArg := range self.cmd.switchArguments {
-						if iArg.NumArgs == numArgs0 {
-							for _, iSwitch := range iArg.Switches {
-								if len(iSwitch) == 2 && rune(iSwitch[1]) == r {
-									found = true
-									// Emit this one
-									self.emitWithArgument(tokArgument, iArg, iSwitch)
-									self.lastSwitch = iSwitch
-									break
+					// All other characters in the given switch must also be one-character
+					// short-option booleans
+					// TODO- think about utf-8 here
+					all_others_good := true
+					for _, r := range text[2:] {
+						found := false
+						for _, iArg := range self.cmd.switchArguments {
+							if iArg.NumArgs == numArgs0 {
+								for _, iSwitch := range iArg.Switches {
+									if len(iSwitch) == 2 && rune(iSwitch[1]) == r {
+										found = true
+										// Emit this one
+										self.emitWithArgument(tokArgument, iArg, iSwitch)
+										self.lastSwitch = iSwitch
+										break
+									}
 								}
 							}
+							if found {
+								break
+							}
 						}
-						if found {
+						if ! found {
+							all_others_good = false
 							break
 						}
 					}
-					if ! found {
-						all_others_good = false
-						break
+					if !all_others_good {
+						self.emitWithValue(tokError,
+							fmt.Sprintf("The %s switch is valid but not as '%s'",
+								text[:2], text))
+						return nil
 					}
-				}
-				if !all_others_good {
-					self.emitWithValue(tokError,
-						fmt.Sprintf("The %s switch is valid but not as '%s'",
-							text[:2], text))
-					return nil
-				}
 
-				// We finished the parse and need to return successfully now
-				self.pos += 1
-				return self.stateArgument
-			}
+					// We finished the parse and need to return successfully now
+					self.pos += 1
+					return self.stateArgument
+				}
 			*/
 		}
 
@@ -415,7 +415,7 @@ func (self *parserState) stateOption() stateFunc {
 		}
 	}
 	// Didn't match ?
-	if ! match {
+	if !match {
 		// Didn't find a switch with that name
 		self.emitWithValue(tokError, fmt.Sprintf("No such switch: %s", text))
 		return nil
@@ -457,7 +457,6 @@ func (self *parserState) stateOption() stateFunc {
 	}
 	panic("not reached")
 }
-
 
 func (self *parserState) statePositionalArgument() stateFunc {
 	if self.pos == len(self.args) {

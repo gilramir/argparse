@@ -3,8 +3,8 @@
 package argparse
 
 import (
-	"os"
 	"github.com/gilramir/consolesize"
+	"os"
 )
 
 // TODO - the help should show Choices, if available
@@ -26,21 +26,21 @@ func (self *ArgumentParser) usageString(ap *ArgumentParser) string {
 		usage += "\n" + ap.Root.Description + "\n"
 	}
 
-/*
-	// Are we a subcommand?
-	if self != ap {
-		var subcommandNames string
-		for parser := self; parser.parentParser != nil; {
-			if subcommandNames == "" {
-				subcommandNames = parser.Name
-			} else {
-				subcommandNames = parser.Name + " " + subcommandNames
+	/*
+		// Are we a subcommand?
+		if self != ap {
+			var subcommandNames string
+			for parser := self; parser.parentParser != nil; {
+				if subcommandNames == "" {
+					subcommandNames = parser.Name
+				} else {
+					subcommandNames = parser.Name + " " + subcommandNames
+				}
+				parser = parser.parentParser
 			}
-			parser = parser.parentParser
+			jusage += " " + subcommandNames
 		}
-		jusage += " " + subcommandNames
-	}
-*/
+	*/
 
 	return usage
 }
@@ -60,28 +60,28 @@ func (self *ArgumentParser) helpString(ap *ArgumentParser, width int) string {
 	text = self.usageString(ap) + "\n"
 	formatter := &HelpFormatter{}
 
-/*
-	if len(self.subParsers) > 0 {
-		text += self.StringSubCommands + ":\n\n"
+	/*
+		if len(self.subParsers) > 0 {
+			text += self.StringSubCommands + ":\n\n"
 
-		longestSubcommandLen := 0
+			longestSubcommandLen := 0
 
-		// Find the longest length of a subcommand name
-		for _, subParser := range self.subParsers {
-			if len(subParser.Name) > longestSubcommandLen {
-				longestSubcommandLen = len(subParser.Name)
+			// Find the longest length of a subcommand name
+			for _, subParser := range self.subParsers {
+				if len(subParser.Name) > longestSubcommandLen {
+					longestSubcommandLen = len(subParser.Name)
+				}
+			}
+
+			indentation := longestSubcommandLen + 4
+
+			for _, subParser := range self.subParsers {
+				padding := strings.Repeat(" ", indentation-len(subParser.Name))
+				text += fmt.Sprintf("    %s%s%s\n", subParser.Name, padding,
+					subParser.Description)
 			}
 		}
-
-		indentation := longestSubcommandLen + 4
-
-		for _, subParser := range self.subParsers {
-			padding := strings.Repeat(" ", indentation-len(subParser.Name))
-			text += fmt.Sprintf("    %s%s%s\n", subParser.Name, padding,
-				subParser.Description)
-		}
-	}
-*/
+	*/
 
 	for _, arg := range self.Root.switchArguments {
 		//argumentStrings := self.HelpSwitches()
@@ -111,39 +111,39 @@ func (self *ArgumentParser) helpString(ap *ArgumentParser, width int) string {
 	text += formatter.produceString(width)
 
 	/*
-	if len(self.switchArguments) > 0 {
-		text += "Options:\n"
-		argumentsLabelPrinted = true
-		for _, argument := range self.switchArguments {
-			lhs := argument.helpString()
-			indent := startRHS - len(lhs)
-			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
-			// Show Choices if available
-			if len(argument.Choices) > 0 {
-				text += "\t" + strings.Repeat(" ", len(lhs)+indent) +
-					"Possible choices: " + argument.getChoicesString() + "\n"
-			}
-		}
-	}
-	if len(self.positionalArguments) > 0 {
-		if argumentsLabelPrinted {
-			text += "\n"
+		if len(self.switchArguments) > 0 {
+			text += "Options:\n"
 			argumentsLabelPrinted = true
-		}
-		text += "Positional Arguments:\n"
-		for _, argument := range self.positionalArguments {
-			lhs := argument.getMetaVar()
-			if argument.NumArgs == numArgsMaybe {
-				lhs = "[" + lhs + "]"
+			for _, argument := range self.switchArguments {
+				lhs := argument.helpString()
+				indent := startRHS - len(lhs)
+				text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
+				// Show Choices if available
+				if len(argument.Choices) > 0 {
+					text += "\t" + strings.Repeat(" ", len(lhs)+indent) +
+						"Possible choices: " + argument.getChoicesString() + "\n"
+				}
 			}
-			indent := startRHS - len(lhs)
-			text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
 		}
-	}
+		if len(self.positionalArguments) > 0 {
+			if argumentsLabelPrinted {
+				text += "\n"
+				argumentsLabelPrinted = true
+			}
+			text += "Positional Arguments:\n"
+			for _, argument := range self.positionalArguments {
+				lhs := argument.getMetaVar()
+				if argument.NumArgs == numArgsMaybe {
+					lhs = "[" + lhs + "]"
+				}
+				indent := startRHS - len(lhs)
+				text += "\t" + lhs + strings.Repeat(" ", indent) + argument.Help + "\n"
+			}
+		}
 
-	if len(self.subParsers)+len(self.switchArguments)+len(self.positionalArguments) == 0 {
-		text += "No options\n"
-	}
-*/
+		if len(self.subParsers)+len(self.switchArguments)+len(self.positionalArguments) == 0 {
+			text += "No options\n"
+		}
+	*/
 	return text
 }
