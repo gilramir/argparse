@@ -61,7 +61,7 @@ type parserState struct {
 	numEvaluatedPositionalArguments int
 
 	// when we need to keep track of an *Argument across state transitions
-	stickyArg *Argument
+	//	stickyArg *Argument
 }
 
 // Each parser state is a function
@@ -244,7 +244,7 @@ func (self *parserState) stateArgument() stateFunc {
 
 	// Is it a switch argument?
 	if len(arg) > 1 && arg[0] == '-' {
-		return self.stateOption
+		return self.stateSwitchArgument
 		/*		self.emitWithValue(tokError, fmt.Sprintf("Unknown argument: %s", arg))
 				return nil*/
 	}
@@ -300,11 +300,23 @@ func (self *parserState) stateMultipleValues() stateFunc {
 	return self.stateMultipleValues
 }
 
-func (self *parserState) stateOption() stateFunc {
+func (self *parserState) stateSwitchArgument() stateFunc {
 	text := self.args[self.pos]
 	if text == "" {
 		self.emitWithValue(tokError, "<empty string>")
 		return nil
+	}
+	// "--" is special... it means the rest of the line is a positional argument
+	if text == "--" {
+		// Positional argument?
+		if self.nextPositionalArgument == 0 && len(self.cmd.positionalArguments) > 0 {
+			self.pos += 1
+			return self.statePositionalArgument
+		} else {
+			self.emitWithValue(tokError,
+				"'--' is given but there's no positional argument allowed")
+			return nil
+		}
 	}
 
 	// Check for '=', as in --value=foo

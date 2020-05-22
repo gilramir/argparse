@@ -175,6 +175,10 @@ how many values can or must be provided:
 
 	type ParserCallback func (Values) error
 
+# Notes
+
+If the parser sees "--" on the command-line, it denotes the beginning of a positional
+argument.
 
 # Examples
 

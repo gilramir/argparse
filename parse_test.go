@@ -383,7 +383,6 @@ func (s *MySuite) TestRootPositionalStringSlice1(c *C) {
 func (s *MySuite) TestRootPositionalStringSliceStar0(c *C) {
 	opts, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "*",
@@ -401,7 +400,6 @@ func (s *MySuite) TestRootPositionalStringSliceStar0(c *C) {
 func (s *MySuite) TestRootPositionalStringSliceStar1(c *C) {
 	opts, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "*",
@@ -419,7 +417,6 @@ func (s *MySuite) TestRootPositionalStringSliceStar1(c *C) {
 func (s *MySuite) TestRootPositionalStringSliceStar2(c *C) {
 	opts, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "*",
@@ -541,7 +538,6 @@ func (s *MySuite) TestRootPositionalFloatSlice2(c *C) {
 func (s *MySuite) TestNumArgsGlobPlusZero(c *C) {
 	_, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "+",
@@ -555,7 +551,6 @@ func (s *MySuite) TestNumArgsGlobPlusZero(c *C) {
 func (s *MySuite) TestNumArgsGlobPlusOne(c *C) {
 	opts, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "+",
@@ -573,7 +568,6 @@ func (s *MySuite) TestNumArgsGlobPlusOne(c *C) {
 func (s *MySuite) TestNumArgsGlobPlusTwo(c *C) {
 	opts, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "+",
@@ -591,7 +585,6 @@ func (s *MySuite) TestNumArgsGlobPlusTwo(c *C) {
 func (s *MySuite) TestNumArgsGlobPlusThree(c *C) {
 	opts, ap := createPTestParser()
 
-	// No NumArgs or NumArgsGlob is legal; == 1
 	ap.Add(&Argument{
 		Name:        "PosStringSlice",
 		NumArgsGlob: "+",
@@ -602,6 +595,39 @@ func (s *MySuite) TestNumArgsGlobPlusThree(c *C) {
 
 	c.Assert(results.parseError, IsNil)
 	c.Check(opts.PosStringSlice, DeepEquals, []string{"a", "b", "c"})
+
+	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
+}
+
+// ====================================================== NumArgsGlob: *
+
+func (s *MySuite) TestRootPositionalVerbatim0(c *C) {
+	_, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosStringSlice",
+		NumArgsGlob: "*",
+	})
+
+	argv := []string{"-a", "-b", "-c"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, NotNil)
+}
+
+func (s *MySuite) TestRootPositionalVerbatim1(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosStringSlice",
+		NumArgsGlob: "*",
+	})
+
+	argv := []string{"--", "-a", "-b", "-c"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"-a", "-b", "-c"})
 
 	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
 }
