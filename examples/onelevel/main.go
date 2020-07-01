@@ -5,43 +5,43 @@ package main
 import (
 	"fmt"
 
-	"github.com/gilramir/argparse"
+	"github.com/gilramir/argparse/v2"
 )
 
 type MyOptions struct {
-	Debug bool
-	Verbose	bool
-	Names []string
-	N int
+	Debug   bool
+	Verbose bool
+	Names   []string
+	N       int
 }
 
 func main() {
 	opts := &MyOptions{}
 	ap := argparse.New(&argparse.Command{
-		Description:	"This is an example program",
-		Values:		opts,
+		Description: "This is an example program",
+		Values:      opts,
 	})
 
 	ap.Add(&argparse.Argument{
-		Switches:	[]string{"--debug"},
-		Help:		"Set debug mode",
+		Switches: []string{"--debug"},
+		Help:     "Set debug mode",
 	})
 
 	ap.Add(&argparse.Argument{
-		Switches:	[]string{"-v", "--verbose"},
-		Help:		"Set verbose mode",
+		Switches: []string{"-v", "--verbose"},
+		Help:     "Set verbose mode",
 	})
 
 	ap.Add(&argparse.Argument{
-		Switches:	[]string{"-n" },
-		Help:		"Number",
-		Choices:	[]int{1, 2, 5},
+		Switches: []string{"-n"},
+		Help:     "Number",
+		Choices:  []int{1, 2, 5},
 	})
 
 	ap.Add(&argparse.Argument{
-		Name:		"names",
-		Help:		"Some names passed into the program",
-		NumArgsGlob:	"+",
+		Name:        "names",
+		Help:        "Some names passed into the program",
+		NumArgsGlob: "+",
 	})
 
 	// The library handles errors, and -h/--help
@@ -52,7 +52,7 @@ func main() {
 	fmt.Printf("N is %v\n", opts.N)
 	fmt.Printf("Number of names: %d\n", len(opts.Names))
 
-	for i := 0 ; i < len(opts.Names) ; i++ {
+	for i := 0; i < len(opts.Names); i++ {
 		fmt.Printf("%d. %s\n", i+1, opts.Names[i])
 	}
 }

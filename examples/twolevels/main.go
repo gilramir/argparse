@@ -5,29 +5,29 @@ package main
 import (
 	"fmt"
 
-	"github.com/gilramir/argparse"
+	"github.com/gilramir/argparse/v2"
 )
 
 type RootOptions struct {
-	Debug bool
-	Verbose	bool
+	Debug   bool
+	Verbose bool
 }
 
 type OpenOptions struct {
 	RootOptions
 
-	Name	string
-	Reason	string
+	Name   string
+	Reason string
 }
 
 type CloseOptions struct {
 	RootOptions
 
-	Name	string
-	Reason	string
+	Name   string
+	Reason string
 }
 
-func DoOpen( values argparse.Values ) error {
+func DoOpen(values argparse.Values) error {
 	opts := values.(*OpenOptions)
 
 	fmt.Printf("Open: Verbose is %v\n", opts.Verbose)
@@ -38,7 +38,7 @@ func DoOpen( values argparse.Values ) error {
 	return nil
 }
 
-func DoClose( values argparse.Values ) error {
+func DoClose(values argparse.Values) error {
 	opts := values.(*CloseOptions)
 
 	fmt.Printf("Close: Verbose is %v\n", opts.Verbose)
@@ -51,57 +51,57 @@ func DoClose( values argparse.Values ) error {
 
 func main() {
 	opts := &RootOptions{}
-	ap := argparse.New( &argparse.Command{
-		Description:	"This is an example program",
-		Values:		opts,
+	ap := argparse.New(&argparse.Command{
+		Description: "This is an example program",
+		Values:      opts,
 	})
 
 	ap.Add(&argparse.Argument{
-		Switches:	[]string{"--debug"},
-		Help:		"Set debug mode",
-		Inherit:	true,
+		Switches: []string{"--debug"},
+		Help:     "Set debug mode",
+		Inherit:  true,
 	})
 
 	ap.Add(&argparse.Argument{
-		Switches:	[]string{"-v", "--verbose"},
-		Help:		"Set verbose mode",
-		Inherit:	true,
+		Switches: []string{"-v", "--verbose"},
+		Help:     "Set verbose mode",
+		Inherit:  true,
 	})
 
 	// open
-	open_ap := ap.New( &argparse.Command {
-		Name:			"open",
-		Description:		"Open something",
-		Function:		DoOpen,
-		Values:			&OpenOptions{},
+	open_ap := ap.New(&argparse.Command{
+		Name:        "open",
+		Description: "Open something",
+		Function:    DoOpen,
+		Values:      &OpenOptions{},
 	})
 
 	open_ap.Add(&argparse.Argument{
-		Switches:	[]string{"-r", "--reason"},
-		Help:		"Why you are opening this",
+		Switches: []string{"-r", "--reason"},
+		Help:     "Why you are opening this",
 	})
 
 	open_ap.Add(&argparse.Argument{
-		Name:		"name",
-		Help:		"The thing you are opening",
+		Name: "name",
+		Help: "The thing you are opening",
 	})
 
 	// close
-	close_ap := ap.New( &argparse.Command {
-		Name:			"close",
-		Description:		"Close something",
-		Function:		DoClose,
-		Values:			&CloseOptions{},
+	close_ap := ap.New(&argparse.Command{
+		Name:        "close",
+		Description: "Close something",
+		Function:    DoClose,
+		Values:      &CloseOptions{},
 	})
 
 	close_ap.Add(&argparse.Argument{
-		Switches:	[]string{"-r", "--reason"},
-		Help:		"Why you are closing this",
+		Switches: []string{"-r", "--reason"},
+		Help:     "Why you are closing this",
 	})
 
 	close_ap.Add(&argparse.Argument{
-		Name:		"name",
-		Help:		"The thing you are closing",
+		Name: "name",
+		Help: "The thing you are closing",
 	})
 
 	ap.Parse()
