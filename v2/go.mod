@@ -1,4 +1,4 @@
-module github.com/gilramir/argparse
+module github.com/gilramir/argparse/v2
 
 go 1.14
 
