@@ -7,9 +7,9 @@ Highlights:
 * You can have nested subcommands.
 * The values for a parser are stored in a struct.
 * Argparse can deduce the name of the value field in the struct by looking
-	at the name of the option.
+        at the name of the option.
 * Argparse fills in the struct with values from the command-line, and also
-	tells you all the options that were seen.
+        tells you all the options that were seen.
 
 See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse)
 
@@ -17,38 +17,38 @@ See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir
 
 1. Define the struct that will hold the values from the parse of the command-line.
 
-	type MyOptions struct {
-		Debug bool
-		Verbose	bool
-		Names []string
-	}
+        type MyOptions struct {
+                Debug bool
+                Verbose bool
+                Names []string
+        }
 
 2. Instantiate an Argparse object with a root Command object. This lets
 you describe your program, and points argparse to the value struct object.
 
-	opts := &MyOptions{}
-	ap := argparse.New(&argparse.Command{
-		Description:	"This is an example program",
-		Values:		opts,
-	})
+        opts := &MyOptions{}
+        ap := argparse.New(&argparse.Command{
+                Description:    "This is an example program",
+                Values:         opts,
+        })
 
 3. Add options to root Command object (via the Argparse object):
 
-	ap.Add(&argparse.Argument{
-		Switches:	[]string{"--debug"},
-		Help:		"Set debug mode",
-	})
+        ap.Add(&argparse.Argument{
+                Switches:       []string{"--debug"},
+                Help:           "Set debug mode",
+        })
 
-	ap.Add(&argparse.Argument{
-		Switches:	[]string{"-v", "--verbose"},
-		Help:		"Set verbose mode",
-	})
+        ap.Add(&argparse.Argument{
+                Switches:       []string{"-v", "--verbose"},
+                Help:           "Set verbose mode",
+        })
 
-	ap.Add(&argparse.String{
-		Name:		"names",
-		Help:		"Some names passed into the program",
-		NumArgsGlob:	'+',
-	})
+        ap.Add(&argparse.String{
+                Name:           "names",
+                Help:           "Some names passed into the program",
+                NumArgsGlob:    '+',
+        })
 
 When each Argument is added, the argparse logic looks in the Command's
 Value struct for a field name that matches either "switch" or "name" of the
@@ -56,7 +56,7 @@ argument.  If it fails to find a matching field, the code will panic().
 
 4. Finally, perform the parse.
 
-	ap.Parse()
+        ap.Parse()
 
 If the user requests help, the help text will be given, and the program exits.
 If the users gives an illegal command-line, the error message is shown, and the
@@ -69,14 +69,14 @@ program exits. Otherwise, on success, the program continues to the next statemen
 * Stderr - an io.Writer to send error messages to instead of os.Stderr.
 
 * Messages - a struct of all the messages that argparse can print to users.
-	You can override this to provide translations. The default is the built-in
-	English version of these messages. This is still a work in progress.
+        You can override this to provide translations. The default is the built-in
+        English version of these messages. This is still a work in progress.
 
 * HelpSwitches - the switches that arpgarse will interpret as a request for help.
-	The default is: []string{"-h", "--help"}
+        The default is: []string{"-h", "--help"}
 
 * Root  - a pointer to the root Command object. This is set by argparse for you,
-	for convenience.
+        for convenience.
 
 # Command
 
@@ -131,7 +131,7 @@ more than one, or a positional argument can be appear more than once.
 The following fields can be set in Argument:
 
 * Switches: (optional) All the accepted versions for this switch. Each one must start
-	with at least one hyphen.
+        with at least one hyphen.
 
 * Name: (optional) For positional arguments (after all switch arguments, which start with dashes), the name of
     the argument. While this name is not used by the user when giving the CLI string,
@@ -145,7 +145,7 @@ The following fields can be set in Argument:
 * MetaVar: The text to use as the name of the value in the --help output.
 
 * NumArgs: (optional) For positional and switch arguments, speficies how many
-	arguments _must_ follow the option.
+        arguments _must_ follow the option.
 
 * NumArgsGlob: (optional) For positional arguments only, a string that specifies
 how many values can or must be provided:
@@ -160,10 +160,10 @@ how many values can or must be provided:
     then NumArgs is set to 1.
 
 * Inherit: If true, then all sub-commands of this Command will automatically inherit a copy
-	of this Argument. This also means that the Value struct must have a field whose name
-	and type work for this Argument. If that is not true, then the New() which adds the
-	sub-command will panic. if you Add() a new Inherited argument after already adding
-	a sub-command with New(), then the Add() will panic.
+        of this Argument. This also means that the Value struct must have a field whose name
+        and type work for this Argument. If that is not true, then the New() which adds the
+        sub-command will panic. if you Add() a new Inherited argument after already adding
+        a sub-command with New(), then the Add() will panic.
 
 * Choices: (optional) A slice (even when the field value is an int) which lists the only
     possible values for the argument value. If a user gives a value that is not in this list,
@@ -171,9 +171,9 @@ how many values can or must be provided:
     this Argument: []bool, []string, []int, or []float64
 
 * Function: If this is not nil, then if this is the "triggered" command or sub-command,
-	then this function is called. The type is:
+        then this function is called. The type is:
 
-	type ParserCallback func (Values) error
+        type ParserCallback func (Values) error
 
 # Notes
 
