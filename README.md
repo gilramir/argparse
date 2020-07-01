@@ -11,7 +11,7 @@ Highlights:
 * Argparse fills in the struct with values from the command-line, and also
         tells you all the options that were seen.
 
-See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse)
+See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse/v2)
 
 # Usage
 
