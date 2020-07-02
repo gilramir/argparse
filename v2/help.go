@@ -50,7 +50,7 @@ func (self *ArgumentParser) helpString(cmd *Command,
 	}
 
 	text = self.usageString(cmd, ancestorCommands) + "\n"
-	formatter := &HelpFormatter{}
+	formatter := &helpFormatter{}
 
 	// Switch arguments
 
@@ -87,7 +87,7 @@ func (self *ArgumentParser) helpString(cmd *Command,
 	if len(cmd.subCommands) > 0 {
 		text += "\n" + self.Messages.SubCommands + ":\n\n"
 
-		subFormatter := &HelpFormatter{}
+		subFormatter := &helpFormatter{}
 		for _, subCommand := range cmd.subCommands {
 			subFormatter.addOption([]string{subCommand.Name}, subCommand.Description)
 		}

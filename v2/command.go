@@ -16,17 +16,10 @@ type Command struct {
 	Name string
 
 	Description string
-	/*
-		// One-line description of the program
-		ShortDescription string
 
-		// This can be a multi-line, longer explanation of
-		// the program.
-		LongDescription string
-	*/
 	// This can be a multi-line string that is shown
 	// after all the options in the --help output
-	Epilog string
+	//Epilog string
 
 	// The struct that will receive the values after parsing
 	Values Values

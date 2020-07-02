@@ -48,7 +48,7 @@ type boolValueT struct {
 	choices []bool
 }
 
-func NewBoolValueT(valueP reflect.Value) *boolValueT {
+func newBoolValueT(valueP reflect.Value) *boolValueT {
 	return &boolValueT{valueT: valueT{valueP}}
 }
 
@@ -109,7 +109,7 @@ type stringValueT struct {
 	choices []string
 }
 
-func NewStringValueT(valueP reflect.Value) *stringValueT {
+func newStringValueT(valueP reflect.Value) *stringValueT {
 	return &stringValueT{valueT: valueT{valueP}}
 }
 
@@ -161,7 +161,7 @@ type intValueT struct {
 	choices []int
 }
 
-func NewIntValueT(valueP reflect.Value) *intValueT {
+func newIntValueT(valueP reflect.Value) *intValueT {
 	return &intValueT{valueT: valueT{valueP}}
 }
 
@@ -221,7 +221,7 @@ type floatValueT struct {
 	choices []float64
 }
 
-func NewFloatValueT(valueP reflect.Value) *floatValueT {
+func newFloatValueT(valueP reflect.Value) *floatValueT {
 	return &floatValueT{valueT: valueT{valueP}}
 }
 
@@ -280,7 +280,7 @@ type boolSliceValueT struct {
 	choices []bool
 }
 
-func NewBoolSliceValueT(valueP reflect.Value) *boolSliceValueT {
+func newBoolSliceValueT(valueP reflect.Value) *boolSliceValueT {
 	return &boolSliceValueT{valueT: valueT{valueP}}
 }
 
@@ -341,7 +341,7 @@ type stringSliceValueT struct {
 	choices []string
 }
 
-func NewStringSliceValueT(valueP reflect.Value) *stringSliceValueT {
+func newStringSliceValueT(valueP reflect.Value) *stringSliceValueT {
 	return &stringSliceValueT{valueT: valueT{valueP}}
 }
 
@@ -397,7 +397,7 @@ type intSliceValueT struct {
 	choices []int
 }
 
-func NewIntSliceValueT(valueP reflect.Value) *intSliceValueT {
+func newIntSliceValueT(valueP reflect.Value) *intSliceValueT {
 	return &intSliceValueT{valueT: valueT{valueP}}
 }
 
@@ -459,7 +459,7 @@ type floatSliceValueT struct {
 	choices []float64
 }
 
-func NewFloatSliceValueT(valueP reflect.Value) *floatSliceValueT {
+func newFloatSliceValueT(valueP reflect.Value) *floatSliceValueT {
 	return &floatSliceValueT{valueT: valueT{valueP}}
 }
 

@@ -242,24 +242,24 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 
 	switch typeKind {
 	case reflect.Bool:
-		self.value = NewBoolValueT(valueP)
+		self.value = newBoolValueT(valueP)
 	case reflect.String:
-		self.value = NewStringValueT(valueP)
+		self.value = newStringValueT(valueP)
 	case reflect.Int:
-		self.value = NewIntValueT(valueP)
+		self.value = newIntValueT(valueP)
 	case reflect.Float64:
-		self.value = NewFloatValueT(valueP)
+		self.value = newFloatValueT(valueP)
 	case reflect.Slice:
 		sliceKind := valueP.Type().Elem().Kind()
 		switch sliceKind {
 		case reflect.Bool:
-			self.value = NewBoolSliceValueT(valueP)
+			self.value = newBoolSliceValueT(valueP)
 		case reflect.Int:
-			self.value = NewIntSliceValueT(valueP)
+			self.value = newIntSliceValueT(valueP)
 		case reflect.String:
-			self.value = NewStringSliceValueT(valueP)
+			self.value = newStringSliceValueT(valueP)
 		case reflect.Float64:
-			self.value = NewFloatSliceValueT(valueP)
+			self.value = newFloatSliceValueT(valueP)
 		default:
 			return fmt.Errorf("Argument %s cannot be of type []%s",
 				self.PrettyName(), sliceKind.String())

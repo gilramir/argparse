@@ -27,7 +27,7 @@ func (s *MySuite) TestValueBool(c *C) {
 	valueP := structValue.FieldByIndex(field.Index)
 
 	// Create our valueT
-	parserVal := NewBoolValueT(valueP)
+	parserVal := newBoolValueT(valueP)
 	c.Assert(v.Bool, Equals, false)
 
 	// seenWithoutValue works
@@ -74,7 +74,7 @@ func (s *MySuite) TestValueString(c *C) {
 	valueP := structValue.FieldByIndex(field.Index)
 
 	// Create our valueT
-	parserVal := NewStringValueT(valueP)
+	parserVal := newStringValueT(valueP)
 	c.Assert(v.String, Equals, "")
 
 	// seenWithoutValue does not work
@@ -126,7 +126,7 @@ func (s *MySuite) TestValueInt(c *C) {
 	valueP := structValue.FieldByIndex(field.Index)
 
 	// Create our valueT
-	parserVal := NewIntValueT(valueP)
+	parserVal := newIntValueT(valueP)
 	c.Assert(v.Int, Equals, 0)
 
 	// seenWithoutValue does not work
@@ -180,7 +180,7 @@ func (s *MySuite) TestValueFloat(c *C) {
 	valueP := structValue.FieldByIndex(field.Index)
 
 	// Create our valueT
-	parserVal := NewFloatValueT(valueP)
+	parserVal := newFloatValueT(valueP)
 	c.Assert(v.Float, Equals, 0.0)
 
 	// seenWithoutValue does not work

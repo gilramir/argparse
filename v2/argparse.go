@@ -68,7 +68,6 @@ func (self *ArgumentParser) Parse() {
 	cmd := results.triggeredCommand
 
 	if results.helpRequested {
-		// TODO - per Command! This needs to change!
 		helpString := self.helpString(cmd, results.ancestorCommands)
 		fmt.Fprintln(self.Stdout, helpString)
 		os.Exit(0)

@@ -15,7 +15,7 @@ type rowData struct {
 	rhs []*unicodemonowidth.PrintedWord
 }
 
-type HelpFormatter struct {
+type helpFormatter struct {
 	rows []rowData
 
 	leftPadding      int
@@ -24,14 +24,14 @@ type HelpFormatter struct {
 	descriptionWidth int
 }
 
-func (s *HelpFormatter) addOption(lhs []string, rhs string) {
+func (s *helpFormatter) addOption(lhs []string, rhs string) {
 	s.rows = append(s.rows, rowData{
 		lhs: lhs,
 		rhs: unicodemonowidth.WhitespaceSplit(rhs),
 	})
 }
 
-func (s *HelpFormatter) produceString(width int) string {
+func (s *helpFormatter) produceString(width int) string {
 	s.analyze(width)
 
 	/*
@@ -50,7 +50,7 @@ func (s *HelpFormatter) produceString(width int) string {
 	return text
 }
 
-func (s *HelpFormatter) makeOptionRows(width int) []string {
+func (s *helpFormatter) makeOptionRows(width int) []string {
 	textRows := make([]string, 0, len(s.rows))
 	leftPad := strings.Repeat(" ", s.leftPadding)
 	middlePad := strings.Repeat(" ", s.middlePadding)
@@ -113,7 +113,7 @@ func (s *HelpFormatter) makeOptionRows(width int) []string {
 	return textRows
 }
 
-func (s *HelpFormatter) analyze(width int) {
+func (s *helpFormatter) analyze(width int) {
 
 	var lhsSingleMin int
 	var lhsSingleMax int
