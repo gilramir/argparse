@@ -64,13 +64,13 @@ func (s *HelpFormatter) makeOptionRows(width int) []string {
 		for _, lhsItem := range pair.lhs {
 			lhsItemWidth := unicodemonowidth.MonoWidth(lhsItem)
 			if lhsWidth > 0 {
-				if lhsWidth+lhsItemWidth > s.optionWidth {
+				if lhsWidth+lhsItemWidth+1 > s.optionWidth {
 					lhsRows = append(lhsRows, lhs)
 					lhs = lhsItem
 					lhsWidth = lhsItemWidth
 				} else {
-					lhs += lhsItem
-					lhsWidth += lhsItemWidth
+					lhs += "," + lhsItem
+					lhsWidth += 1 + lhsItemWidth
 				}
 			} else {
 				lhs = lhsItem

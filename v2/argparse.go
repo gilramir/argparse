@@ -65,9 +65,11 @@ func (self *ArgumentParser) New(c *Command) *Command {
 func (self *ArgumentParser) Parse() {
 	results := self.ParseArgv(os.Args[1:])
 
+	cmd := results.triggeredCommand
+
 	if results.helpRequested {
 		// TODO - per Command! This needs to change!
-		helpString := self.helpString(self, 0)
+		helpString := self.helpString(cmd, results.ancestorCommands)
 		fmt.Fprintln(self.Stdout, helpString)
 		os.Exit(0)
 	} else if results.parseError != nil {
@@ -75,7 +77,6 @@ func (self *ArgumentParser) Parse() {
 		os.Exit(1)
 	}
 
-	cmd := results.triggeredCommand
 	if cmd.Function != nil {
 		err := cmd.Function(cmd.Values)
 		if err != nil {
