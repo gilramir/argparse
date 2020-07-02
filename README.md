@@ -44,7 +44,7 @@ you describe your program, and points argparse to the value struct object.
                 Help:           "Set verbose mode",
         })
 
-        ap.Add(&argparse.String{
+        ap.Add(&argparse.Argument{
                 Name:           "names",
                 Help:           "Some names passed into the program",
                 NumArgsGlob:    '+',
@@ -61,6 +61,26 @@ argument.  If it fails to find a matching field, the code will panic().
 If the user requests help, the help text will be given, and the program exits.
 If the users gives an illegal command-line, the error message is shown, and the
 program exits. Otherwise, on success, the program continues to the next statement.
+
+
+Sub-commands are also supported. You add a Command as a child of its parent
+Command, and then can add arguments to that new Command
+
+        // open
+        open_ap := ap.New(&argparse.Command{
+                Name:        "open",
+                Description: "Open something",
+                Function:    DoOpen,
+                Values:      &OpenOptions{},
+        })
+
+        open_ap.Add(&argparse.Argument{
+                Switches: []string{"-r", "--reason"},
+                Help:     "Why you are opening this",
+        })
+
+With sub-commands, the Function argument is a callback to your code, to
+run when the sub-command is chosen.
 
 # ArgumentParser
 
