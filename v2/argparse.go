@@ -79,7 +79,7 @@ func (self *ArgumentParser) Parse() {
 	if cmd.Function != nil {
 		err := cmd.Function(cmd.Values)
 		if err != nil {
-			fmt.Fprintln(self.Stderr, results.parseError.Error())
+			fmt.Fprintln(self.Stderr, err.Error())
 			os.Exit(1)
 		}
 	}
