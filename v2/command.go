@@ -9,7 +9,7 @@ import (
 
 type Values interface{}
 
-type ParserCallback func(Values) error
+type ParserCallback func(*Command, Values) error
 
 type Command struct {
 	// The name of the program or subcommand

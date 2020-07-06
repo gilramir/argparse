@@ -27,24 +27,30 @@ type CloseOptions struct {
 	Reason string
 }
 
-func DoOpen(values argparse.Values) error {
+func DoOpen(cmd *argparse.Command, values argparse.Values) error {
 	opts := values.(*OpenOptions)
 
-	fmt.Printf("Open: Verbose is %v\n", opts.Verbose)
-	fmt.Printf("Open: Debug is %v\n", opts.Debug)
+	fmt.Printf("Open: Verbose is %v, Seen=%v\n", opts.Verbose,
+		cmd.Seen["Verbose"])
+	fmt.Printf("Open: Debug is %v, Seen=%v\n", opts.Debug,
+		cmd.Seen["Debug"])
+	fmt.Printf("Open: Reason is %s, Seen=%v\n", opts.Reason,
+		cmd.Seen["Reason"])
 	fmt.Printf("Open: Name is %v\n", opts.Name)
-	fmt.Printf("Open: Reason is %v\n", opts.Reason)
 
 	return nil
 }
 
-func DoClose(values argparse.Values) error {
+func DoClose(cmd *argparse.Command, values argparse.Values) error {
 	opts := values.(*CloseOptions)
 
-	fmt.Printf("Close: Verbose is %v\n", opts.Verbose)
-	fmt.Printf("Close: Debug is %v\n", opts.Debug)
+	fmt.Printf("Close: Verbose is %v, Seen=%v\n", opts.Verbose,
+		cmd.Seen["Verbose"])
+	fmt.Printf("Close: Debug is %v, Seen=%v\n", opts.Debug,
+		cmd.Seen["Debug"])
+	fmt.Printf("Close: Reason is %s, Seen=%v\n", opts.Reason,
+		cmd.Seen["Reason"])
 	fmt.Printf("Close: Name is %v\n", opts.Name)
-	fmt.Printf("Close: Reason is %v\n", opts.Reason)
 
 	return nil
 }
