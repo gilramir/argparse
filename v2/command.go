@@ -110,7 +110,17 @@ func (self *Command) propagateInherited(cmds []*Command, myIndex int) {
 }
 
 func (self *Command) New(cmd *Command) *Command {
+
+	// Check for duplicates
+	for _, other := range self.subCommands {
+		if other.Name == cmd.Name {
+			panic(fmt.Sprintf("Sub-command %s already exists in %s",
+				other.Name, self.Name))
+		}
+	}
+
 	cmd.init(self, self.ap)
+
 	self.subCommands = append(self.subCommands, cmd)
 	return cmd
 }
