@@ -116,21 +116,42 @@ func (self *Command) New(cmd *Command) *Command {
 }
 
 // TODO - check that it's not a HelpSwitch; Command will need to know HelpSwitches
-// TODO - check that Arguments are duplicated or collide within a Command
 func (self *Command) Add(arg *Argument) {
 
 	// Arguments with Inherit == true cannot be added after a sub-command is already
 	// added
 	if arg.Inherit && len(self.subCommands) > 0 {
-		panic(fmt.Sprintf("Cannot add argument %s because it's Inhert is true "+
+		panic(fmt.Sprintf("Cannot add argument %s because it's Inherit flag is true "+
 			"and the Command %s already has sub-commands", arg.PrettyName(),
 			self.Name))
+	}
+
+	// Check for a duplicate
+	if arg.isPositional() {
+		for _, other := range self.positionalArguments {
+			if other.Name == arg.Name {
+				panic(fmt.Sprintf("%s is already used by a "+
+					"positional argument in this Command.", arg.Name))
+			}
+		}
+	} else {
+		for _, other := range self.switchArguments {
+			for _, otherSwitch := range other.Switches {
+				for _, thisSwitch := range arg.Switches {
+					if otherSwitch == thisSwitch {
+						panic(fmt.Sprintf("%s is already used by a "+
+							"switch argument in this Command.", thisSwitch))
+					}
+				}
+			}
+		}
 	}
 
 	// Sanity check
 	if self.Values == nil {
 		panic(fmt.Sprintf("There is no Values field set for Command %s", self.Name))
 	}
+
 	// set arg.value
 	arg.init(self.Values, &self.ap.Messages)
 
