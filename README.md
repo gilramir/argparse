@@ -1,15 +1,18 @@
 # argparse
-A Go module to parse CLI argument, that loosely follows the model of the Python
-argparse module.
+Argparse is a Go module that helps you parse command-line arguments.
+It loosely follows the conceptual model of the Python argparse module.
 
 Highlights:
 
 * You can have nested subcommands.
-* The values for a parser are stored in a struct.
+* The values for that the command-line options are stored in a struct of your
+  creation.
 * Argparse can deduce the name of the value field in the struct by looking
         at the name of the option.
-* Argparse fills in the struct with values from the command-line, and also
-        tells you all the options that were seen.
+* Argparse will tell you if a particular option was present or not present,
+        in case you need that information.
+* Options can be inherited by sub-comands, and you need only define them
+        once.
 
 See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse/v2)
 
@@ -51,8 +54,8 @@ you describe your program, and points argparse to the value struct object.
         })
 
 When each Argument is added, the argparse logic looks in the Command's
-Value struct for a field name that matches either "switch" or "name" of the
-argument.  If it fails to find a matching field, the code will panic().
+Value struct for a field name that matches either a "Switches" or "Name" value
+of the argument.  If it fails to find a matching field, the code will panic().
 
 4. Finally, perform the parse.
 
@@ -62,6 +65,7 @@ If the user requests help, the help text will be given, and the program exits.
 If the users gives an illegal command-line, the error message is shown, and the
 program exits. Otherwise, on success, the program continues to the next statement.
 
+## Sub-commands
 
 Sub-commands are also supported. You add a Command as a child of its parent
 Command, and then can add arguments to that new Command
@@ -80,38 +84,50 @@ Command, and then can add arguments to that new Command
         })
 
 With sub-commands, the Function argument is a callback to your code, to
-run when the sub-command is chosen.
+run when the sub-command is chosen. The callback accepts two arguments:
+a pointer to leaf argparse.Command object that was triggered by the
+command-line, and the Values associated with that Command.
 
-# ArgumentParser
+To use the Values, you will need to coerce them from the argparse.Values
+interface to the actual struct-poiner that they are:
+
+    func DoOpen(cmd *argparse.Command, values argparse.Values) error {
+	opts := values.(*OpenOptions)
+    }
+
+This of course gives you the values of the arguments, be they default values
+or values given by the user. The Command object has a Seen map which
+tells you if a command was actually given by the user (if it was "seen" by the
+parser). You give it the string name of the field in the Values struct:
+
+        cmd.Seen["Verbose"]
+
+
+# Translation
+
+Once you create your ArgumentParser object with the argparse.New() function:
+
+        ap := argparse.New(&argparse.Command{
+                Description:    "This is an example program",
+                Values:         opts,
+        })
+
+The following fields can bet changed:
 
 * Stdout - an io.Writer to send the output of "--help" to instead of os.Stdout.
 
 * Stderr - an io.Writer to send error messages to instead of os.Stderr.
 
-* Messages - a struct of all the messages that argparse can print to users.
-        You can override this to provide translations. The default is the built-in
-        English version of these messages. This is still a work in progress.
-
 * HelpSwitches - the switches that arpgarse will interpret as a request for help.
         The default is: []string{"-h", "--help"}
 
-* Root  - a pointer to the root Command object. This is set by argparse for you,
-        for convenience.
+* Messages - a struct of all the messages that argparse can print to users.
+        You can override this to provide translations. The default is the built-in
+        English version of these messages. Not all strings are supported
+        via this mechnism; it's still a work in progress.
 
-# Command
 
-The following fields can be set in a Command:
-
-* Name - (optional) the name of the program
-
-* Description - (optional) a short description of the program
-
-* Epilog - (optional) this can be a multi-line string. It is shown after all
-    the options in the "--help" output
-
-* Values - the struct that receives the values after parsing
-
-# Values struct
+# Values struct and field names
 
 The Values struct needs to have field names that match either the short
 name or the long name of the Arguments added to a Command.  Because the
@@ -195,10 +211,70 @@ how many values can or must be provided:
 
         type ParserCallback func (Values) error
 
+# Inheritance by Sub-commands
+
+It's often the case that some arguments can be given at any level in the
+command-hierarchy. For example, a "-v"/"--verbose" option could be given for a
+root command, or a sub-command. Instead of having to define the same argument
+at each level, argparse lets you define it at the root level and let the
+sub-command inherit them.
+
+You will probably also want to have your Values structs inherit the values
+through Go's composition.
+
+The examples/two_levels_with_defaults example shows this.  The root options
+have Verbose and Debug, and the OpenOptions and CloseOptions inherit them
+through composition.
+
+
+    type RootOptions struct {
+            Debug   bool
+            Verbose bool
+            Reason  string
+    }
+
+    type OpenOptions struct {
+            RootOptions
+
+            Name string
+    }
+
+    type CloseOptions struct {
+            RootOptions
+
+            Name string
+    }
+
+The root command parser defines the arguments, and also sets their Inherit flag
+to true:
+
+    ap := argparse.New(&argparse.Command{
+            Description: "This is an example program",
+            Values:      opts,
+    })
+
+    ap.Add(&argparse.Argument{
+            Switches: []string{"--debug"},
+            Help:     "Set debug mode",
+            Inherit:  true,
+    })
+
+    ap.Add(&argparse.Argument{
+            Switches: []string{"-v", "--verbose"},
+            Help:     "Set verbose mode",
+            Inherit:  true,
+    })
+
+After that, the parsers for the open and close sub-commands do not need to
+define the arguments. Because the parent command (the root) had these arguments
+with Inherit = true, and because the Values struct for open and close have
+destiation fields for Verbose and Debug, argparse will copy the argument
+definitions from the root command to the open and close commands.
+
 # Notes
 
 If the parser sees "--" on the command-line, it denotes the beginning of a positional
-argument.
+argument, and no other switch arguments will be processed.
 
 # Examples
 
