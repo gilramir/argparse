@@ -92,7 +92,7 @@ To use the Values, you will need to coerce them from the argparse.Values
 interface to the actual struct-poiner that they are:
 
     func DoOpen(cmd *argparse.Command, values argparse.Values) error {
-	opts := values.(*OpenOptions)
+        opts := values.(*OpenOptions)
     }
 
 This of course gives you the values of the arguments, be they default values
