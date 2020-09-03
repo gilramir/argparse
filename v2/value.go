@@ -10,6 +10,13 @@ import (
 	"strconv"
 )
 
+type valueStorageType int
+
+const (
+	Scalar valueStorageType = iota
+	Slice
+)
+
 type valueType interface {
 
 	// Parse the text into the destination value
@@ -25,6 +32,8 @@ type valueType interface {
 	getValue() reflect.Value
 
 	setChoices(m *Messages, itemsIntf interface{}) error
+
+	storageType() valueStorageType
 }
 
 type valueT struct {
@@ -102,6 +111,10 @@ func (self *boolValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	return nil
 }
 
+func (self *boolValueT) storageType() valueStorageType {
+	return Scalar
+}
+
 // =========================================================== string
 
 type stringValueT struct {
@@ -152,6 +165,10 @@ func (self *stringValueT) setChoices(m *Messages, choicesIntf interface{}) error
 		}
 	*/
 	return nil
+}
+
+func (self *stringValueT) storageType() valueStorageType {
+	return Scalar
 }
 
 // =========================================================== int
@@ -214,6 +231,10 @@ func (self *intValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	return nil
 }
 
+func (self *intValueT) storageType() valueStorageType {
+	return Scalar
+}
+
 // =========================================================== float
 
 type floatValueT struct {
@@ -273,6 +294,10 @@ func (self *floatValueT) setChoices(m *Messages, choicesIntf interface{}) error 
 	return nil
 }
 
+func (self *floatValueT) storageType() valueStorageType {
+	return Scalar
+}
+
 // =========================================================== bool slice
 
 type boolSliceValueT struct {
@@ -318,7 +343,7 @@ func (self *boolSliceValueT) parse(m *Messages, text string) error {
 func (self *boolSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	choices, ok := choicesIntf.([]bool)
 	if !ok {
-		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "bool")
 	}
 	self.choices = choices
 	/*
@@ -332,6 +357,10 @@ func (self *boolSliceValueT) setChoices(m *Messages, choicesIntf interface{}) er
 		}
 	*/
 	return nil
+}
+
+func (self *boolSliceValueT) storageType() valueStorageType {
+	return Slice
 }
 
 // =========================================================== string slice
@@ -390,6 +419,10 @@ func (self *stringSliceValueT) setChoices(m *Messages, choicesIntf interface{}) 
 	return nil
 }
 
+func (self *stringSliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
 // =========================================================== int slice
 
 type intSliceValueT struct {
@@ -436,7 +469,7 @@ func (self *intSliceValueT) parse(m *Messages, text string) error {
 func (self *intSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	choices, ok := choicesIntf.([]int)
 	if !ok {
-		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
 	}
 	self.choices = choices
 	/*
@@ -450,6 +483,10 @@ func (self *intSliceValueT) setChoices(m *Messages, choicesIntf interface{}) err
 		}
 	*/
 	return nil
+}
+
+func (self *intSliceValueT) storageType() valueStorageType {
+	return Slice
 }
 
 // =========================================================== float slice
@@ -496,7 +533,7 @@ func (self *floatSliceValueT) parse(m *Messages, text string) error {
 func (self *floatSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	choices, ok := choicesIntf.([]float64)
 	if !ok {
-		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "float64")
 	}
 	self.choices = choices
 	/*
@@ -510,4 +547,8 @@ func (self *floatSliceValueT) setChoices(m *Messages, choicesIntf interface{}) e
 		}
 	*/
 	return nil
+}
+
+func (self *floatSliceValueT) storageType() valueStorageType {
+	return Slice
 }

@@ -201,6 +201,17 @@ func (self *Command) Add(arg *Argument) {
 		} else {
 			panic("Not reached")
 		}
+
+		// If the positional argument accepts more than one value,
+		// the destination must be a slice
+		if arg.NumArgs == -1 && arg.value.storageType() != Slice {
+			panic(fmt.Sprintf(
+				"Cannot use positional argument %s with a non-slice destination variable because NumArgsGlob is %s", arg.PrettyName(), arg.NumArgsGlob))
+		} else if arg.NumArgs > 1 && arg.value.storageType() != Slice {
+			panic(fmt.Sprintf(
+				"Cannot use positional argument %s with a non-slice destination variable because NumArgs is %d", arg.PrettyName(), arg.NumArgs))
+		}
+
 	} else if arg.isSwitch() {
 		if arg.NumArgsGlob != "" {
 			panic(fmt.Sprintf(
@@ -209,6 +220,12 @@ func (self *Command) Add(arg *Argument) {
 		}
 		if arg.NumArgs == 0 {
 			arg.NumArgs = arg.value.defaultSwitchNumArgs()
+		}
+		// If the switch argument accepts more than one value,
+		// the destination must be a slice
+		if arg.NumArgs > 1 && arg.value.storageType() != Slice {
+			panic(fmt.Sprintf(
+				"Cannot use switch argument %s with a non-slice destination variable because NumArgs is %d", arg.PrettyName(), arg.NumArgs))
 		}
 		self.switchArguments = append(self.switchArguments, arg)
 	} else {

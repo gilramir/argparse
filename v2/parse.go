@@ -476,8 +476,10 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		return nil
 	}
 
-	//	log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
-	//		self.nextPositionalArgument, self.numEvaluatedPositionalArguments, self.cmd.numRequiredPositionalArguments, self.cmd.numMaxPositionalArguments)
+	/*
+		log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
+			self.nextPositionalArgument, self.numEvaluatedPositionalArguments, self.cmd.numRequiredPositionalArguments, self.cmd.numMaxPositionalArguments)
+	*/
 
 	// Is there more than enough required positional arguments, but there could be more?
 	if self.cmd.numMaxPositionalArguments == -1 {
@@ -524,7 +526,7 @@ func (self *parserState) statePositionalArgument() stateFunc {
 	} else {
 		arg := self.args[self.pos]
 		// Maybe this is a switch after all the positional args?
-		if len(arg) > 1 && arg[0] == '-' {
+		if len(arg) > 1 && arg[0] == '-' && self.cmd.numMaxPositionalArguments != -1 {
 			return self.stateSwitchArgument
 		} else {
 			self.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))

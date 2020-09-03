@@ -651,3 +651,23 @@ func (s *MySuite) TestSwitchAfterPositional(c *C) {
 	c.Check(opts.Bool1, Equals, true)
 	c.Check(opts.PosString, Equals, "x")
 }
+
+// test switch argument after unbounded number of positional arguments
+
+func (s *MySuite) TestSwitchAfterUnboundedPositional(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
+	})
+
+	argv := []string{"x", "--bool1"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(len(opts.PosStringSlice), Equals, 2)
+	c.Check(opts.PosStringSlice[0], Equals, "x")
+	// "--bool1", as a string, ends up as a positional arg value
+	c.Check(opts.PosStringSlice[1], Equals, "--bool1")
+}
