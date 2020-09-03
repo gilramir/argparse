@@ -476,11 +476,10 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		return nil
 	}
 
-	//        log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
-	//            self.nextPositionalArgument, self.numEvaluatedPositionalArguments, self.numRequiredPositionalArguments, self.numMaxPositionalArguments)
+	//	log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
+	//		self.nextPositionalArgument, self.numEvaluatedPositionalArguments, self.cmd.numRequiredPositionalArguments, self.cmd.numMaxPositionalArguments)
 
 	// Is there more than enough required positional arguments, but there could be more?
-	//if self.numEvaluatedPositionalArguments > self.numRequiredPositionalArguments && self.numMaxPositionalArguments == -1 {
 	if self.cmd.numMaxPositionalArguments == -1 {
 		arg := self.args[self.pos]
 		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
@@ -507,7 +506,10 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		self.pos += 1
 		self.numEvaluatedPositionalArguments++
 		return self.statePositionalArgument
-	} else if self.numEvaluatedPositionalArguments < self.cmd.numMaxPositionalArguments {
+	} else if self.numEvaluatedPositionalArguments < self.cmd.numMaxPositionalArguments ||
+		self.cmd.numMaxPositionalArguments == -1 {
+		// are we still less than the max possible number of positional
+		// arguments? if there is no max, it will be -1
 		arg := self.args[self.pos]
 		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
 		self.emitWithArgument(tokArgument, posArg, posArg.Name)
@@ -521,7 +523,12 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		return self.statePositionalArgument
 	} else {
 		arg := self.args[self.pos]
-		self.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
+		// Maybe this is a switch after all the positional args?
+		if len(arg) > 1 && arg[0] == '-' {
+			return self.stateSwitchArgument
+		} else {
+			self.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
+		}
 		return nil
 	}
 }
