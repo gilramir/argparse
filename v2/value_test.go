@@ -4,6 +4,7 @@ package argparse
 
 import (
 	"reflect"
+        "time"
 
 	. "gopkg.in/check.v1"
 )
@@ -13,6 +14,7 @@ type TestValues struct {
 	String string
 	Int    int
 	Float  float64
+        Duration time.Duration
 }
 
 func (s *MySuite) TestValueBool(c *C) {
@@ -68,7 +70,7 @@ func (s *MySuite) TestValueString(c *C) {
 	ptrValue := reflect.ValueOf(v)
 	structValue := reflect.Indirect(ptrValue)
 	structType := structValue.Type()
-	// Find the pointer to Bool
+	// Find the pointer to String
 	field, found := structType.FieldByName("String")
 	c.Assert(found, Equals, true)
 	valueP := structValue.FieldByIndex(field.Index)
@@ -120,7 +122,7 @@ func (s *MySuite) TestValueInt(c *C) {
 	ptrValue := reflect.ValueOf(v)
 	structValue := reflect.Indirect(ptrValue)
 	structType := structValue.Type()
-	// Find the pointer to Bool
+	// Find the pointer to Int
 	field, found := structType.FieldByName("Int")
 	c.Assert(found, Equals, true)
 	valueP := structValue.FieldByIndex(field.Index)
@@ -174,7 +176,7 @@ func (s *MySuite) TestValueFloat(c *C) {
 	ptrValue := reflect.ValueOf(v)
 	structValue := reflect.Indirect(ptrValue)
 	structType := structValue.Type()
-	// Find the pointer to Bool
+	// Find the pointer to Float
 	field, found := structType.FieldByName("Float")
 	c.Assert(found, Equals, true)
 	valueP := structValue.FieldByIndex(field.Index)
@@ -222,5 +224,66 @@ func (s *MySuite) TestValueFloat(c *C) {
 
 	// Test choice
 	err = parserVal.parse(&DefaultMessages_en, "17.22")
+	c.Check(err, NotNil)
+}
+
+func (s *MySuite) TestValueDuration(c *C) {
+	v := &TestValues{}
+
+	ptrValue := reflect.ValueOf(v)
+	structValue := reflect.Indirect(ptrValue)
+	structType := structValue.Type()
+	// Find the pointer to Duration
+	field, found := structType.FieldByName("Duration")
+	c.Assert(found, Equals, true)
+	valueP := structValue.FieldByIndex(field.Index)
+
+	// Create our valueT
+	parserVal := newDurationValueT(valueP)
+	c.Assert(v.Duration.Seconds(), Equals, 0.0)
+
+	// seenWithoutValue does not work
+	err := parserVal.seenWithoutValue()
+	c.Assert(err, NotNil)
+
+	// set v.Int to some value, and then check that
+        // parsing sets it do a different value
+	v.Duration, err = time.ParseDuration("1s")
+        c.Assert(err, IsNil)
+        c.Assert(v.Duration.Seconds(), Equals, 1.0)
+
+	err = parserVal.parse(&DefaultMessages_en, "30s")
+	c.Assert(err, IsNil)
+	c.Check(v.Duration.Seconds(), Equals, 30.0)
+
+	err = parserVal.parse(&DefaultMessages_en, "5m")
+	c.Assert(err, IsNil)
+	c.Check(v.Duration.Seconds(), Equals, 300.0)
+
+	err = parserVal.parse(&DefaultMessages_en, "not-a-duration")
+	c.Assert(err, NotNil)
+
+	err = parserVal.parse(&DefaultMessages_en, "5")
+	c.Assert(err, NotNil)
+
+        d1min, _ := time.ParseDuration("1m")
+        d2min, _ := time.ParseDuration("2m")
+
+	// Set Choices
+	err = parserVal.setChoices(&DefaultMessages_en, []time.Duration{d1min, d2min})
+	c.Assert(err, IsNil)
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "60s")
+	c.Assert(err, IsNil)
+	c.Check(v.Duration.Seconds(), Equals, 60.0)
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "120s")
+	c.Assert(err, IsNil)
+	c.Check(v.Duration.Seconds(), Equals, 120.0)
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "2s")
 	c.Check(err, NotNil)
 }

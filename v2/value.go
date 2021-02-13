@@ -8,6 +8,7 @@ import (
 	//	"log"
 	"reflect"
 	"strconv"
+        "time"
 )
 
 type valueStorageType int
@@ -295,6 +296,70 @@ func (self *floatValueT) setChoices(m *Messages, choicesIntf interface{}) error 
 }
 
 func (self *floatValueT) storageType() valueStorageType {
+	return Scalar
+}
+
+// =========================================================== time.Duration
+
+type durationValueT struct {
+	valueT
+	choices []time.Duration
+}
+
+func newDurationValueT(valueP reflect.Value) *durationValueT {
+	return &durationValueT{valueT: valueT{valueP}}
+}
+
+func (self *durationValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *durationValueT) seenWithoutValue() error {
+    // TODO - needs to support i18n
+	return errors.New("Need a time duration string")
+}
+
+func (self *durationValueT) parse(m *Messages, text string) error {
+	d, err := time.ParseDuration(text)
+	if err != nil {
+            return fmt.Errorf("Cannot parse \"%s\" as a time duration: %s", text, err)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if d.Nanoseconds() == choice.Nanoseconds() {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	self.value.SetInt(int64(d.Nanoseconds()))
+	return nil
+}
+
+func (self *durationValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	choices, ok := choicesIntf.([]time.Duration)
+	if !ok {
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "time duration string")
+	}
+	self.choices = choices
+	/*
+		self.choices = make([]int, len(choicesIntf))
+		for i, itemIntf := range choicesIntf {
+			item, ok := itemIntf.(int)
+			if ! ok {
+				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
+			}
+			self.choices[i] = item
+		}
+	*/
+	return nil
+}
+
+func (self *durationValueT) storageType() valueStorageType {
 	return Scalar
 }
 

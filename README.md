@@ -5,12 +5,13 @@ It loosely follows the conceptual model of the Python argparse module.
 Highlights:
 
 * You can have nested subcommands.
-* The values for that the command-line options are stored in a struct of your
+* The values for the command-line options are stored in a struct of your
   creation.
 * Argparse can deduce the name of the value field in the struct by looking
-        at the name of the option.
-* Argparse will tell you if a particular option was present or not present,
-        in case you need that information.
+        at the name of the option. Or, you can tell it exactly which field to
+        use.
+* Argparse will tell you if a particular option was present on the command-line
+        or not present, in case you need that information.
 * Options can be inherited by sub-comands, and you need only define them
         once.
 
@@ -21,9 +22,10 @@ See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir
 1. Define the struct that will hold the values from the parse of the command-line.
 
         type MyOptions struct {
-                Debug bool
-                Verbose bool
-                Names []string
+                Count       int
+                Expiration  time.Duration
+                Verbose     bool
+                Names       []string
         }
 
 2. Instantiate an Argparse object with a root Command object. This lets
@@ -37,9 +39,16 @@ you describe your program, and points argparse to the value struct object.
 
 3. Add options to root Command object (via the Argparse object):
 
+        // These are switch arguments
         ap.Add(&argparse.Argument{
-                Switches:       []string{"--debug"},
-                Help:           "Set debug mode",
+                Switches:       []string{"--count"},
+                MetaVar:        "N",
+                Help:           "How many items",
+        })
+
+        ap.Add(&argparse.Argument{
+                Switches:       []string{"--expiration", "-x"},
+                Help:           "How long: #(h|m|s|ms|us|ns)",
         })
 
         ap.Add(&argparse.Argument{
@@ -47,9 +56,11 @@ you describe your program, and points argparse to the value struct object.
                 Help:           "Set verbose mode",
         })
 
+        // This is a positional argument
         ap.Add(&argparse.Argument{
                 Name:           "names",
                 Help:           "Some names passed into the program",
+                // We require one or more names
                 NumArgsGlob:    '+',
         })
 
@@ -64,6 +75,22 @@ of the argument.  If it fails to find a matching field, the code will panic().
 If the user requests help, the help text will be given, and the program exits.
 If the users gives an illegal command-line, the error message is shown, and the
 program exits. Otherwise, on success, the program continues to the next statement.
+
+## Default values
+
+Because you supply the struct that will be used to hold the values seen on the
+command-line, you can set the initial values to anything you want. Those are
+thus the default values.
+
+You can know if the user actually provided an option on the command-line by
+checking the argparse.Command.Seen map, which is filled in after the parsing
+happens. The argparse object's command object, the root of the command tree,
+can be accessed by the "Root" field.
+
+The Seen map uses the name of the struct field as keys.
+For example, this tells you if "--count" was ggiven:
+
+        if ap.Root.Seen["Count"]
 
 ## Sub-commands
 
@@ -89,7 +116,7 @@ a pointer to leaf argparse.Command object that was triggered by the
 command-line, and the Values associated with that Command.
 
 To use the Values, you will need to coerce them from the argparse.Values
-interface to the actual struct-poiner that they are:
+interface to the actual struct-pointer that they are:
 
     func DoOpen(cmd *argparse.Command, values argparse.Values) error {
         opts := values.(*OpenOptions)
@@ -151,7 +178,9 @@ The fields for switch or positional arguments can be of the scalar types:
 
 * int
 
-Or they can be the following sclice types. A slice indicates a switch is accepted
+* time.Duration - parsed by time.ParseDuration()
+
+Or they can be the following slice types. A slice indicates a switch is accepted
 more than one, or a positional argument can be appear more than once.
 
 * []bool

@@ -196,17 +196,21 @@ func argumentVariableName(orig string) string {
 // to this argument.
 func (self *Argument) sanityCheckValueType(dest Values) error {
 
-	ptrValue := reflect.ValueOf(dest)
-	structValue := reflect.Indirect(ptrValue)
-	// TODO - some sanity checks here would be great
-	structType := structValue.Type()
+        // dest is Values, which is an interface{} type.
+        // TypeOf(dest) gives us the dynamic type, the pointer to a
+        // user-defined struct that was given to argparse.
+	userStructPtrValue := reflect.ValueOf(dest)
+
+        // Indirecting points us to the user's struct
+        userStructValue := reflect.Indirect(userStructPtrValue)
+        userStructType := userStructValue.Type()
 
 	var field reflect.StructField
 	var found bool
 	var needles []string
 
 	if self.Dest != "" {
-		field, found = structType.FieldByName(self.Dest)
+		field, found = userStructType.FieldByName(self.Dest)
 		if !found {
 			return errors.New(fmt.Sprintf("Could not find destination field for argument %s, given as %s",
 				self.PrettyName(), self.Dest))
@@ -215,7 +219,7 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		for _, switchName := range self.Switches {
 			structName := argumentVariableName(switchName[1:])
 			needles = append(needles, structName)
-			field, found = structType.FieldByName(structName)
+			field, found = userStructType.FieldByName(structName)
 			if found {
 				self.Dest = field.Name
 				break
@@ -224,7 +228,7 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		if !found && self.Name != "" {
 			structName := argumentVariableName(self.Name)
 			needles = append(needles, structName)
-			field, found = structType.FieldByName(structName)
+			field, found = userStructType.FieldByName(structName)
 			if found {
 				self.Dest = field.Name
 			}
@@ -237,36 +241,45 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 
 	// By using the index of the field within the struct type,
 	// we can get the corresponding struct value
-	valueP := structValue.FieldByIndex(field.Index)
-	typeKind := field.Type.Kind()
+	fieldValue := userStructValue.FieldByIndex(field.Index)
+        fieldType := fieldValue.Type()
+        fieldTypeKind := fieldType.Kind()
+//	typeKind := field.Type.Kind()
+//        fmt.Printf("field %s has type %s but kind type %s\n", self.Dest, field.Type.String(),
+//        typeKind.String())
+	switch fieldType.String() {
+        case "time.Duration":
+            self.value = newDurationValueT(fieldValue)
+            return nil
+        }
 
-	switch typeKind {
+	switch fieldTypeKind {
 	case reflect.Bool:
-		self.value = newBoolValueT(valueP)
+		self.value = newBoolValueT(fieldValue)
 	case reflect.String:
-		self.value = newStringValueT(valueP)
+		self.value = newStringValueT(fieldValue)
 	case reflect.Int:
-		self.value = newIntValueT(valueP)
+		self.value = newIntValueT(fieldValue)
 	case reflect.Float64:
-		self.value = newFloatValueT(valueP)
+		self.value = newFloatValueT(fieldValue)
 	case reflect.Slice:
-		sliceKind := valueP.Type().Elem().Kind()
+		sliceKind := fieldValue.Type().Elem().Kind()
 		switch sliceKind {
 		case reflect.Bool:
-			self.value = newBoolSliceValueT(valueP)
+			self.value = newBoolSliceValueT(fieldValue)
 		case reflect.Int:
-			self.value = newIntSliceValueT(valueP)
+			self.value = newIntSliceValueT(fieldValue)
 		case reflect.String:
-			self.value = newStringSliceValueT(valueP)
+			self.value = newStringSliceValueT(fieldValue)
 		case reflect.Float64:
-			self.value = newFloatSliceValueT(valueP)
+			self.value = newFloatSliceValueT(fieldValue)
 		default:
 			return fmt.Errorf("Argument %s cannot be of type []%s",
 				self.PrettyName(), sliceKind.String())
 		}
 	default:
 		return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
-			self.PrettyName(), typeKind.String()))
+			self.PrettyName(), fieldType.String()))
 	}
 	return nil
 }
