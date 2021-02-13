@@ -8,7 +8,7 @@ import (
 	//	"log"
 	"reflect"
 	"strconv"
-        "time"
+	"time"
 )
 
 type valueStorageType int
@@ -315,14 +315,14 @@ func (self *durationValueT) defaultSwitchNumArgs() int {
 }
 
 func (self *durationValueT) seenWithoutValue() error {
-    // TODO - needs to support i18n
+	// TODO - needs to support i18n
 	return errors.New("Need a time duration string")
 }
 
 func (self *durationValueT) parse(m *Messages, text string) error {
 	d, err := time.ParseDuration(text)
 	if err != nil {
-            return fmt.Errorf("Cannot parse \"%s\" as a time duration: %s", text, err)
+		return fmt.Errorf("Cannot parse \"%s\" as a time duration: %s", text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false

@@ -4,17 +4,17 @@ package argparse
 
 import (
 	"reflect"
-        "time"
+	"time"
 
 	. "gopkg.in/check.v1"
 )
 
 type TestValues struct {
-	Bool   bool
-	String string
-	Int    int
-	Float  float64
-        Duration time.Duration
+	Bool     bool
+	String   string
+	Int      int
+	Float    float64
+	Duration time.Duration
 }
 
 func (s *MySuite) TestValueBool(c *C) {
@@ -247,10 +247,10 @@ func (s *MySuite) TestValueDuration(c *C) {
 	c.Assert(err, NotNil)
 
 	// set v.Int to some value, and then check that
-        // parsing sets it do a different value
+	// parsing sets it do a different value
 	v.Duration, err = time.ParseDuration("1s")
-        c.Assert(err, IsNil)
-        c.Assert(v.Duration.Seconds(), Equals, 1.0)
+	c.Assert(err, IsNil)
+	c.Assert(v.Duration.Seconds(), Equals, 1.0)
 
 	err = parserVal.parse(&DefaultMessages_en, "30s")
 	c.Assert(err, IsNil)
@@ -266,8 +266,8 @@ func (s *MySuite) TestValueDuration(c *C) {
 	err = parserVal.parse(&DefaultMessages_en, "5")
 	c.Assert(err, NotNil)
 
-        d1min, _ := time.ParseDuration("1m")
-        d2min, _ := time.ParseDuration("2m")
+	d1min, _ := time.ParseDuration("1m")
+	d2min, _ := time.ParseDuration("2m")
 
 	// Set Choices
 	err = parserVal.setChoices(&DefaultMessages_en, []time.Duration{d1min, d2min})

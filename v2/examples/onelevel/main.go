@@ -4,17 +4,17 @@ package main
 
 import (
 	"fmt"
-        "time"
+	"time"
 
 	"github.com/gilramir/argparse/v2"
 )
 
 type MyOptions struct {
-	Debug   bool
-        Duration time.Duration
-	Verbose bool
-	Names   []string
-	N       int
+	Debug    bool
+	Duration time.Duration
+	Verbose  bool
+	Names    []string
+	N        int
 }
 
 func main() {
@@ -31,7 +31,8 @@ func main() {
 
 	ap.Add(&argparse.Argument{
 		Switches: []string{"--duration"},
-		Help:     "#(h|m|s|ms|us|ns)",
+		MetaVar:  "#(h|m|s|ms|us|ns)",
+		Help:     "How long do you want to run?",
 	})
 
 	ap.Add(&argparse.Argument{
@@ -58,9 +59,9 @@ func main() {
 	fmt.Printf("Debug is %v\n", opts.Debug)
 	fmt.Printf("N is %v\n", opts.N)
 
-        if ap.Root.Seen["Duration"] {
-            fmt.Printf("Duration: %s\n", opts.Duration.String())
-        }
+	if ap.Root.Seen["Duration"] {
+		fmt.Printf("Duration: %s\n", opts.Duration.String())
+	}
 
 	fmt.Printf("Number of names: %d\n", len(opts.Names))
 	for i := 0; i < len(opts.Names); i++ {

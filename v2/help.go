@@ -5,6 +5,7 @@ package argparse
 import (
 	"github.com/gilramir/consolesize"
 	"os"
+	"strings"
 )
 
 // TODO - the help should show Choices, if available
@@ -56,6 +57,20 @@ func (self *ArgumentParser) helpString(cmd *Command,
 
 	for _, arg := range cmd.switchArguments {
 		argumentStrings := arg.Switches
+		if !arg.isPositional() && arg.NumArgs > 0 {
+			// set a default metavar?
+			var metavar string
+			if arg.MetaVar == "" {
+				// Use the upper-case version of the first switch, with
+				// no dashes at the front.
+				metavar = strings.TrimLeft(strings.ToUpper(arg.Switches[0]), "-")
+			} else {
+				metavar = arg.MetaVar
+			}
+			// Add the metavar to the last one
+			idx := len(argumentStrings) - 1
+			argumentStrings[idx] = argumentStrings[idx] + "=" + metavar
+		}
 		formatter.addOption(argumentStrings, arg.Help)
 	}
 	formatter.addOption(self.HelpSwitches, self.Messages.HelpDescription)

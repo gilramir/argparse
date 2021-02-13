@@ -11,6 +11,7 @@ import (
 type rowData struct {
 	// the various forms of a single option
 	lhs []string
+
 	// the description
 	rhs []*unicodemonowidth.PrintedWord
 }
