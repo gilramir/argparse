@@ -40,11 +40,6 @@ type Argument struct {
 	NumArgs     int
 	NumArgsGlob string
 
-	// Is the user required to provide this argument? This is only
-	// checked for Switch arguments; positional arguments make use of
-	// NumArgs or NumArgsGlob
-	//	Required bool
-
 	// Will a sub-command inherit this argument definition if one is not
 	// defined for that sub-command, *and* if the Value struct for that
 	// Command has a suitable field?

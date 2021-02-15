@@ -91,9 +91,9 @@ thus the default values.
 You can know if the user actually provided an option on the command-line by
 checking the argparse.Command.Seen map, which is filled in after the parsing
 happens. The argparse object's command object, the root of the command tree,
-can be accessed by the "Root" field.
+can be accessed by the **Root** field.
 
-The Seen map uses the name of the struct field as keys.
+The **Seen** map uses the name of the struct field as keys.
 For example, this tells you if "--count" was ggiven:
 
         if ap.Root.Seen["Count"]
@@ -147,14 +147,14 @@ Once you create your ArgumentParser object with the argparse.New() function:
 
 The following fields can bet changed:
 
-* Stdout - an io.Writer to send the output of "--help" to instead of os.Stdout.
+* **Stdout** - an io.Writer to send the output of "--help" to instead of os.Stdout.
 
-* Stderr - an io.Writer to send error messages to instead of os.Stderr.
+* **Stderr** - an io.Writer to send error messages to instead of os.Stderr.
 
-* HelpSwitches - the switches that arpgarse will interpret as a request for help.
+* **HelpSwitches** - the switches that arpgarse will interpret as a request for help.
         The default is: []string{"-h", "--help"}
 
-* Messages - a struct of all the messages that argparse can print to users.
+* **Messages** - a struct of all the messages that argparse can print to users.
         You can override this to provide translations. The default is the built-in
         English version of these messages. Not all strings are supported
         via this mechnism; it's still a work in progress.
@@ -176,51 +176,54 @@ dashes are removed and the field name is expected to be in CamelCase. For exampl
 
 The fields for switch or positional arguments can be of the scalar types:
 
-* bool - For a switch, if the switch is present, the value is set to true.
+* **bool** - For a switch, if the switch is present, the value is set to true.
 
-* string
+* **string**
 
-* float64
+* **float64**
 
-* int
+* **int**
 
-* time.Duration - parsed by time.ParseDuration()
+* **time.Duration** - parsed by time.ParseDuration()
 
-Or they can be the following slice types. A slice indicates a switch is accepted
-more than one, or a positional argument can be appear more than once.
+Or they can be the following slice types. A slice value for a switch argument
+indicates is accepted more than once on the command-line. A slice value
+for a positional argument means the positional argument can be appear more than once.
+In that case, **NumArgs** or **NumArgsGlob**, should be used to define how
+many times it must appear, otherwise argparse still accepts it only once.
 
-* []bool
+* **[]bool**
 
-* []string
+* **[]string**
 
-* []float64
+* **[]float64**
 
-* []int
+* **[]int**
 
-* []time.Duration - each time.Duration is parsed by time.ParseDuration()
+* **[]time.Duration** - each time.Duration is parsed by time.ParseDuration()
 
 # Argument
 
 The following fields can be set in Argument:
 
-* Switches: (optional) All the accepted versions for this switch. Each one must start
+* **Switches**: (optional) All the accepted versions for this switch. Each one must start
         with at least one hyphen.
 
-* Name: (optional) For positional arguments (after all switch arguments, which start with dashes), the name of
+* **Name**: (optional) For positional arguments (after all switch arguments, which start with dashes), the name of
     the argument. While this name is not used by the user when giving the CLI string,
     it is used in the help statement produced by argparse.
 
-* Dest: The name of the field in the Destination where the value will be stored.
+* **Dest**: The name of the field in the Destination where the value will be stored.
     This is only needed if you wish to override the default.
 
-* Description: A description of the argument. Can be multi-line.
+* **Description**: A description of the argument. Can be multi-line.
 
-* MetaVar: The text to use as the name of the value in the --help output.
+* **MetaVar**: The text to use as the name of the value in the --help output.
 
-* NumArgs: (optional) For positional and switch arguments, specifies how many
+* **NumArgs**: (optional) For positional and switch arguments, specifies how many
         arguments _must_ follow the option.
 
-* NumArgsGlob: (optional) For positional arguments only, a string that specifies
+* **NumArgsGlob**: (optional) For positional arguments only, a string that specifies
 how many values can or must be provided:
 
     * "\*" - zero or more
@@ -232,18 +235,18 @@ how many values can or must be provided:
     This is not allowed for switch arguments. If neither NumArgs nor NumArgsGlob is given,
     then NumArgs is set to 1.
 
-* Inherit: If true, then all sub-commands of this Command will automatically inherit a copy
+* **Inherit**: If true, then all sub-commands of this Command will automatically inherit a copy
         of this Argument. This also means that the Value struct must have a field whose name
         and type work for this Argument. If that is not true, then the New() which adds the
         sub-command will panic. if you Add() a new Inherited argument after already adding
         a sub-command with New(), then the Add() will panic.
 
-* Choices: (optional) A slice (even when the field value is an int) which lists the only
+* **Choices**: (optional) A slice (even when the field value is an int) which lists the only
     possible values for the argument value. If a user gives a value that is not in this list,
     an error will be returned to the user. The slice type must match the Value type for
     this Argument: []bool, []string, []int, or []float64
 
-* Function: If this is not nil, then if this is the "triggered" command or sub-command,
+* **Function**: If this is not nil, then if this is the "triggered" command or sub-command,
         then this function is called. The type is:
 
         type ParserCallback func (Values) error
