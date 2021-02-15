@@ -1,11 +1,11 @@
+// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
 package argparse
 
-// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
+// This file implements the type system for argument values.
 
 import (
 	"errors"
 	"fmt"
-	//	"log"
 	"reflect"
 	"strconv"
 	"time"
@@ -46,7 +46,6 @@ func (self *valueT) getValue() reflect.Value {
 	return self.value
 }
 
-// Does this work for slices? Does it matter?
 func (self *valueT) setValue(valueP reflect.Value) {
 	self.value.Set(valueP)
 }
@@ -99,16 +98,6 @@ func (self *boolValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]bool, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(bool)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "bool")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -158,13 +147,6 @@ func (self *stringValueT) setChoices(m *Messages, choicesIntf interface{}) error
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]string, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(string)
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -219,16 +201,6 @@ func (self *intValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]int, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(int)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -252,13 +224,13 @@ func (self *floatValueT) defaultSwitchNumArgs() int {
 }
 
 func (self *floatValueT) seenWithoutValue() error {
-	return errors.New("Need an float value")
+	return errors.New("Need a float value")
 }
 
 func (self *floatValueT) parse(m *Messages, text string) error {
 	f, err := strconv.ParseFloat(text, 64)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to an float", text)
+		return fmt.Errorf("Cannot convert \"%s\" to a float", text)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -282,16 +254,6 @@ func (self *floatValueT) setChoices(m *Messages, choicesIntf interface{}) error 
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "float64")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]float64, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(float64)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "float64")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -346,16 +308,6 @@ func (self *durationValueT) setChoices(m *Messages, choicesIntf interface{}) err
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "time duration string")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]int, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(int)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -411,16 +363,6 @@ func (self *boolSliceValueT) setChoices(m *Messages, choicesIntf interface{}) er
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "bool")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]bool, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(bool)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "bool")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -471,16 +413,6 @@ func (self *stringSliceValueT) setChoices(m *Messages, choicesIntf interface{}) 
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]string, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(string)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -525,7 +457,6 @@ func (self *intSliceValueT) parse(m *Messages, text string) error {
 			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
 		}
 	}
-	//	self.value.SetInt(int64(i))
 	itemValue := reflect.ValueOf(i)
 	self.value.Set(reflect.Append(self.value, itemValue))
 	return nil
@@ -537,16 +468,6 @@ func (self *intSliceValueT) setChoices(m *Messages, choicesIntf interface{}) err
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]int, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(int)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
@@ -570,7 +491,7 @@ func (self *floatSliceValueT) defaultSwitchNumArgs() int {
 }
 
 func (self *floatSliceValueT) seenWithoutValue() error {
-	return errors.New("Need an float value")
+	return errors.New("Need a float value")
 }
 
 func (self *floatSliceValueT) parse(m *Messages, text string) error {
@@ -601,19 +522,65 @@ func (self *floatSliceValueT) setChoices(m *Messages, choicesIntf interface{}) e
 		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "float64")
 	}
 	self.choices = choices
-	/*
-		self.choices = make([]float64, len(choicesIntf))
-		for i, itemIntf := range choicesIntf {
-			item, ok := itemIntf.(float64)
-			if ! ok {
-				return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "float64")
-			}
-			self.choices[i] = item
-		}
-	*/
 	return nil
 }
 
 func (self *floatSliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
+// =========================================================== time.Duration slice
+
+type durationSliceValueT struct {
+	valueT
+	choices []time.Duration
+}
+
+func newDurationSliceValueT(valueP reflect.Value) *durationSliceValueT {
+	return &durationSliceValueT{valueT: valueT{valueP}}
+}
+
+func (self *durationSliceValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *durationSliceValueT) seenWithoutValue() error {
+	return errors.New("Need a time duration value")
+}
+
+func (self *durationSliceValueT) parse(m *Messages, text string) error {
+	d, err := time.ParseDuration(text)
+	if err != nil {
+		return fmt.Errorf("Cannot parse \"%s\" as a time duration: %s", text, err)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if d.Nanoseconds() == choice.Nanoseconds() {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	//	self.value.SetInt(int64(d.Nanoseconds()))
+
+	itemValue := reflect.ValueOf(d)
+	self.value.Set(reflect.Append(self.value, itemValue))
+	return nil
+}
+
+func (self *durationSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	choices, ok := choicesIntf.([]time.Duration)
+	if !ok {
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "time duration string")
+	}
+	self.choices = choices
+	return nil
+}
+
+func (self *durationSliceValueT) storageType() valueStorageType {
 	return Slice
 }

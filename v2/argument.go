@@ -196,14 +196,14 @@ func argumentVariableName(orig string) string {
 // to this argument.
 func (self *Argument) sanityCheckValueType(dest Values) error {
 
-        // dest is Values, which is an interface{} type.
-        // TypeOf(dest) gives us the dynamic type, the pointer to a
-        // user-defined struct that was given to argparse.
+	// dest is Values, which is an interface{} type.
+	// TypeOf(dest) gives us the dynamic type, the pointer to a
+	// user-defined struct that was given to argparse.
 	userStructPtrValue := reflect.ValueOf(dest)
 
-        // Indirecting points us to the user's struct
-        userStructValue := reflect.Indirect(userStructPtrValue)
-        userStructType := userStructValue.Type()
+	// Indirecting points us to the user's struct
+	userStructValue := reflect.Indirect(userStructPtrValue)
+	userStructType := userStructValue.Type()
 
 	var field reflect.StructField
 	var found bool
@@ -242,37 +242,52 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 	// By using the index of the field within the struct type,
 	// we can get the corresponding struct value
 	fieldValue := userStructValue.FieldByIndex(field.Index)
-        fieldType := fieldValue.Type()
-        fieldTypeKind := fieldType.Kind()
-//	typeKind := field.Type.Kind()
-//        fmt.Printf("field %s has type %s but kind type %s\n", self.Dest, field.Type.String(),
-//        typeKind.String())
-	switch fieldType.String() {
-        case "time.Duration":
-            self.value = newDurationValueT(fieldValue)
-            return nil
-        }
+	fieldType := fieldValue.Type()
+	fieldTypeKind := fieldType.Kind()
 
+	switch fieldType.String() {
+	case "time.Duration":
+		self.value = newDurationValueT(fieldValue)
+		return nil
+	}
+
+	// We may want to look at fieldType.String() for all types here,
+	// since we really do want the dynamic type not the concrete type
 	switch fieldTypeKind {
 	case reflect.Bool:
 		self.value = newBoolValueT(fieldValue)
+		return nil
 	case reflect.String:
 		self.value = newStringValueT(fieldValue)
+		return nil
 	case reflect.Int:
 		self.value = newIntValueT(fieldValue)
+		return nil
 	case reflect.Float64:
 		self.value = newFloatValueT(fieldValue)
+		return nil
 	case reflect.Slice:
+		sliceType := fieldValue.Type().Elem()
+		switch sliceType.String() {
+		case "time.Duration":
+			self.value = newDurationSliceValueT(fieldValue)
+			return nil
+		}
+
 		sliceKind := fieldValue.Type().Elem().Kind()
 		switch sliceKind {
 		case reflect.Bool:
 			self.value = newBoolSliceValueT(fieldValue)
+			return nil
 		case reflect.Int:
 			self.value = newIntSliceValueT(fieldValue)
+			return nil
 		case reflect.String:
 			self.value = newStringSliceValueT(fieldValue)
+			return nil
 		case reflect.Float64:
 			self.value = newFloatSliceValueT(fieldValue)
+			return nil
 		default:
 			return fmt.Errorf("Argument %s cannot be of type []%s",
 				self.PrettyName(), sliceKind.String())
@@ -281,6 +296,7 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
 			self.PrettyName(), fieldType.String()))
 	}
+	panic("Should not reach here.")
 	return nil
 }
 
@@ -314,116 +330,3 @@ func (self *Argument) isSwitch() bool {
 func (self *Argument) isPositional() bool {
 	return !self.isSwitch()
 }
-
-/*
-
-func (self *Argument) getChoicesString() string {
-	switch self.typeKind {
-	case reflect.Bool:
-		panic("not reached")
-
-	case reflect.Int:
-		return nonQuotedListString(self.Choices)
-
-	case reflect.String:
-		return quotedListString(self.Choices)
-
-	case reflect.Slice:
-		switch self.sliceKind {
-		case reflect.String:
-			return quotedListString(self.Choices)
-		default:
-			panic("Should not reach")
-		}
-	default:
-		panic("Should not reach")
-	}
-	return ""
-}
-
-func nonQuotedListString(choices []string) string {
-	var text string
-
-	// Special handling for the 2-choice case
-	if len(choices) == 2 {
-		return choices[0] + " and " + choices[1]
-	}
-
-	for i := 0; i < len(choices); i++ {
-		if i == 0 {
-			text += choices[i]
-		} else if i == len(choices)-1 {
-			text += ", and " + choices[i]
-		} else {
-			text += ", " + choices[i]
-		}
-	}
-	return text
-}
-
-func quotedListString(choices []string) string {
-	var text string
-
-	// Special handling for the 2-choice case
-	if len(choices) == 2 {
-		return "'" + choices[0] + "' and '" + choices[1] + "'"
-	}
-
-	for i := 0; i < len(choices); i++ {
-		if i == 0 {
-			text += "'" + choices[i] + "'"
-		} else if i == len(choices)-1 {
-			text += ", and '" + choices[i] + "'"
-		} else {
-			text += ", '" + choices[i] + "'"
-		}
-	}
-	return text
-}
-
-func (self *Argument) getMetavar() string {
-	if self.Metavar != "" {
-		return self.Metavar
-	} else if self.Name != "" {
-		return strings.ToUpper(self.Name)
-	} else if len(self.Switches) > 0 {
-		firstSwitch := strings.ToUpper(self.Switches[0])
-		if firstSwitch[1] == '-' {
-			return strings.ToUpper(firstSwitch[2:])
-		} else {
-			return strings.ToUpper(firstSwitch[1:])
-		}
-	} else {
-		panic("Should not reach")
-	}
-	return ""
-}
-
-func (self *Argument) helpString() string {
-	var text string
-
-	if len(self.Switches) > 0 {
-		text += strings.Join(self.Switches, ",")
-	}
-	if self.NumArgs != numArgs0 {
-		text += "=" + self.getMetavar()
-	}
-	return text
-}
-
-func (self *Argument) helpStrings() []string {
-	strings := make([]string, 0, len(self.Switches))
-
-	for i, switchText := range self.Switches {
-		text := switchText
-		if self.NumArgs != numArgs0 {
-			text += "=" + self.getMetavar()
-		}
-		if i < len(self.Switches) - 1 {
-			text = text + ","
-		}
-		strings = append(strings, text)
-	}
-	return strings
-}
-*/

@@ -2,6 +2,8 @@
 package argparse
 
 import (
+	"time"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -22,10 +24,11 @@ type PTestOptions struct {
 	PosString string
 	PosFloat  float64
 
-	PosBoolSlice   []bool
-	PosIntSlice    []int
-	PosStringSlice []string
-	PosFloatSlice  []float64
+	PosBoolSlice     []bool
+	PosIntSlice      []int
+	PosStringSlice   []string
+	PosFloatSlice    []float64
+	PosDurationSlice []time.Duration
 }
 
 func createPTestParser() (*PTestOptions, *ArgumentParser) {
@@ -532,6 +535,45 @@ func (s *MySuite) TestRootPositionalFloatSlice2(c *C) {
 	c.Check(opts.PosFloatSlice, DeepEquals, []float64{101.2, 202.4})
 
 	c.Check(ap.Root.Seen["PosFloatSlice"], Equals, true)
+}
+
+// ====================================================== time.Duration slice positional
+
+func (s *MySuite) TestRootPositionalTimeDurationSlice1(c *C) {
+	opts, ap := createPTestParser()
+
+	// No NumArgs or NumArgsGlob is legal; == 1
+	ap.Add(&Argument{
+		Name: "PosDurationSlice",
+	})
+
+	argv := []string{"1m"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Assert(len(opts.PosDurationSlice), Equals, 1)
+	c.Check(opts.PosDurationSlice[0].Seconds(), Equals, 60.0)
+
+	c.Check(ap.Root.Seen["PosDurationSlice"], Equals, true)
+}
+
+func (s *MySuite) TestRootPositionalTimeDurationSlice2(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:    "PosDurationSlice",
+		NumArgs: 2,
+	})
+
+	argv := []string{"2m", "1h"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Assert(len(opts.PosDurationSlice), Equals, 2)
+	c.Check(opts.PosDurationSlice[0].Seconds(), Equals, 120.0)
+	c.Check(opts.PosDurationSlice[1].Seconds(), Equals, 3600.0)
+
+	c.Check(ap.Root.Seen["PosDurationSlice"], Equals, true)
 }
 
 // ====================================================== NumArgsGlob +

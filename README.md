@@ -68,13 +68,19 @@ When each Argument is added, the argparse logic looks in the Command's
 Value struct for a field name that matches either a "Switches" or "Name" value
 of the argument.  If it fails to find a matching field, the code will panic().
 
-4. Finally, perform the parse.
+4. Perform the parse.
 
         ap.Parse()
 
 If the user requests help, the help text will be given, and the program exits.
 If the users gives an illegal command-line, the error message is shown, and the
 program exits. Otherwise, on success, the program continues to the next statement.
+
+5. Use the values.
+
+        if opts.Verbose {
+                // do something
+
 
 ## Default values
 
@@ -97,7 +103,7 @@ For example, this tells you if "--count" was ggiven:
 Sub-commands are also supported. You add a Command as a child of its parent
 Command, and then can add arguments to that new Command
 
-        // open
+        // Add "open" as a sub-command ot the root parser "ap".
         open_ap := ap.New(&argparse.Command{
                 Name:        "open",
                 Description: "Open something",
@@ -191,6 +197,8 @@ more than one, or a positional argument can be appear more than once.
 
 * []int
 
+* []time.Duration - each time.Duration is parsed by time.ParseDuration()
+
 # Argument
 
 The following fields can be set in Argument:
@@ -209,7 +217,7 @@ The following fields can be set in Argument:
 
 * MetaVar: The text to use as the name of the value in the --help output.
 
-* NumArgs: (optional) For positional and switch arguments, speficies how many
+* NumArgs: (optional) For positional and switch arguments, specifies how many
         arguments _must_ follow the option.
 
 * NumArgsGlob: (optional) For positional arguments only, a string that specifies
