@@ -3,7 +3,7 @@
 package argparse
 
 import (
-	//	"fmt"
+	//		"fmt"
 	"github.com/gilramir/unicodemonowidth"
 	"strings"
 )
@@ -34,13 +34,6 @@ func (s *helpFormatter) addOption(lhs []string, rhs string) {
 
 func (s *helpFormatter) produceString(width int) string {
 	s.analyze(width)
-
-	/*
-		fmt.Println("leftPadding", s.leftPadding)
-		fmt.Println("optionWidth", s.optionWidth)
-		fmt.Println("middlePadding", s.middlePadding)
-		fmt.Println("descriptionWidth", s.descriptionWidth)
-	*/
 
 	textRows := s.makeOptionRows(width)
 
@@ -163,19 +156,27 @@ func (s *helpFormatter) analyze(width int) {
 	// Is the width so narrow as to be impossible? The absolute minimum
 	// needed is enough for the lhs single min, the rhs single max, and 1 space between
 	absMinNeeded := lhsSingleMin + 1 + rhsSingleMax
+	//	fmt.Println("absMinNeeded", absMinNeeded)
 	if width < absMinNeeded {
+		//		fmt.Println("* width < absMinNeeded")
 		// It just won't fit. Don't do any formatting
 		s.leftPadding = 0
 		s.optionWidth = lhsCombinedMax
 		s.middlePadding = 1
 		s.descriptionWidth = -1
-		return
+	} else {
+		// Start with the ideal
+		//		fmt.Println("* width >= absMinNeeded")
+		s.optionWidth = lhsCombinedMax
+		s.leftPadding = width / 10
+		s.middlePadding = width / 20
+		rightPadding := width / 40
+		s.descriptionWidth = width - lhsCombinedMax - s.leftPadding - s.middlePadding - rightPadding
 	}
-
-	// Start with the ideal
-	s.optionWidth = lhsCombinedMax
-	s.leftPadding = width / 10
-	s.middlePadding = width / 20
-	rightPadding := width / 40
-	s.descriptionWidth = width - lhsCombinedMax - s.leftPadding - s.middlePadding - rightPadding
+	/*
+		fmt.Println("leftPadding", s.leftPadding)
+		fmt.Println("optionWidth", s.optionWidth)
+		fmt.Println("middlePadding", s.middlePadding)
+		fmt.Println("descriptionWdith", s.descriptionWidth)
+	*/
 }

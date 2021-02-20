@@ -47,8 +47,10 @@ func main() {
 	})
 
 	ap.Add(&argparse.Argument{
-		Name:        "names",
-		Help:        "Some names passed into the program",
+		Name: "names",
+		Help: `Some names passed into the program. This is
+                an example of a very long help message so that the word wrap
+                can be checked.`,
 		NumArgsGlob: "+",
 	})
 

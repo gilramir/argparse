@@ -46,7 +46,7 @@ func (self *ArgumentParser) helpString(cmd *Command,
 
 	width := 80
 	wh, err := consolesize.GetConsoleWidthHeight()
-	if err != nil {
+	if err == nil {
 		width = wh.Width
 	}
 
