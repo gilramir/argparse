@@ -12,6 +12,7 @@ type PTestOptions struct {
 	Bool2   bool
 	Int1    int
 	Int2    int
+	Int64   int64
 	String1 string
 	String2 string
 	Float1  float64
@@ -48,6 +49,9 @@ func createPTestParser() (*PTestOptions, *ArgumentParser) {
 	})
 	ap.Add(&Argument{
 		Switches: []string{"--int2"},
+	})
+	ap.Add(&Argument{
+		Switches: []string{"--int64"},
 	})
 	ap.Add(&Argument{
 		Switches: []string{"--string1"},
@@ -174,6 +178,36 @@ func (s *MySuite) TestRootSwitchesInt3(c *C) {
 	c.Check(opts.Int1, Equals, 500)
 
 	c.Check(ap.Root.Seen["Int1"], Equals, true)
+	c.Check(ap.Root.Seen["Int2"], Equals, false)
+}
+
+// ====================================================== int64
+
+func (s *MySuite) TestRootSwitchesInt64Pos(c *C) {
+	opts, ap := createPTestParser()
+
+	argv := []string{"--int64", "500"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.Int64, Equals, int64(500))
+
+	c.Check(ap.Root.Seen["Int64"], Equals, true)
+	c.Check(ap.Root.Seen["Int1"], Equals, false)
+	c.Check(ap.Root.Seen["Int2"], Equals, false)
+}
+
+func (s *MySuite) TestRootSwitchesInt64Neg(c *C) {
+	opts, ap := createPTestParser()
+
+	argv := []string{"--int64", "-999"}
+	results := ap.ParseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.Int64, Equals, int64(-999))
+
+	c.Check(ap.Root.Seen["Int64"], Equals, true)
+	c.Check(ap.Root.Seen["Int1"], Equals, false)
 	c.Check(ap.Root.Seen["Int2"], Equals, false)
 }
 

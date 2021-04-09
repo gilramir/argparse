@@ -182,7 +182,7 @@ The fields for switch or positional arguments can be of the scalar types:
 
 * **float64**
 
-* **int**
+* **int**, **int64**
 
 * **time.Duration** - parsed by time.ParseDuration()
 
@@ -198,7 +198,7 @@ many times it must appear, otherwise argparse still accepts it only once.
 
 * **[]float64**
 
-* **[]int**
+* **[]int**, **[]int64**
 
 * **[]time.Duration** - each time.Duration is parsed by time.ParseDuration()
 

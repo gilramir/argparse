@@ -255,6 +255,9 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 	case reflect.String:
 		self.value = newStringValueT(fieldValue)
 		return nil
+	case reflect.Int64:
+		self.value = newInt64ValueT(fieldValue)
+		return nil
 	case reflect.Int:
 		self.value = newIntValueT(fieldValue)
 		return nil
@@ -273,6 +276,9 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		switch sliceKind {
 		case reflect.Bool:
 			self.value = newBoolSliceValueT(fieldValue)
+			return nil
+		case reflect.Int64:
+			self.value = newInt64SliceValueT(fieldValue)
 			return nil
 		case reflect.Int:
 			self.value = newIntSliceValueT(fieldValue)

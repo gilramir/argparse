@@ -95,7 +95,7 @@ func (self *boolValueT) parse(m *Messages, text string) error {
 func (self *boolValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	choices, ok := choicesIntf.([]bool)
 	if !ok {
-		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "bool")
 	}
 	self.choices = choices
 	return nil
@@ -198,13 +198,66 @@ func (self *intValueT) parse(m *Messages, text string) error {
 func (self *intValueT) setChoices(m *Messages, choicesIntf interface{}) error {
 	choices, ok := choicesIntf.([]int)
 	if !ok {
-		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "string")
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
 	}
 	self.choices = choices
 	return nil
 }
 
 func (self *intValueT) storageType() valueStorageType {
+	return Scalar
+}
+
+// =========================================================== int64
+
+type int64ValueT struct {
+	valueT
+	choices []int64
+}
+
+func newInt64ValueT(valueP reflect.Value) *int64ValueT {
+	return &int64ValueT{valueT: valueT{valueP}}
+}
+
+func (self *int64ValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *int64ValueT) seenWithoutValue() error {
+	return errors.New("Need an int64 value")
+}
+
+func (self *int64ValueT) parse(m *Messages, text string) error {
+	i, err := strconv.ParseInt(text, 10, 64)
+	if err != nil {
+		return fmt.Errorf("Cannot convert \"%s\" to an int64", text)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if i == choice {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	self.value.SetInt(i)
+	return nil
+}
+
+func (self *int64ValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	choices, ok := choicesIntf.([]int64)
+	if !ok {
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int64")
+	}
+	self.choices = choices
+	return nil
+}
+
+func (self *int64ValueT) storageType() valueStorageType {
 	return Scalar
 }
 
@@ -472,6 +525,60 @@ func (self *intSliceValueT) setChoices(m *Messages, choicesIntf interface{}) err
 }
 
 func (self *intSliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
+// =========================================================== int64 slice
+
+type int64SliceValueT struct {
+	valueT
+	choices []int64
+}
+
+func newInt64SliceValueT(valueP reflect.Value) *int64SliceValueT {
+	return &int64SliceValueT{valueT: valueT{valueP}}
+}
+
+func (self *int64SliceValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *int64SliceValueT) seenWithoutValue() error {
+	return errors.New("Need an int64 value")
+}
+
+func (self *int64SliceValueT) parse(m *Messages, text string) error {
+	i, err := strconv.ParseInt(text, 10, 64)
+	if err != nil {
+		return fmt.Errorf("Cannot convert \"%s\" to an int64", text)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if i == choice {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	itemValue := reflect.ValueOf(i)
+	self.value.Set(reflect.Append(self.value, itemValue))
+	return nil
+}
+
+func (self *int64SliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	choices, ok := choicesIntf.([]int64)
+	if !ok {
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int64")
+	}
+	self.choices = choices
+	return nil
+}
+
+func (self *int64SliceValueT) storageType() valueStorageType {
 	return Slice
 }
 

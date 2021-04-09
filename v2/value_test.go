@@ -13,6 +13,7 @@ type TestValues struct {
 	Bool     bool
 	String   string
 	Int      int
+	Int64    int64
 	Float    float64
 	Duration time.Duration
 }
@@ -164,6 +165,60 @@ func (s *MySuite) TestValueInt(c *C) {
 	err = parserVal.parse(&DefaultMessages_en, "5")
 	c.Assert(err, IsNil)
 	c.Check(v.Int, Equals, 5)
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "17")
+	c.Check(err, NotNil)
+}
+
+func (s *MySuite) TestValueInt64(c *C) {
+	v := &TestValues{}
+
+	ptrValue := reflect.ValueOf(v)
+	structValue := reflect.Indirect(ptrValue)
+	structType := structValue.Type()
+	// Find the pointer to Int64
+	field, found := structType.FieldByName("Int64")
+	c.Assert(found, Equals, true)
+	valueP := structValue.FieldByIndex(field.Index)
+
+	// Create our valueT
+	parserVal := newInt64ValueT(valueP)
+	c.Assert(v.Int64, Equals, int64(0))
+
+	// seenWithoutValue does not work
+	err := parserVal.seenWithoutValue()
+	c.Assert(err, NotNil)
+
+	// parse works
+	v.Int64 = 64
+	err = parserVal.parse(&DefaultMessages_en, "100")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(100))
+
+	err = parserVal.parse(&DefaultMessages_en, "-55")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(-55))
+
+	err = parserVal.parse(&DefaultMessages_en, "abc")
+	c.Assert(err, NotNil)
+
+	err = parserVal.parse(&DefaultMessages_en, "5.7")
+	c.Assert(err, NotNil)
+
+	// Set Choices
+	err = parserVal.setChoices(&DefaultMessages_en, []int64{3, 5})
+	c.Assert(err, IsNil)
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "3")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(3))
+
+	// Test choice
+	err = parserVal.parse(&DefaultMessages_en, "5")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(5))
 
 	// Test choice
 	err = parserVal.parse(&DefaultMessages_en, "17")
