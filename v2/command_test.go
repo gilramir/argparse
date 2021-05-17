@@ -98,7 +98,7 @@ func (s *MySuite) TestSubCommandRoot(c *C) {
 	opts, ap, _, _ := createCTestParser()
 
 	argv := []string{"--verbose"}
-	results := ap.ParseArgv(argv)
+	results := ap.parseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
 	c.Check(opts.root.Verbose, Equals, true)
@@ -111,7 +111,7 @@ func (s *MySuite) TestSubCommandSubAPre(c *C) {
 
 	// --verbose is before the sub-command "sub-a"
 	argv := []string{"--verbose", "sub-a", "--string2", "foo"}
-	results := ap.ParseArgv(argv)
+	results := ap.parseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
 
@@ -129,7 +129,7 @@ func (s *MySuite) TestSubCommandSubAPost(c *C) {
 
 	// --verbose is after the sub-command "sub-a"
 	argv := []string{"sub-a", "--verbose", "--string2", "foo"}
-	results := ap.ParseArgv(argv)
+	results := ap.parseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
 

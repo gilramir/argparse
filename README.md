@@ -121,6 +121,12 @@ run when the sub-command is chosen. The callback accepts two arguments:
 a pointer to leaf argparse.Command object that was triggered by the
 command-line, and the Values associated with that Command.
 
+Since sub-commands have callback functions, it's usually better to
+perform the parse with ParseAndExit. In that way, the program exits
+after completing the sub-commands callback function.
+
+        ap.ParseAndExit()
+
 To use the Values, you will need to coerce them from the argparse.Values
 interface to the actual struct-pointer that they are:
 

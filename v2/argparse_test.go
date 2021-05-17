@@ -19,7 +19,7 @@ func (s *MySuite) TestChooseHelpLongAtRoot(c *C) {
 	})
 
 	argv := []string{"--help"}
-	results := ap.ParseArgv(argv)
+	results := ap.parseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
 	c.Check(results.helpRequested, Equals, true)
@@ -35,7 +35,7 @@ func (s *MySuite) TestChooseHelpShortAtRoot(c *C) {
 	})
 
 	argv := []string{"-h"}
-	results := ap.ParseArgv(argv)
+	results := ap.parseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
 	c.Check(results.helpRequested, Equals, true)
@@ -52,7 +52,7 @@ func (s *MySuite) TestChooseHelpCustomAtRoot(c *C) {
 	ap.HelpSwitches = []string{"--custom-help"}
 
 	argv := []string{"--custom-help"}
-	results := ap.ParseArgv(argv)
+	results := ap.parseArgv(argv)
 
 	c.Assert(results.parseError, IsNil)
 	c.Check(results.helpRequested, Equals, true)

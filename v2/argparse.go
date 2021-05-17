@@ -63,7 +63,7 @@ func (self *ArgumentParser) New(c *Command) *Command {
 // On a request for help (-h), print the help and exit with os.Exit(0).
 // On a user input error, print the error message and exit with os.Exit(1).
 func (self *ArgumentParser) Parse() {
-	results := self.ParseArgv(os.Args[1:])
+	results := self.parseArgv(os.Args[1:])
 
 	cmd := results.triggeredCommand
 
@@ -85,96 +85,18 @@ func (self *ArgumentParser) Parse() {
 	}
 }
 
-/*
-func (self *ArgumentParser) ParseOsArgs() (Values) {
-	// Sanity check
-*/
-/*
-	if self.root.Function != nil {
-		panic fmt.Sprintf("ParseOsArgv can't be used with a root ArgumentParser "\
-			"that has a callback Function. Use ExecuteOsArgv instead.")
-	}
-*/
-/*
-	return self.ParseArgv( os.Args[1:] )
+// Parse the os.Argv arguments, call the Function for the triggered
+// Command, and then exit. An error returned from the Function causes us
+// to exit with 1, otherwise, exit with 0.
+// On a request for help (-h), print the help and exit with os.Exit(0).
+// On a user input error, print the error message and exit with os.Exit(1).
+func (self *ArgumentParser) ParseAndExit() {
+	self.Parse()
+	os.Exit(0)
 }
-*/
 
-/*
-	// Is there a function?
-	if results.triggeredParser.Function == nil {
-		return nil
-	}
-
-	err := results.triggeredParser.Function(nil)
-	switch err.(type) {
-	case ParseError:
-		fmt.Fprintf(pt.Stderr, "\n%s\n",
-			results.triggeredParser.helpString(pt.rootParser, 0))
-	}
-	return err
-}
-*/
-
-func (self *ArgumentParser) ParseArgv(argv []string) *parseResults {
+func (self *ArgumentParser) parseArgv(argv []string) *parseResults {
 	parser := parserState{}
 	results := parser.runParser(self, argv)
 	return results
 }
-
-/*
-	valueStack := make([]Values, 0, 1)
-	err := self.root.startParseArgv(self, argv, &valueStack)
-
-	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-	return valueStack[len(valueStack)-1]
-}*/
-/*
-func (self *ArgumentParser) CommandParseOsArgs() (*Command, Values, error) {
-	// Sanity check
-	/*
-	if self.root.Function != nil {
-		panic fmt.Sprintf("ParseOsArgv can't be used with a root ArgumentParser "\
-			"that has a callback Function. Use ExecuteOsArgv instead.")
-	}
-	return self.ParseArgv( os.Args[1:] )
-}
-
-func (self *ArgumentParser) CommandParseArgv(argv []string) (*Command, Values, error) {
-	// Sanity check
-	/*
-	if self.root.Function != nil {
-		panic fmt.Sprintf("ParseArgv can't be used with a root ArgumentParser "\
-			"that has a callback Function. Use ExecuteArgv instead.")
-	}
-
-	valueStack := make([]Values, 0, 1)
-	err := self.root.startParseArgv(self, argv, &valueStack)
-	return valueStack[len(valueStack)-1], err
-}
-*/
-
-/*
-func (self *ArgumentParser) ExecuteOsArgs() (error) {
-	// Sanity check
-	if self.root.Function == nil {
-		panic fmt.Sprintf("ExecuteOsArgs can't be used with a root ArgumentParser "\
-			"that has no callback Function. Use ParseOsArgs instead.")
-	}
-	return self.ExecuteArgv( os.Args[1:] )
-}
-
-func (self *ArgumentParser) ExeuteArgv(argv []string) (error) {
-	// Sanity check
-	if self.root.Function == nil {
-		panic fmt.Sprintf("ExecuteArgv can't be used with a root ArgumentParser "\
-			"that has no callback Function. Use ParseArgv instead.")
-	}
-
-	valueStack := make([]OptionValues, 0, 1)
-	return self.root.startParseArgv(self, argv, &valueStack)
-}
-*/
