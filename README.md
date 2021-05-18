@@ -8,37 +8,61 @@ Highlights:
 * The values for the command-line options are stored in a struct of your
   creation.
 * Argparse can deduce the name of the value field in the struct by looking
-        at the name of the option. Or, you can tell it exactly which field to
-        use.
+  at the name of the option. Or, you can tell it exactly which field to
+  use.
 * Argparse will tell you if a particular option was present on the command-line
-        or not present, in case you need that information.
+  or not present, in case you need that information.
 * Options can be inherited by sub-comands, and you need only define them
-        once.
+  once.
 
 See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse/v2)
 
 # Usage
 
+## Single-level commands
+
+The argument parser shown in this example produces this help message for the
+user:
+
+```
+$ example1 -h
+Example 1
+
+This is an example program
+
+               --count=N                         How many items
+               --expiration,-x=EXPIRATION        How long: #(h|m|s|ms|us|ns)
+               -v,--verbose                      Set verbose mode
+               -h,--help                         See this list of options
+               names[ ... ]                      Some names passed into the program
+```
+
 1. Define the struct that will hold the values from the parse of the command-line.
 
+```
         type MyOptions struct {
                 Count       int
                 Expiration  time.Duration
                 Verbose     bool
                 Names       []string
         }
+```
 
 2. Instantiate an Argparse object with a root Command object. This lets
 you describe your program, and points argparse to the value struct object.
 
+```
         opts := &MyOptions{}
         ap := argparse.New(&argparse.Command{
+                Name:           "Example 1",
                 Description:    "This is an example program",
                 Values:         opts,
         })
+```
 
 3. Add options to root Command object (via the Argparse object):
 
+```
         // These are switch arguments
         ap.Add(&argparse.Argument{
                 Switches:       []string{"--count"},
@@ -61,8 +85,9 @@ you describe your program, and points argparse to the value struct object.
                 Name:           "names",
                 Help:           "Some names passed into the program",
                 // We require one or more names
-                NumArgsGlob:    '+',
+                NumArgsGlob:    "+",
         })
+```
 
 When each Argument is added, the argparse logic looks in the Command's
 Value struct for a field name that matches either a "Switches" or "Name" value
@@ -78,31 +103,20 @@ program exits. Otherwise, on success, the program continues to the next statemen
 
 5. Use the values.
 
+```
         if opts.Verbose {
-                // do something
+                fmt.Printf("Verbose mode is on!\n")
+        }
+        fmt.Printf("Count is %d\n", opts.Count)
+```
 
-
-## Default values
-
-Because you supply the struct that will be used to hold the values seen on the
-command-line, you can set the initial values to anything you want. Those are
-thus the default values.
-
-You can know if the user actually provided an option on the command-line by
-checking the argparse.Command.Seen map, which is filled in after the parsing
-happens. The argparse object's command object, the root of the command tree,
-can be accessed by the **Root** field.
-
-The **Seen** map uses the name of the struct field as keys.
-For example, this tells you if "--count" was ggiven:
-
-        if ap.Root.Seen["Count"]
 
 ## Sub-commands
 
 Sub-commands are also supported. You add a Command as a child of its parent
 Command, and then can add arguments to that new Command
 
+```
         // Add "open" as a sub-command ot the root parser "ap".
         open_ap := ap.New(&argparse.Command{
                 Name:        "open",
@@ -115,6 +129,7 @@ Command, and then can add arguments to that new Command
                 Switches: []string{"-r", "--reason"},
                 Help:     "Why you are opening this",
         })
+```
 
 With sub-commands, the Function argument is a callback to your code, to
 run when the sub-command is chosen. The callback accepts two arguments:
@@ -130,17 +145,49 @@ after completing the sub-commands callback function.
 To use the Values, you will need to coerce them from the argparse.Values
 interface to the actual struct-pointer that they are:
 
+```
     func DoOpen(cmd *argparse.Command, values argparse.Values) error {
         opts := values.(*OpenOptions)
+        // Now you can use opts
     }
+```
 
-This of course gives you the values of the arguments, be they default values
-or values given by the user. The Command object has a Seen map which
-tells you if a command was actually given by the user (if it was "seen" by the
-parser). You give it the string name of the field in the Values struct:
 
-        cmd.Seen["Verbose"]
+## Default values and "Seen" arguments
 
+Because you supply the struct that will be used to hold the values seen on the
+command-line, you can initialialize values to anything you want. Those are
+thus the default values.
+
+Sometimes you may also wish to know if the user actually set the value on the
+command-line, even if the value is the same as the default value.
+You can know if the user actually provided an option on the command-line by
+checking the argparse.Command.Seen map, which is filled in after the parsing
+happens.
+
+The function callbacks, used for sub-commands, provid the argparse.Command
+to your code. But if you're using a single-level parser, with no callback.
+the Command object is the **Root** field of the ArgumentParser object.
+
+The **Seen** map uses the name of the struct field as keys.
+For example, this tells you if "--count" was given, by using the **Root**
+field of the ArgumentParser object:
+
+        if ap.Root.Seen["Count"]
+
+But if this were code in a Function callback for a subcommand, it would simply
+use the **Command** object passed to the function:
+
+```
+    func DoOpen(cmd *argparse.Command, values argparse.Values) error {
+        opts := values.(*OpenOptions)
+        // Now you can use opts
+
+        if cmd.Seen["Count"] {
+            // do something
+        }
+    }
+```
 
 # Translation
 
@@ -227,7 +274,7 @@ The following fields can be set in Argument:
 * **MetaVar**: The text to use as the name of the value in the --help output.
 
 * **NumArgs**: (optional) For positional and switch arguments, specifies how many
-        arguments _must_ follow the option.
+  arguments _must_ follow the option.
 
 * **NumArgsGlob**: (optional) For positional arguments only, a string that specifies
 how many values can or must be provided:
@@ -242,18 +289,18 @@ how many values can or must be provided:
     then NumArgs is set to 1.
 
 * **Inherit**: If true, then all sub-commands of this Command will automatically inherit a copy
-        of this Argument. This also means that the Value struct must have a field whose name
-        and type work for this Argument. If that is not true, then the New() which adds the
-        sub-command will panic. if you Add() a new Inherited argument after already adding
-        a sub-command with New(), then the Add() will panic.
+  of this Argument. This also means that the Value struct must have a field whose name
+  and type work for this Argument. If that is not true, then the New() which adds the
+  sub-command will panic. if you Add() a new Inherited argument after already adding
+  a sub-command with New(), then the Add() will panic.
 
 * **Choices**: (optional) A slice (even when the field value is an int) which lists the only
-    possible values for the argument value. If a user gives a value that is not in this list,
-    an error will be returned to the user. The slice type must match the Value type for
-    this Argument: []bool, []string, []int, or []float64
+  possible values for the argument value. If a user gives a value that is not in this list,
+  an error will be returned to the user. The slice type must match the Value type for
+  this Argument: []bool, []string, []int, or []float64
 
 * **Function**: If this is not nil, then if this is the "triggered" command or sub-command,
-        then this function is called. The type is:
+  then this function is called. The type is:
 
         type ParserCallback func (Values) error
 
@@ -268,7 +315,7 @@ sub-command inherit them.
 You will probably also want to have your Values structs inherit the values
 through Go's composition.
 
-The examples/two_levels_with_defaults example shows this.  The root options
+The examples/two\_levels\_with\_defaults example shows this.  The root options
 have Verbose and Debug, and the OpenOptions and CloseOptions inherit them
 through composition.
 
