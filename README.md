@@ -1,5 +1,6 @@
 # argparse
-Argparse is a Go module that helps you parse command-line arguments.
+Argparse is a Go module that makes it easy to write the command-line parsing
+part of your program.
 It loosely follows the conceptual model of the Python argparse module.
 
 Highlights:
@@ -12,8 +13,9 @@ Highlights:
   use.
 * Argparse will tell you if a particular option was present on the command-line
   or not present, in case you need that information.
-* Options can be inherited by sub-comands, and you need only define them
+* Options can be inherited by sub-comands, so you need only define them
   once.
+* The built-in help strings are translatable.
 
 See [the GoDoc documentation for argparse](https://godoc.org/github.com/gilramir/argparse/v2)
 
