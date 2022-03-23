@@ -677,7 +677,7 @@ func (s *MySuite) TestNumArgsGlobPlusThree(c *C) {
 
 // ====================================================== NumArgsGlob: *
 
-func (s *MySuite) TestRootPositionalVerbatim0(c *C) {
+func (s *MySuite) TestRootPositionalStar0(c *C) {
 	_, ap := createPTestParser()
 
 	ap.Add(&Argument{
@@ -691,7 +691,7 @@ func (s *MySuite) TestRootPositionalVerbatim0(c *C) {
 	c.Assert(results.parseError, NotNil)
 }
 
-func (s *MySuite) TestRootPositionalVerbatim1(c *C) {
+func (s *MySuite) TestRootPositionalStar1(c *C) {
 	opts, ap := createPTestParser()
 
 	ap.Add(&Argument{
@@ -706,6 +706,31 @@ func (s *MySuite) TestRootPositionalVerbatim1(c *C) {
 	c.Check(opts.PosStringSlice, DeepEquals, []string{"-a", "-b", "-c"})
 
 	c.Check(ap.Root.Seen["PosStringSlice"], Equals, true)
+}
+
+// ============================================= NumArgsGlob: ? of string
+
+func (s *MySuite) TestRootPositionalOptionalString0(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosString",
+		NumArgsGlob: "?",
+	})
+
+	argv := []string{"--bool1"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(ap.Root.Seen["PosString"], Equals, false)
+	c.Check(opts.PosString, Equals, "")
+
+	argv = []string{"--bool1", "target"}
+	results = ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(ap.Root.Seen["PosString"], Equals, true)
+	c.Check(opts.PosString, Equals, "target")
 }
 
 // ======================================================
@@ -729,7 +754,6 @@ func (s *MySuite) TestSwitchAfterPositional(c *C) {
 }
 
 // test switch argument after unbounded number of positional arguments
-
 func (s *MySuite) TestSwitchAfterUnboundedPositional(c *C) {
 	opts, ap := createPTestParser()
 

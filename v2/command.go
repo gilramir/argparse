@@ -182,29 +182,34 @@ func (self *Command) Add(arg *Argument) {
 		if arg.NumArgs == 0 && arg.NumArgsGlob == "" {
 			arg.NumArgs = 1
 		}
+		var canBeMoreThanOne bool
 		if arg.NumArgs > 0 {
 			self.numRequiredPositionalArguments += arg.NumArgs
 			self.numMaxPositionalArguments += arg.NumArgs
+			canBeMoreThanOne = true
 		} else if arg.NumArgsGlob == "+" {
 			// + : one or more
 			arg.NumArgs = -1
 			self.numRequiredPositionalArguments++
 			self.numMaxPositionalArguments = -1
+			canBeMoreThanOne = true
 		} else if arg.NumArgsGlob == "?" {
 			// ? : zero or one
 			arg.NumArgs = -1
 			self.numMaxPositionalArguments++
+			canBeMoreThanOne = false
 		} else if arg.NumArgsGlob == "*" {
 			// * : zero or more
 			arg.NumArgs = -1
 			self.numMaxPositionalArguments = -1
+			canBeMoreThanOne = true
 		} else {
 			panic("Not reached")
 		}
 
 		// If the positional argument accepts more than one value,
 		// the destination must be a slice
-		if arg.NumArgs == -1 && arg.value.storageType() != Slice {
+		if arg.NumArgs == -1 && canBeMoreThanOne && arg.value.storageType() != Slice {
 			panic(fmt.Sprintf(
 				"Cannot use positional argument %s with a non-slice destination variable because NumArgsGlob is %s", arg.PrettyName(), arg.NumArgsGlob))
 		} else if arg.NumArgs > 1 && arg.value.storageType() != Slice {
