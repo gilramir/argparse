@@ -3,16 +3,17 @@
 package argparse
 
 import (
-	"github.com/gilramir/consolesize"
 	"os"
 	"strings"
+
+	"github.com/gilramir/consolesize"
+	"github.com/gilramir/unicodemonowidth"
 )
 
 // TODO - the help should show Choices, if available
 
 // This should honor width too
-func (self *ArgumentParser) usageString(cmd *Command,
-	ancestorCommands []*Command) string {
+func (self *ArgumentParser) usageString(cmd *Command, width int, ancestorCommands []*Command) string {
 	var usage string
 
 	// Show the names of the command(s)
@@ -32,9 +33,14 @@ func (self *ArgumentParser) usageString(cmd *Command,
 		}
 	}
 
+	usage += "\n\n"
 	// Do we have a description to report
 	if cmd.Description != "" {
-		usage += "\n\n" + cmd.Description + "\n"
+		descWords := unicodemonowidth.WhitespaceSplit(cmd.Description)
+		descRows := unicodemonowidth.WrapPrintedWords(descWords, width)
+		for _, row := range descRows {
+			usage += row + "\n"
+		}
 	}
 
 	return usage
@@ -50,7 +56,7 @@ func (self *ArgumentParser) helpString(cmd *Command,
 		width = wh.Width
 	}
 
-	text = self.usageString(cmd, ancestorCommands) + "\n"
+	text = self.usageString(cmd, width, ancestorCommands) + "\n"
 	formatter := &helpFormatter{}
 
 	// Switch arguments
@@ -107,6 +113,22 @@ func (self *ArgumentParser) helpString(cmd *Command,
 			subFormatter.addOption([]string{subCommand.Name}, subCommand.Description)
 		}
 		text += subFormatter.produceString(width)
+	}
+
+	// Do we have an Epilog to report?
+	if cmd.Epilog != "" {
+		indent := ""
+		if width > 40 {
+			// Indent 4, with 4 spaces on the RHS too.
+			indent = "    "
+			width -= 8
+		}
+		epilogWords := unicodemonowidth.WhitespaceSplit(cmd.Epilog)
+		epilogRows := unicodemonowidth.WrapPrintedWords(epilogWords, width)
+		text += "\n\n"
+		for _, row := range epilogRows {
+			text += indent + row + "\n"
+		}
 	}
 
 	return text

@@ -22,6 +22,9 @@ func main() {
 	ap := argparse.New(&argparse.Command{
 		Description: "This is an example program",
 		Values:      opts,
+		Epilog: `By the way, a very long paragraph can be added at the end,
+                to be shown after all the options and sub-commands. It's useful to provide
+                longer info to the user without making the argument descriptions overly long.`,
 	})
 
 	ap.Add(&argparse.Argument{

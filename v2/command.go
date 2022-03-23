@@ -15,11 +15,13 @@ type Command struct {
 	// The name of the program or subcommand
 	Name string
 
+	// This can be a multi-line string that is shown
+	// after after the command name, and before the options.
 	Description string
 
 	// This can be a multi-line string that is shown
 	// after all the options in the --help output
-	//Epilog string
+	Epilog string
 
 	// The struct that will receive the values after parsing
 	Values Values
