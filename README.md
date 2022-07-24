@@ -253,7 +253,8 @@ many times it must appear, otherwise argparse still accepts it only once.
 
 * **[]float64**
 
-* **[]int**, **[]int64**
+* **[]int**, **[]int64** - these can be given in decimal, or in hex if they
+  start with "0x", as in, "0xff"
 
 * **[]time.Duration** - each time.Duration is parsed by time.ParseDuration()
 

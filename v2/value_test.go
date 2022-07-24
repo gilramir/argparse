@@ -142,6 +142,11 @@ func (s *MySuite) TestValueInt(c *C) {
 	c.Assert(err, IsNil)
 	c.Check(v.Int, Equals, 100)
 
+	// hex
+	err = parserVal.parse(&DefaultMessages_en, "0xff")
+	c.Assert(err, IsNil)
+	c.Check(v.Int, Equals, 255)
+
 	err = parserVal.parse(&DefaultMessages_en, "-55")
 	c.Assert(err, IsNil)
 	c.Check(v.Int, Equals, -55)
@@ -195,6 +200,11 @@ func (s *MySuite) TestValueInt64(c *C) {
 	err = parserVal.parse(&DefaultMessages_en, "100")
 	c.Assert(err, IsNil)
 	c.Check(v.Int64, Equals, int64(100))
+
+	// hex
+	err = parserVal.parse(&DefaultMessages_en, "0xffff")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(65535))
 
 	err = parserVal.parse(&DefaultMessages_en, "-55")
 	c.Assert(err, IsNil)
