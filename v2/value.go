@@ -1,5 +1,6 @@
-// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
 package argparse
+
+// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
 
 // This file implements the type system for argument values.
 

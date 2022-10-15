@@ -1,8 +1,11 @@
 package argparse
 
+// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
+
 import (
 	"errors"
 	"fmt"
+
 	//	"log"
 	"strings"
 )

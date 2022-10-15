@@ -1,11 +1,12 @@
-// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
-
 package argparse
+
+// Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
 
 import (
 	//		"fmt"
-	"github.com/gilramir/unicodemonowidth"
 	"strings"
+
+	"github.com/gilramir/unicodemonowidth"
 )
 
 type rowData struct {

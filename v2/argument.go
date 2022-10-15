@@ -1,10 +1,13 @@
 package argparse
 
+// Copyright (c) 2017 by Gilbert Ramirez <gram@alumni.rice.edu>
+
 import (
 	"errors"
 	"fmt"
 	"io"
 	"reflect"
+
 	//	"strconv"
 	"strings"
 )
