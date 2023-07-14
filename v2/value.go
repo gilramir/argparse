@@ -174,38 +174,28 @@ func (self *intValueT) seenWithoutValue() error {
 	return errors.New("Need an int value")
 }
 
-func (self *intValueT) parse(m *Messages, text string) error {
-	var i int
-	var err error
-
+func text_to_int64(text string) (int64, error) {
 	// hex?
 	if len(text) > 2 && text[0:2] == "0x" {
 		text = text[2:]
-		var i64 int64
-		i64, err = strconv.ParseInt(text, 16, 64)
-		if err == nil {
-			i = int(i64)
-		}
+		return strconv.ParseInt(text, 16, 64)
 	} else if len(text) > 2 && text[0:2] == "0o" {
 		// octal with "0o"?
 		text = text[2:]
-		var i64 int64
-		i64, err = strconv.ParseInt(text, 8, 64)
-		if err == nil {
-			i = int(i64)
-		}
+		return strconv.ParseInt(text, 8, 64)
 	} else if len(text) > 1 && text[0:1] == "0" {
 		// octal with "0"?
 		text = text[1:]
-		var i64 int64
-		i64, err = strconv.ParseInt(text, 8, 64)
-		if err == nil {
-			i = int(i64)
-		}
+		return strconv.ParseInt(text, 8, 64)
 	} else {
 		// decimal
-		i, err = strconv.Atoi(text)
+		return strconv.ParseInt(text, 10, 64)
 	}
+}
+
+func (self *intValueT) parse(m *Messages, text string) error {
+	i64, err := text_to_int64(text)
+	i := int(i64)
 	if err != nil {
 		return fmt.Errorf("Cannot convert \"%s\" to an integer: %w", text, err)
 	}
@@ -258,27 +248,9 @@ func (self *int64ValueT) seenWithoutValue() error {
 }
 
 func (self *int64ValueT) parse(m *Messages, text string) error {
-	var i int64
-	var err error
-
-	// hex?
-	if len(text) > 2 && text[0:2] == "0x" {
-		text = text[2:]
-		i, err = strconv.ParseInt(text, 16, 64)
-	} else if len(text) > 2 && text[0:2] == "0o" {
-		// octal with "0o"?
-		text = text[2:]
-		i, err = strconv.ParseInt(text, 8, 64)
-	} else if len(text) > 1 && text[0:1] == "0" {
-		// octal with "0"?
-		text = text[1:]
-		i, err = strconv.ParseInt(text, 8, 64)
-	} else {
-		// decimal
-		i, err = strconv.ParseInt(text, 10, 64)
-	}
+	i, err := text_to_int64(text)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to an int64: %w", text, err)
+		return fmt.Errorf("Cannot convert \"%s\" to an integer: %w", text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -541,24 +513,11 @@ func (self *intSliceValueT) seenWithoutValue() error {
 }
 
 func (self *intSliceValueT) parse(m *Messages, text string) error {
-	var i int
-	var err error
-
-	// hex?
-	if len(text) > 2 && text[0:2] == "0x" {
-		text = text[2:]
-		var i64 int64
-		i64, err = strconv.ParseInt(text, 16, 64)
-		if err == nil {
-			i = int(i64)
-		}
-	} else {
-		// decimal
-		i, err = strconv.Atoi(text)
-	}
+	i64, err := text_to_int64(text)
 	if err != nil {
 		return fmt.Errorf("Cannot convert \"%s\" to an integer: %w", text, err)
 	}
+	i := int(i64)
 	if len(self.choices) > 0 {
 		ok := false
 		for _, choice := range self.choices {
@@ -609,17 +568,7 @@ func (self *int64SliceValueT) seenWithoutValue() error {
 }
 
 func (self *int64SliceValueT) parse(m *Messages, text string) error {
-	var i int64
-	var err error
-
-	// hex?
-	if len(text) > 2 && text[0:2] == "0x" {
-		text = text[2:]
-		i, err = strconv.ParseInt(text, 16, 64)
-	} else {
-		// decimal
-		i, err = strconv.ParseInt(text, 10, 64)
-	}
+	i, err := text_to_int64(text)
 	if err != nil {
 		return fmt.Errorf("Cannot convert \"%s\" to an int64: %w", text, err)
 	}
