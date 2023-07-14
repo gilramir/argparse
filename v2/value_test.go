@@ -147,6 +147,16 @@ func (s *MySuite) TestValueInt(c *C) {
 	c.Assert(err, IsNil)
 	c.Check(v.Int, Equals, 255)
 
+	// octal with "0o"
+	err = parserVal.parse(&DefaultMessages_en, "0o776")
+	c.Assert(err, IsNil)
+	c.Check(v.Int, Equals, 510)
+
+	// octal with "0"
+	err = parserVal.parse(&DefaultMessages_en, "0775")
+	c.Assert(err, IsNil)
+	c.Check(v.Int, Equals, 509)
+
 	err = parserVal.parse(&DefaultMessages_en, "-55")
 	c.Assert(err, IsNil)
 	c.Check(v.Int, Equals, -55)
@@ -205,6 +215,16 @@ func (s *MySuite) TestValueInt64(c *C) {
 	err = parserVal.parse(&DefaultMessages_en, "0xffff")
 	c.Assert(err, IsNil)
 	c.Check(v.Int64, Equals, int64(65535))
+
+	// octal with "0o"
+	err = parserVal.parse(&DefaultMessages_en, "0o776")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(510))
+
+	// octal with "0"
+	err = parserVal.parse(&DefaultMessages_en, "0775")
+	c.Assert(err, IsNil)
+	c.Check(v.Int64, Equals, int64(509))
 
 	err = parserVal.parse(&DefaultMessages_en, "-55")
 	c.Assert(err, IsNil)
