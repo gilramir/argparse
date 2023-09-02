@@ -5,17 +5,17 @@ It loosely follows the conceptual model of the Python argparse module.
 
 Highlights:
 
-* You can have nested subcommands.
-* The values for the command-line options are stored in a struct of your
-  creation.
-* Argparse can deduce the name of the value field in the struct by looking
-  at the name of the option. Or, you can tell it exactly which field to
-  use.
-* Argparse will tell you if a particular option was present on the command-line
-  or not present, in case you need that information.
-* Options can be inherited by sub-comands, so you need only define them
-  once.
-* The built-in help strings are translatable.
+  - You can have nested subcommands.
+  - The values for the command-line options are stored in a struct of your
+    creation.
+  - Argparse can deduce the name of the value field in the struct by looking
+    at the name of the option. Or, you can tell it exactly which field to
+    use.
+  - Argparse will tell you if a particular option was present on the command-line
+    or not present, in case you need that information.
+  - Options can be inherited by sub-comands, so you need only define them
+    once.
+  - The built-in help strings are translatable.
 */
 package argparse
 
@@ -82,6 +82,11 @@ func (self *ArgumentParser) New(c *Command) *Command {
 // On a request for help (-h), print the help and exit with os.Exit(0).
 // On a user input error, print the error message and exit with os.Exit(1).
 func (self *ArgumentParser) Parse() {
+	self.parseRunFunction(true)
+}
+
+// Parse and run the function.
+func (self *ArgumentParser) parseRunFunction(shouldReturn bool) {
 	results := self.parseArgv(os.Args[1:])
 
 	cmd := results.triggeredCommand
@@ -101,6 +106,19 @@ func (self *ArgumentParser) Parse() {
 			fmt.Fprintln(self.Stderr, err.Error())
 			os.Exit(1)
 		}
+		// Success
+		if shouldReturn {
+			return
+		} else {
+			os.Exit(0)
+		}
+	}
+	// The chosen command had no function to run!
+	if !shouldReturn {
+		// Print the usage to stderr, and exit with non-0.
+		helpString := self.helpString(cmd, results.ancestorCommands)
+		fmt.Fprintln(self.Stderr, helpString)
+		os.Exit(1)
 	}
 }
 
@@ -110,8 +128,7 @@ func (self *ArgumentParser) Parse() {
 // On a request for help (-h), print the help and exit with os.Exit(0).
 // On a user input error, print the error message and exit with os.Exit(1).
 func (self *ArgumentParser) ParseAndExit() {
-	self.Parse()
-	os.Exit(0)
+	self.parseRunFunction(false)
 }
 
 func (self *ArgumentParser) parseArgv(argv []string) *parseResults {

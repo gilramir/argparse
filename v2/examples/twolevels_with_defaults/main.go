@@ -137,5 +137,5 @@ func build_argparse_close(parent_ap *argparse.ArgumentParser) {
 func main() {
 
 	ap := build_argparse()
-	ap.Parse()
+	ap.ParseAndExit()
 }
