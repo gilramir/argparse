@@ -104,7 +104,6 @@ func (self *ArgumentParser) helpString(cmd *Command,
 	text += formatter.produceString(width)
 
 	// Sub-commands
-
 	if len(cmd.subCommands) > 0 {
 		text += "\n" + self.Messages.SubCommands + ":\n\n"
 
@@ -123,9 +122,14 @@ func (self *ArgumentParser) helpString(cmd *Command,
 			indent = "    "
 			width -= 8
 		}
+                // Don't split the epilog; treat it as raw.
+                /*
 		epilogWords := unicodemonowidth.WhitespaceSplit(cmd.Epilog)
 		epilogRows := unicodemonowidth.WrapPrintedWords(epilogWords, width)
 		text += "\n\n"
+                */
+                text += "\n"
+                epilogRows := strings.Split(cmd.Epilog, "\n")
 		for _, row := range epilogRows {
 			text += indent + row + "\n"
 		}
