@@ -23,6 +23,8 @@ type PTestOptions struct {
 	PosBool2 bool
 
 	PosInt    int
+	PosInt1   int
+	PosInt2   int
 	PosString string
 	PosFloat  float64
 
@@ -771,4 +773,225 @@ func (s *MySuite) TestSwitchAfterUnboundedPositional(c *C) {
 	c.Check(opts.PosStringSlice[0], Equals, "x")
 	// "--bool1", as a string, ends up as a positional arg value
 	c.Check(opts.PosStringSlice[1], Equals, "--bool1")
+}
+
+// ======================================================
+
+// Test positional arguments after a ? option
+func (s *MySuite) TestOptionalPositional01(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	argv := []string{"22"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+}
+
+// Test positional arguments after a ? option, with no input
+func (s *MySuite) TestOptionalPositional01a(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	argv := []string{}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 0)
+}
+
+// ? followed by required
+func (s *MySuite) TestOptionalPositional02(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name: "PosInt1",
+	})
+
+	argv := []string{"22", "33"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosInt1, Equals, 33)
+}
+
+// ? followed by required, with only 1 input
+func (s *MySuite) TestOptionalPositional02a(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name: "PosInt1",
+	})
+
+	argv := []string{"22"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosInt1, Equals, 0)
+}
+
+// ? followed by required, required
+func (s *MySuite) TestOptionalPositional03(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name: "PosInt1",
+	})
+
+	ap.Add(&Argument{
+		Name: "PosInt2",
+	})
+
+	argv := []string{"22", "33", "44"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosInt1, Equals, 33)
+	c.Check(opts.PosInt2, Equals, 44)
+}
+
+// ?? followed by required
+func (s *MySuite) TestOptionalPositional04(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosInt1",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name: "PosInt2",
+	})
+
+	argv := []string{"22", "33", "44"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosInt1, Equals, 33)
+	c.Check(opts.PosInt2, Equals, 44)
+}
+
+// 3 ? arguments
+func (s *MySuite) TestOptionalPositional05(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosInt1",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosInt2",
+		NumArgsGlob: "?",
+	})
+
+	argv := []string{"22", "33", "44"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosInt1, Equals, 33)
+	c.Check(opts.PosInt2, Equals, 44)
+}
+
+// 2 ? arguments with leftover input
+func (s *MySuite) TestOptionalPositional06(c *C) {
+	_, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosInt1",
+		NumArgsGlob: "?",
+	})
+
+	argv := []string{"22", "33", "44"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, NotNil)
+}
+
+// ? argument followed by *
+func (s *MySuite) TestOptionalPositional07(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosIntSlice",
+		NumArgsGlob: "*",
+	})
+
+	argv := []string{"22", "33", "44"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosIntSlice, DeepEquals, []int{33, 44})
+}
+
+// ? argument followed by +
+func (s *MySuite) TestOptionalPositional08(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:        "PosInt",
+		NumArgsGlob: "?",
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosIntSlice",
+		NumArgsGlob: "+",
+	})
+
+	argv := []string{"22", "33", "44"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosInt, Equals, 22)
+	c.Check(opts.PosIntSlice, DeepEquals, []int{33, 44})
 }

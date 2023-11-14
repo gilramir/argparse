@@ -290,7 +290,10 @@ how many values can or must be provided:
     * "?" - one or zero
 
     This is not allowed for switch arguments. If neither NumArgs nor NumArgsGlob is given,
-    then NumArgs is set to 1.
+    then NumArgs is set to 1. A "?" NumArgsGlob argument may be followed by
+    other NumArgsGlob arguments; but a "*" or "+" NumArgsGlob argument may not
+    be followed by another any other argument, as there are an unlimited number
+    of arguments for them.
 
 * **Inherit**: If true, then all sub-commands of this Command will automatically inherit a copy
   of this Argument. This also means that the Value struct must have a field whose name

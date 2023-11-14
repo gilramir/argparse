@@ -503,10 +503,11 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		arg := self.args[self.pos]
 		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
 		self.emitWithArgument(tokArgument, posArg, posArg.Name)
-		// If only one arg is allowed, then go to the next positional argument
-		if posArg.NumArgs == 1 {
+		// If only one arg is allowed (max), then go to the next positional argument
+		if posArg.NumArgs == 1 || posArg.NumArgsGlob == "?" {
 			self.nextPositionalArgument++
 		}
+		//		log.Printf("A: using posArg #%d: %+v", self.nextPositionalArgument, posArg)
 		self.emitWithValue(tokValue, arg)
 		self.pos += 1
 		self.numEvaluatedPositionalArguments++
@@ -518,10 +519,11 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		arg := self.args[self.pos]
 		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
 		self.emitWithArgument(tokArgument, posArg, posArg.Name)
-		// If only one arg is allowed, then go to the next positional argument
-		if posArg.NumArgsGlob == "?" {
+		// If only one arg is allowed (max), then go to the next positional argument
+		if posArg.NumArgs == 1 || posArg.NumArgsGlob == "?" {
 			self.nextPositionalArgument++
 		}
+		//		log.Printf("B: using posArg #%d: %+v", self.nextPositionalArgument, posArg)
 		self.emitWithValue(tokValue, arg)
 		self.pos += 1
 		self.numEvaluatedPositionalArguments++

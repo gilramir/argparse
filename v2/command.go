@@ -170,11 +170,13 @@ func (self *Command) Add(arg *Argument) {
 	if arg.isPositional() {
 		if len(self.positionalArguments) > 0 {
 			prevArg := self.positionalArguments[len(self.positionalArguments)-1]
-			if prevArg.NumArgsGlob == "*" || prevArg.NumArgsGlob == "+" ||
-				prevArg.NumArgsGlob == "?" {
+			// Can't add a positional argument after * or +, as
+			// we don't know when those argument lists will end.
+			// But we can add after a ?; it either exists or not.
+			if prevArg.NumArgsGlob == "*" || prevArg.NumArgsGlob == "+" {
 				panic(fmt.Sprintf(
 					"Cannot add a positional argument after argument "+
-						"'%s' which has a variable number of values.",
+						"'%s' which has an unlimited number of values.",
 					prevArg.PrettyName()))
 			}
 		}
