@@ -1050,3 +1050,31 @@ func (s *MySuite) TestRequired02(c *C) {
 	c.Check(opts.PosStringSlice[0], Equals, "44")
 	c.Check(opts.PosStringSlice[1], Equals, "55")
 }
+
+// Test 2 required arguments after a switch argument, giving the switch twice
+func (s *MySuite) TestRequired03(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Switches: []string{"--strings"},
+		Dest:     "StringSlice",
+		NumArgs:  2,
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
+	})
+
+	argv := []string{"--strings", "22", "33", "--strings", "44", "55", "x"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(len(opts.StringSlice), Equals, 4)
+	c.Check(opts.StringSlice[0], Equals, "22")
+	c.Check(opts.StringSlice[1], Equals, "33")
+	c.Check(opts.StringSlice[2], Equals, "44")
+	c.Check(opts.StringSlice[3], Equals, "55")
+	c.Check(len(opts.PosStringSlice), Equals, 1)
+	c.Check(opts.PosStringSlice[0], Equals, "x")
+}
