@@ -63,6 +63,7 @@ type parserState struct {
 	nextPositionalArgument          int
 	numEvaluatedPositionalArguments int
 
+	needNValues int
 	// when we need to keep track of an *Argument across state transitions
 	//	stickyArg *Argument
 }
@@ -297,10 +298,18 @@ func (self *parserState) stateMultipleValues() stateFunc {
 	if self.pos == len(self.args) {
 		return nil
 	}
+	if self.needNValues < 1 {
+		panic("Should not reach")
+	}
 
 	self.emitWithValue(tokValue, self.args[self.pos])
 	self.pos += 1
-	return self.stateMultipleValues
+	self.needNValues--
+	if self.needNValues > 0 {
+		return self.stateMultipleValues
+	} else {
+		return self.stateArgument
+	}
 }
 
 func (self *parserState) stateSwitchArgument() stateFunc {
@@ -445,7 +454,8 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 		} else if arg.NumArgs == 1 {
 			return self.stateOneValue
 		} else if arg.NumArgs > 1 {
-			panic("not implemented yet")
+			self.needNValues = arg.NumArgs
+			return self.stateMultipleValues
 		} else if arg.NumArgs == -1 {
 			panic("not reached")
 		} else {
@@ -462,7 +472,10 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 			self.pos += 1
 			return self.stateArgument
 		} else if arg.NumArgs > 1 {
-			panic("not implemented yet")
+			self.emitWithValue(tokValue, rhs)
+			self.pos += 1
+			self.needNValues = arg.NumArgs - 1
+			return self.stateMultipleValues
 		} else if arg.NumArgs == -1 {
 			panic("not reached")
 		} else {

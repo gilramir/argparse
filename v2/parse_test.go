@@ -9,15 +9,16 @@ import (
 )
 
 type PTestOptions struct {
-	Bool1   bool
-	Bool2   bool
-	Int1    int
-	Int2    int
-	Int64   int64
-	String1 string
-	String2 string
-	Float1  float64
-	Float2  float64
+	Bool1       bool
+	Bool2       bool
+	Int1        int
+	Int2        int
+	Int64       int64
+	String1     string
+	String2     string
+	Float1      float64
+	Float2      float64
+	StringSlice []string
 
 	PosBool1 bool
 	PosBool2 bool
@@ -994,4 +995,58 @@ func (s *MySuite) TestOptionalPositional08(c *C) {
 	c.Assert(results.parseError, IsNil)
 	c.Check(opts.PosInt, Equals, 22)
 	c.Check(opts.PosIntSlice, DeepEquals, []int{33, 44})
+}
+
+// Test 2 required arguments after a switch argument
+func (s *MySuite) TestRequired01(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Switches: []string{"--strings"},
+		Dest:     "StringSlice",
+		NumArgs:  2,
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
+	})
+
+	argv := []string{"--strings", "22", "33", "44", "55"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(len(opts.StringSlice), Equals, 2)
+	c.Check(opts.StringSlice[0], Equals, "22")
+	c.Check(opts.StringSlice[1], Equals, "33")
+	c.Check(len(opts.PosStringSlice), Equals, 2)
+	c.Check(opts.PosStringSlice[0], Equals, "44")
+	c.Check(opts.PosStringSlice[1], Equals, "55")
+}
+
+// Test 2 required arguments after a switch argument with =
+func (s *MySuite) TestRequired02(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Switches: []string{"--strings"},
+		Dest:     "StringSlice",
+		NumArgs:  2,
+	})
+
+	ap.Add(&Argument{
+		Name:        "PosStringSlice",
+		NumArgsGlob: "+",
+	})
+
+	argv := []string{"--strings=22", "33", "44", "55"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(len(opts.StringSlice), Equals, 2)
+	c.Check(opts.StringSlice[0], Equals, "22")
+	c.Check(opts.StringSlice[1], Equals, "33")
+	c.Check(len(opts.PosStringSlice), Equals, 2)
+	c.Check(opts.PosStringSlice[0], Equals, "44")
+	c.Check(opts.PosStringSlice[1], Equals, "55")
 }

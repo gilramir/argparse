@@ -278,7 +278,7 @@ The following fields can be set in Argument:
 * **MetaVar**: The text to use as the name of the value in the --help output.
 
 * **NumArgs**: (optional) For positional and switch arguments, specifies how many
-  arguments _must_ follow the option.
+  arguments _must_ follow the option. The value type must be a slice.
 
 * **NumArgsGlob**: (optional) For positional arguments only, a string that specifies
 how many values can or must be provided:
@@ -293,7 +293,9 @@ how many values can or must be provided:
     then NumArgs is set to 1. A "?" NumArgsGlob argument may be followed by
     other NumArgsGlob arguments; but a "*" or "+" NumArgsGlob argument may not
     be followed by another any other argument, as there are an unlimited number
-    of arguments for them.
+    of arguments for them. If "*" or "+" are used, the value type must be a
+    slice.
+
 
 * **Inherit**: If true, then all sub-commands of this Command will automatically inherit a copy
   of this Argument. This also means that the Value struct must have a field whose name
