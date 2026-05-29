@@ -4,12 +4,29 @@ package argparse
 
 import (
 	"fmt"
+	"strings"
 	//	"log"
 )
 
 type Values interface{}
 
 type ParserCallback func(*Command, Values) error
+
+// mutexGroup is a set of switch arguments of which at most one may be given
+// on the command-line. If required is true, exactly one must be given.
+type mutexGroup struct {
+	required bool
+	args     []*Argument
+}
+
+// prettyNames returns the group's argument names joined for an error message.
+func (self *mutexGroup) prettyNames() string {
+	names := make([]string, len(self.args))
+	for i, arg := range self.args {
+		names[i] = arg.PrettyName()
+	}
+	return strings.Join(names, ", ")
+}
 
 type Command struct {
 	// The name of the program or subcommand
@@ -40,6 +57,7 @@ type Command struct {
 	subCommands         []*Command
 	switchArguments     []*Argument
 	positionalArguments []*Argument
+	mutexGroups         []*mutexGroup
 
 	numRequiredPositionalArguments int
 	// -1 if there is no max (i.e., if the final NumArgsGlob is "*" or "+")
@@ -266,4 +284,29 @@ func (self *Command) Add(arg *Argument) {
 	} else {
 		panic(fmt.Sprintf("Cannot determine argument type for %v", arg))
 	}
+}
+
+// AddMutuallyExclusive adds the given switch arguments to this Command and
+// records them as a mutually-exclusive group: at most one of them may appear on
+// the command-line. If required is true, exactly one must appear. The group's
+// requiredness is set here, so the individual arguments must not set Required.
+func (self *Command) AddMutuallyExclusive(required bool, args ...*Argument) {
+	if len(args) < 2 {
+		panic("A mutually-exclusive group needs at least two arguments")
+	}
+	for _, arg := range args {
+		if arg.isPositional() {
+			panic(fmt.Sprintf(
+				"Cannot put positional argument '%s' in a mutually-exclusive group",
+				arg.PrettyName()))
+		}
+		if arg.Required {
+			panic(fmt.Sprintf(
+				"Argument %s in a mutually-exclusive group must not set Required; "+
+					"pass required to AddMutuallyExclusive instead", arg.PrettyName()))
+		}
+		self.Add(arg)
+	}
+	self.mutexGroups = append(self.mutexGroups,
+		&mutexGroup{required: required, args: args})
 }

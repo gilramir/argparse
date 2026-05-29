@@ -49,6 +49,7 @@ name inside it is `argparse`.
 * [Command](#command)
 * [Argument](#argument)
 * [NumArgs and NumArgsGlob](#numargs-and-numargsglob)
+* [Mutually-exclusive groups](#mutually-exclusive-groups)
 * [Inheritance by sub-commands](#inheritance-by-sub-commands)
 * [Translation](#translation)
 * [Examples](#examples)
@@ -564,6 +565,25 @@ Rules:
 * A `"*"` or `"+"` positional argument may not be followed by any other
   positional argument, because it consumes an unlimited number of values.
 * If `"*"` or `"+"` is used, the destination field must be a slice.
+
+# Mutually-exclusive groups
+
+Use `AddMutuallyExclusive` to declare a set of switch arguments of which at most
+one may be given. It adds the arguments to the Command and records the group; if
+`required` is true, exactly one of them must be given.
+
+```go
+ap.AddMutuallyExclusive(false,
+	&argparse.Argument{Switches: []string{"--json"}, Help: "JSON output"},
+	&argparse.Argument{Switches: []string{"--yaml"}, Help: "YAML output"},
+)
+```
+
+Giving more than one member is a parse error ("Only one of ... may be given");
+if the group is `required` and none is given, that is also an error ("One of ...
+is required"). Only switch arguments may be grouped, and the members must not
+set `Required` individually (the group's `required` flag covers that). On a
+sub-command, call the method on the sub-command's `*Command`.
 
 # Inheritance by sub-commands
 

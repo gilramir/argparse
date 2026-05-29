@@ -114,6 +114,15 @@ type Messages struct {
 	// "Missing required switch: %s"
 	MissingRequiredSwitchFmt string
 
+	// More than one argument from a mutually-exclusive group was given. The
+	// %s is the comma-separated list of the group's arguments.
+	// "Only one of %s may be given"
+	MutuallyExclusiveFmt string
+
+	// No argument from a required mutually-exclusive group was given.
+	// "One of %s is required"
+	MutuallyExclusiveRequiredFmt string
+
 	// "The %s switch does not take a value"
 	SwitchDoesNotTakeValueFmt string
 
@@ -179,6 +188,8 @@ var DefaultMessages_en = Messages{
 	ExpectedValueAfterFmt:           "Expected a value after %s",
 	ExpectedRequiredArgumentFmt:     "Expected a required '%s' argument",
 	MissingRequiredSwitchFmt:        "Missing required switch: %s",
+	MutuallyExclusiveFmt:            "Only one of %s may be given",
+	MutuallyExclusiveRequiredFmt:    "One of %s is required",
 	SwitchDoesNotTakeValueFmt:       "The %s switch does not take a value",
 	DoesNotAcceptValueFmt:           "%s does not accept a value",
 	SwitchNameCannotBeginWithEquals: "A switch name cannot begin with '='",
@@ -225,6 +236,8 @@ var DefaultMessages_ko = Messages{
 	ExpectedValueAfterFmt:           "%s 다음에 값이 필요합니다",
 	ExpectedRequiredArgumentFmt:     "필수 '%s' 인수가 필요합니다",
 	MissingRequiredSwitchFmt:        "필수 스위치가 누락되었습니다: %s",
+	MutuallyExclusiveFmt:            "%s 중 하나만 지정할 수 있습니다",
+	MutuallyExclusiveRequiredFmt:    "%s 중 하나가 필요합니다",
 	SwitchDoesNotTakeValueFmt:       "%s 스위치는 값을 받지 않습니다",
 	DoesNotAcceptValueFmt:           "%s은(는) 값을 받지 않습니다",
 	SwitchNameCannotBeginWithEquals: "스위치 이름은 '='로 시작할 수 없습니다",

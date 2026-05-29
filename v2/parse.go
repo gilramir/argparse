@@ -231,6 +231,28 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 		}
 	}
 
+	// Enforce mutually-exclusive groups along the path.
+	for _, pathCmd := range pathCommands {
+		for _, group := range pathCmd.mutexGroups {
+			seen := 0
+			for _, arg := range group.args {
+				if pathCmd.Seen[arg.Dest] {
+					seen++
+				}
+			}
+			if seen > 1 {
+				results.parseError = fmt.Errorf(
+					ap.Messages.MutuallyExclusiveFmt, group.prettyNames())
+				return results
+			}
+			if group.required && seen == 0 {
+				results.parseError = fmt.Errorf(
+					ap.Messages.MutuallyExclusiveRequiredFmt, group.prettyNames())
+				return results
+			}
+		}
+	}
+
 	return results
 }
 

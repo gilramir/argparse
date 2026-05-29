@@ -99,6 +99,11 @@ func (self *ArgumentParser) New(c *Command) *Command {
 	return self.Root.New(c)
 }
 
+// Add a mutually-exclusive group of switch arguments to the root command.
+func (self *ArgumentParser) AddMutuallyExclusive(required bool, args ...*Argument) {
+	self.Root.AddMutuallyExclusive(required, args...)
+}
+
 // Parse the os.Argv arguments and return, having filled out Values.
 // On a request for help (-h), print the help and exit with os.Exit(0).
 // On a user input error, print the error message and exit with os.Exit(1).
