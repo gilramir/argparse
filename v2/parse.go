@@ -212,6 +212,20 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 		cmdStack[0].propagateInherited(cmdStack, 0)
 	}
 
+	// Were all the required switches given? Check every command along the
+	// path that was traversed (the ancestors and the triggered command);
+	// inherited values have already been propagated above.
+	pathCommands := append(append([]*Command{}, results.ancestorCommands...), cmd)
+	for _, pathCmd := range pathCommands {
+		for _, arg := range pathCmd.switchArguments {
+			if arg.Required && !pathCmd.Seen[arg.Dest] {
+				results.parseError = fmt.Errorf(
+					ap.Messages.MissingRequiredSwitchFmt, arg.PrettyName())
+				return results
+			}
+		}
+	}
+
 	return results
 }
 

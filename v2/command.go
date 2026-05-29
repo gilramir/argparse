@@ -168,6 +168,11 @@ func (self *Command) Add(arg *Argument) {
 	arg.init(self.Values, &self.ap.Messages)
 
 	if arg.isPositional() {
+		if arg.Required {
+			panic(fmt.Sprintf(
+				"Cannot set Required on positional argument '%s'; use NumArgs "+
+					"or NumArgsGlob instead.", arg.PrettyName()))
+		}
 		if len(self.positionalArguments) > 0 {
 			prevArg := self.positionalArguments[len(self.positionalArguments)-1]
 			// Can't add a positional argument after * or +, as

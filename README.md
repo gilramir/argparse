@@ -433,6 +433,11 @@ The following fields can be set in an `Argument`:
   (`"*"`, `"+"`, or `"?"`) describing how many values may or must be given. See
   [NumArgs and NumArgsGlob](#numargs-and-numargsglob).
 
+* **Required**: (switch arguments only) If true, the switch must be given on the
+  command-line; otherwise a parse error is returned. The requiredness of
+  positional arguments is controlled by `NumArgs`/`NumArgsGlob` instead, so
+  setting `Required` on a positional argument panics.
+
 * **Inherit**: If true, then all sub-commands of this Command will automatically
   inherit a copy of this Argument. This also means the Values struct of each
   sub-command must have a field whose name and type work for this Argument; if

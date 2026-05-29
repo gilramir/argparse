@@ -43,6 +43,12 @@ type Argument struct {
 	NumArgs     int
 	NumArgsGlob string
 
+	// If true, this switch argument must be given on the command-line;
+	// otherwise a parse error is returned. This only applies to switch
+	// arguments; the requiredness of positional arguments is controlled by
+	// NumArgs and NumArgsGlob.
+	Required bool
+
 	// Will a sub-command inherit this argument definition if one is not
 	// defined for that sub-command, *and* if the Value struct for that
 	// Command has a suitable field?
@@ -67,9 +73,9 @@ func (self *Argument) deepCopy() *Argument {
 		Dest:        self.Dest,
 		NumArgs:     self.NumArgs,
 		NumArgsGlob: self.NumArgsGlob,
-		//		Required: self.Required,
-		Inherit: self.Inherit,
-		Choices: self.Choices,
+		Required:    self.Required,
+		Inherit:     self.Inherit,
+		Choices:     self.Choices,
 	}
 	copy(arg.Switches, self.Switches)
 	return arg
