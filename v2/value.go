@@ -717,6 +717,259 @@ func (self *durationSliceValueT) storageType() valueStorageType {
 	return Slice
 }
 
+// =========================================================== uint (all unsigned kinds)
+
+func text_to_uint64(text string) (uint64, error) {
+	if len(text) > 2 && text[0:2] == "0x" {
+		return strconv.ParseUint(text[2:], 16, 64)
+	} else if len(text) > 2 && text[0:2] == "0o" {
+		return strconv.ParseUint(text[2:], 8, 64)
+	} else if len(text) > 1 && text[0:1] == "0" {
+		return strconv.ParseUint(text[1:], 8, 64)
+	}
+	return strconv.ParseUint(text, 10, 64)
+}
+
+// uintValueT handles a scalar field of any unsigned integer kind (uint,
+// uint8, uint16, uint32, uint64).
+type uintValueT struct {
+	valueT
+	choices []uint64
+}
+
+func newUintValueT(valueP reflect.Value) *uintValueT {
+	return &uintValueT{valueT: valueT{valueP}}
+}
+
+func (self *uintValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *uintValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedUintValue)
+}
+
+func (self *uintValueT) parse(m *Messages, text string) error {
+	u, err := text_to_uint64(text)
+	if err != nil {
+		return fmt.Errorf(m.CannotParseUintFmt, text, err)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if u == choice {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	self.value.SetUint(u)
+	return nil
+}
+
+func uintChoices(m *Messages, choicesIntf interface{}) ([]uint64, error) {
+	choices, ok := choicesIntf.([]uint)
+	if !ok {
+		return nil, fmt.Errorf(m.ChoicesOfWrongTypeFmt, "uint")
+	}
+	c64 := make([]uint64, len(choices))
+	for i, v := range choices {
+		c64[i] = uint64(v)
+	}
+	return c64, nil
+}
+
+func (self *uintValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	c, err := uintChoices(m, choicesIntf)
+	if err != nil {
+		return err
+	}
+	self.choices = c
+	return nil
+}
+
+func (self *uintValueT) storageType() valueStorageType {
+	return Scalar
+}
+
+// =========================================================== uint slice
+
+type uintSliceValueT struct {
+	valueT
+	choices []uint64
+}
+
+func newUintSliceValueT(valueP reflect.Value) *uintSliceValueT {
+	return &uintSliceValueT{valueT: valueT{valueP}}
+}
+
+func (self *uintSliceValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *uintSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedUintValue)
+}
+
+func (self *uintSliceValueT) parse(m *Messages, text string) error {
+	u, err := text_to_uint64(text)
+	if err != nil {
+		return fmt.Errorf(m.CannotParseUintFmt, text, err)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if u == choice {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	elem := reflect.New(self.value.Type().Elem()).Elem()
+	elem.SetUint(u)
+	self.value.Set(reflect.Append(self.value, elem))
+	return nil
+}
+
+func (self *uintSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	c, err := uintChoices(m, choicesIntf)
+	if err != nil {
+		return err
+	}
+	self.choices = c
+	return nil
+}
+
+func (self *uintSliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
+// =========================================================== signed int slice (int8/16/32)
+
+// signedIntSliceValueT handles a slice field whose element is a sub-width
+// signed integer (int8, int16, int32). []int and []int64 keep their own types.
+type signedIntSliceValueT struct {
+	valueT
+	choices []int64
+}
+
+func newSignedIntSliceValueT(valueP reflect.Value) *signedIntSliceValueT {
+	return &signedIntSliceValueT{valueT: valueT{valueP}}
+}
+
+func (self *signedIntSliceValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *signedIntSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedIntValue)
+}
+
+func (self *signedIntSliceValueT) parse(m *Messages, text string) error {
+	i, err := text_to_int64(text)
+	if err != nil {
+		return fmt.Errorf(m.CannotParseIntegerFmt, text, err)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if i == choice {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	elem := reflect.New(self.value.Type().Elem()).Elem()
+	elem.SetInt(i)
+	self.value.Set(reflect.Append(self.value, elem))
+	return nil
+}
+
+func (self *signedIntSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	choices, ok := choicesIntf.([]int)
+	if !ok {
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "int")
+	}
+	c64 := make([]int64, len(choices))
+	for i, v := range choices {
+		c64[i] = int64(v)
+	}
+	self.choices = c64
+	return nil
+}
+
+func (self *signedIntSliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
+// =========================================================== float32 slice
+
+type float32SliceValueT struct {
+	valueT
+	choices []float64
+}
+
+func newFloat32SliceValueT(valueP reflect.Value) *float32SliceValueT {
+	return &float32SliceValueT{valueT: valueT{valueP}}
+}
+
+func (self *float32SliceValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *float32SliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedFloatValue)
+}
+
+func (self *float32SliceValueT) parse(m *Messages, text string) error {
+	f, err := strconv.ParseFloat(text, 32)
+	if err != nil {
+		return fmt.Errorf(m.CannotParseFloatFmt, text)
+	}
+	if len(self.choices) > 0 {
+		ok := false
+		for _, choice := range self.choices {
+			if f == choice {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf(m.ShouldBeAValidChoiceFmt, self.choices)
+		}
+	}
+	elem := reflect.New(self.value.Type().Elem()).Elem()
+	elem.SetFloat(f)
+	self.value.Set(reflect.Append(self.value, elem))
+	return nil
+}
+
+func (self *float32SliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	choices, ok := choicesIntf.([]float32)
+	if !ok {
+		return fmt.Errorf(m.ChoicesOfWrongTypeFmt, "float32")
+	}
+	c64 := make([]float64, len(choices))
+	for i, v := range choices {
+		c64[i] = float64(v)
+	}
+	self.choices = c64
+	return nil
+}
+
+func (self *float32SliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
 // =========================================================== custom (encoding.TextUnmarshaler)
 
 // textUnmarshalerValueT handles a scalar field whose type implements

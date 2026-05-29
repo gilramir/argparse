@@ -284,7 +284,19 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 	case reflect.Int:
 		self.value = newIntValueT(fieldValue)
 		return nil
+	case reflect.Int8, reflect.Int16, reflect.Int32:
+		// Sub-width signed ints use the int64 storage (SetInt handles the
+		// narrower kinds).
+		self.value = newInt64ValueT(fieldValue)
+		return nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		self.value = newUintValueT(fieldValue)
+		return nil
 	case reflect.Float64:
+		self.value = newFloatValueT(fieldValue)
+		return nil
+	case reflect.Float32:
+		// SetFloat handles float32.
 		self.value = newFloatValueT(fieldValue)
 		return nil
 	case reflect.Slice:
@@ -317,6 +329,15 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 			return nil
 		case reflect.Float64:
 			self.value = newFloatSliceValueT(fieldValue)
+			return nil
+		case reflect.Int8, reflect.Int16, reflect.Int32:
+			self.value = newSignedIntSliceValueT(fieldValue)
+			return nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			self.value = newUintSliceValueT(fieldValue)
+			return nil
+		case reflect.Float32:
+			self.value = newFloat32SliceValueT(fieldValue)
 			return nil
 		default:
 			return fmt.Errorf("Argument %s cannot be of type []%s",

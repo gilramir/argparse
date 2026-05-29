@@ -54,6 +54,10 @@ type Messages struct {
 	// "Cannot convert \"%s\" to a float"
 	CannotParseFloatFmt string
 
+	// Error when parsing an unsigned integer.
+	// "Cannot convert \"%s\" to an unsigned integer: %w"
+	CannotParseUintFmt string
+
 	// Error when parsing a time.Duration. The first %s is the text, the
 	// second %s is the underlying error.
 	// "Cannot parse \"%s\" as a time duration: %s"
@@ -76,6 +80,7 @@ type Messages struct {
 	NeedFloatValue    string // "Need a float value"
 	NeedDurationValue string // "Need a time duration value"
 	NeedBoolValue     string // "Need a bool value"
+	NeedUintValue     string // "Need an unsigned integer value"
 	NeedValue         string // "Need a value" (for custom encoding.TextUnmarshaler types)
 
 	// Error when a custom encoding.TextUnmarshaler type fails to parse. The
@@ -149,6 +154,7 @@ var DefaultMessages_en = Messages{
 	CannotParseBooleanFmt:  "Cannot convert \"%s\" to a boolean",
 	CannotParseIntegerFmt:  "Cannot convert \"%s\" to an integer: %w",
 	CannotParseFloatFmt:    "Cannot convert \"%s\" to a float",
+	CannotParseUintFmt:     "Cannot convert \"%s\" to an unsigned integer: %w",
 	CannotParseDurationFmt: "Cannot parse \"%s\" as a time duration: %s",
 
 	ChoicesOfWrongTypeFmt:   "Choices should be []%s",
@@ -160,6 +166,7 @@ var DefaultMessages_en = Messages{
 	NeedFloatValue:    "Need a float value",
 	NeedDurationValue: "Need a time duration value",
 	NeedBoolValue:     "Need a bool value",
+	NeedUintValue:     "Need an unsigned integer value",
 	NeedValue:         "Need a value",
 
 	CannotParseValueFmt: "Cannot parse \"%s\": %w",
@@ -193,6 +200,7 @@ var DefaultMessages_ko = Messages{
 	CannotParseBooleanFmt:  "\"%s\"을(를) 불리언으로 변환할 수 없습니다",
 	CannotParseIntegerFmt:  "\"%s\"을(를) 정수로 변환할 수 없습니다: %w",
 	CannotParseFloatFmt:    "\"%s\"을(를) 실수로 변환할 수 없습니다",
+	CannotParseUintFmt:     "\"%s\"을(를) 부호 없는 정수로 변환할 수 없습니다: %w",
 	CannotParseDurationFmt: "\"%s\"을(를) 시간 기간으로 구문 분석할 수 없습니다: %s",
 
 	ChoicesOfWrongTypeFmt:   "Choices는 []%s 형식이어야 합니다",
@@ -204,6 +212,7 @@ var DefaultMessages_ko = Messages{
 	NeedFloatValue:    "실수 값이 필요합니다",
 	NeedDurationValue: "시간 기간 값이 필요합니다",
 	NeedBoolValue:     "불리언 값이 필요합니다",
+	NeedUintValue:     "부호 없는 정수 값이 필요합니다",
 	NeedValue:         "값이 필요합니다",
 
 	CannotParseValueFmt: "\"%s\"을(를) 구문 분석할 수 없습니다: %w",

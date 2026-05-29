@@ -413,8 +413,10 @@ The fields for switch or positional arguments can be of these scalar types:
 
 * **bool** — For a switch, if the switch is present, the value is set to true.
 * **string**
-* **float64**
-* **int**, **int64**
+* **float64**, **float32**
+* **int**, **int64**, **int8**, **int16**, **int32**
+* **uint**, **uint64**, **uint8**, **uint16**, **uint32** — same decimal/hex/octal
+  forms as the signed integers, but negative values are rejected
 * **time.Duration** — parsed by `time.ParseDuration()`
 
 Or they can be the following slice types. A slice value for a switch argument
@@ -425,9 +427,11 @@ many times it must appear; otherwise argparse still accepts it only once.
 
 * **[]bool**
 * **[]string**
-* **[]float64**
-* **[]int**, **[]int64** — these can be given in decimal, in hex if they start
-  with `0x` (as in `0xff`), or in octal if they start with `0o` or just `0`.
+* **[]float64**, **[]float32**
+* **[]int**, **[]int64**, **[]int8**, **[]int16**, **[]int32** — these can be
+  given in decimal, in hex if they start with `0x` (as in `0xff`), or in octal
+  if they start with `0o` or just `0`.
+* **[]uint**, **[]uint64**, **[]uint8**, **[]uint16**, **[]uint32**
 * **[]time.Duration** — each value is parsed by `time.ParseDuration()`
 
 ## Custom value types
