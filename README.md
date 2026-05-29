@@ -426,13 +426,35 @@ match this program's own (and additional `--` tokens) are stored as-is. The
 program's switches and any preceding positionals before capture begins are
 parsed normally.
 
+Using the `Options` above (a `-v`/`--verbose` switch and a `Cmd` pass-through),
+here is how different numbers of `--` behave:
+
 ```
-$ mytool -v -- some-cmd --flag -x
-# Verbose == true; Cmd == ["some-cmd", "--flag", "-x"]
+# No "--": mytool's own switches are parsed; capture starts at the first
+# non-switch token ("build"), and everything from there is taken raw.
+$ mytool -v build --release
+Verbose=true  Cmd=["build" "--release"]
+
+# One "--": needed here because the first forwarded token begins with "-".
+# Without the "--", argparse would treat "--release" as one of mytool's
+# switches and fail. The "--" is consumed as the separator.
+$ mytool -- --release build
+Verbose=false  Cmd=["--release" "build"]
+
+# One "--": a forwarded flag that collides with mytool's own (--verbose) is
+# still captured raw, because it comes after capture has begun.
+$ mytool --verbose -- inner --verbose
+Verbose=true  Cmd=["inner" "--verbose"]
+
+# Two "--": the first is the separator; the second is inside the captured
+# remainder and is kept literally.
+$ mytool -- build -- --release
+Verbose=false  Cmd=["build" "--" "--release"]
 ```
 
-Because a bare leading `-token` is otherwise treated as a switch, use `--` when
-the very first forwarded token begins with a hyphen and there is no preceding
+So the *first* `--` (before capture begins) is a separator and is dropped; any
+later `--` is part of the forwarded arguments and is kept. Use a leading `--`
+when the first forwarded token begins with a hyphen and there is no preceding
 positional. A pass-through argument must be the last positional and have a
 `[]string` destination.
 
