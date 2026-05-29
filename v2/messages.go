@@ -20,6 +20,14 @@ type Messages struct {
 	// "See this list of options"
 	HelpDescription string
 
+	// Appended to an argument's help text to show its default value.
+	// "(default: %v)"
+	HelpDefaultFmt string
+
+	// Appended to an argument's help text to list its allowed values.
+	// "(choices: %s)"
+	HelpChoicesFmt string
+
 	// ---- value parsing errors ----
 
 	// Error when parsing a boolean.
@@ -120,6 +128,8 @@ type Messages struct {
 var DefaultMessages_en = Messages{
 	SubCommands:     "Sub-Commands",
 	HelpDescription: "See this list of options",
+	HelpDefaultFmt:  "(default: %v)",
+	HelpChoicesFmt:  "(choices: %s)",
 
 	CannotParseBooleanFmt:  "Cannot convert \"%s\" to a boolean",
 	CannotParseIntegerFmt:  "Cannot convert \"%s\" to an integer: %w",
@@ -159,6 +169,8 @@ var DefaultMessages_en = Messages{
 var DefaultMessages_ko = Messages{
 	SubCommands:     "하위 명령",
 	HelpDescription: "이 옵션 목록 보기",
+	HelpDefaultFmt:  "(기본값: %v)",
+	HelpChoicesFmt:  "(선택: %s)",
 
 	CannotParseBooleanFmt:  "\"%s\"을(를) 불리언으로 변환할 수 없습니다",
 	CannotParseIntegerFmt:  "\"%s\"을(를) 정수로 변환할 수 없습니다: %w",

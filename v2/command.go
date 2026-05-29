@@ -181,6 +181,13 @@ func (self *Command) Add(arg *Argument) {
 	// set arg.value
 	arg.init(self.Values, &self.ap.Messages)
 
+	// Capture the default value (the field's value before any parse) so the
+	// help output can show it. Zero values are not worth displaying.
+	if dv := arg.value.getValue(); !dv.IsZero() {
+		arg.hasDefault = true
+		arg.defaultValue = dv.Interface()
+	}
+
 	if arg.isPositional() {
 		if arg.Required {
 			panic(fmt.Sprintf(

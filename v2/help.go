@@ -3,14 +3,46 @@ package argparse
 // Copyright (c) 2020 by Gilbert Ramirez <gram@alumni.rice.edu>
 
 import (
+	"fmt"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/gilramir/consolesize"
 	"github.com/gilramir/unicodemonowidth"
 )
 
-// TODO - the help should show Choices, if available
+// argumentHelp returns the help text for an argument, with its allowed values
+// (Choices) and default value appended, if any.
+func (self *ArgumentParser) argumentHelp(arg *Argument) string {
+	parts := []string{}
+	if arg.Help != "" {
+		parts = append(parts, arg.Help)
+	}
+	if arg.Choices != nil {
+		parts = append(parts,
+			fmt.Sprintf(self.Messages.HelpChoicesFmt, formatChoices(arg.Choices)))
+	}
+	if arg.hasDefault {
+		parts = append(parts,
+			fmt.Sprintf(self.Messages.HelpDefaultFmt, arg.defaultValue))
+	}
+	return strings.Join(parts, " ")
+}
+
+// formatChoices renders a Choices slice (held as an interface{}) as a
+// comma-separated list.
+func formatChoices(choices interface{}) string {
+	v := reflect.ValueOf(choices)
+	if v.Kind() != reflect.Slice {
+		return fmt.Sprintf("%v", choices)
+	}
+	parts := make([]string, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		parts[i] = fmt.Sprintf("%v", v.Index(i).Interface())
+	}
+	return strings.Join(parts, ", ")
+}
 
 // This should honor width too
 func (self *ArgumentParser) usageString(cmd *Command, width int, ancestorCommands []*Command) string {
@@ -77,7 +109,7 @@ func (self *ArgumentParser) helpString(cmd *Command,
 			idx := len(argumentStrings) - 1
 			argumentStrings[idx] = argumentStrings[idx] + "=" + metavar
 		}
-		formatter.addOption(argumentStrings, arg.Help)
+		formatter.addOption(argumentStrings, self.argumentHelp(arg))
 	}
 	formatter.addOption(self.HelpSwitches, self.Messages.HelpDescription)
 
@@ -98,7 +130,7 @@ func (self *ArgumentParser) helpString(cmd *Command,
 		} else if arg.NumArgsGlob == "*" {
 			argName = "[" + argName + "[ ... ] ]"
 		}
-		formatter.addOption([]string{argName}, arg.Help)
+		formatter.addOption([]string{argName}, self.argumentHelp(arg))
 	}
 
 	text += formatter.produceString(width)

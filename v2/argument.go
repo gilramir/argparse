@@ -62,6 +62,12 @@ type Argument struct {
 	// The methods for the specific storage type of this value of the Argument
 	// (bool, int, string, float64, etc.)
 	value valueType
+
+	// The default value captured from the Values struct field when this
+	// Argument was added, shown in the --help output. hasDefault is false for
+	// zero-valued defaults, which are not worth displaying.
+	hasDefault   bool
+	defaultValue interface{}
 }
 
 func (self *Argument) deepCopy() *Argument {

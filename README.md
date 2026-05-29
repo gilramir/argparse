@@ -509,7 +509,12 @@ The following fields can be set in an `Argument`:
 * **Choices**: (optional) A slice (even when the field value is a scalar) listing
   the only possible values for the argument. If a user gives a value not in this
   list, an error is returned to the user. The slice type must match the value
-  type for this Argument: `[]bool`, `[]string`, `[]int`, or `[]float64`.
+  type for this Argument: `[]bool`, `[]string`, `[]int`, or `[]float64`. The
+  choices are listed in the `--help` output.
+
+The `--help` output also shows an argument's default value (the value held by its
+Values-struct field when the argument is added), unless that default is the
+type's zero value.
 
 # NumArgs and NumArgsGlob
 
