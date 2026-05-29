@@ -128,6 +128,8 @@ example1
 
 This is an example program
 
+usage: example1 [--count N] [--expiration EXPIRATION] [-v] [-h] names [...]
+
         --count=N                      How many items
         --expiration,-x=EXPIRATION     How long: #(h|m|s|ms|us|ns)
         -v,--verbose                   Set verbose mode

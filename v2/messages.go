@@ -16,6 +16,14 @@ type Messages struct {
 	// "Sub-Commands"
 	SubCommands string
 
+	// The label that introduces the one-line usage synopsis:
+	// "usage:"
+	UsageLabel string
+
+	// The placeholder shown in the usage synopsis when a command has
+	// sub-commands: "command"
+	SubCommandPlaceholder string
+
 	// The description for the help options (-h / --help):
 	// "See this list of options"
 	HelpDescription string
@@ -126,10 +134,12 @@ type Messages struct {
 }
 
 var DefaultMessages_en = Messages{
-	SubCommands:     "Sub-Commands",
-	HelpDescription: "See this list of options",
-	HelpDefaultFmt:  "(default: %v)",
-	HelpChoicesFmt:  "(choices: %s)",
+	SubCommands:           "Sub-Commands",
+	UsageLabel:            "usage:",
+	SubCommandPlaceholder: "command",
+	HelpDescription:       "See this list of options",
+	HelpDefaultFmt:        "(default: %v)",
+	HelpChoicesFmt:        "(choices: %s)",
 
 	CannotParseBooleanFmt:  "Cannot convert \"%s\" to a boolean",
 	CannotParseIntegerFmt:  "Cannot convert \"%s\" to an integer: %w",
@@ -167,10 +177,12 @@ var DefaultMessages_en = Messages{
 }
 
 var DefaultMessages_ko = Messages{
-	SubCommands:     "하위 명령",
-	HelpDescription: "이 옵션 목록 보기",
-	HelpDefaultFmt:  "(기본값: %v)",
-	HelpChoicesFmt:  "(선택: %s)",
+	SubCommands:           "하위 명령",
+	UsageLabel:            "사용법:",
+	SubCommandPlaceholder: "명령",
+	HelpDescription:       "이 옵션 목록 보기",
+	HelpDefaultFmt:        "(기본값: %v)",
+	HelpChoicesFmt:        "(선택: %s)",
 
 	CannotParseBooleanFmt:  "\"%s\"을(를) 불리언으로 변환할 수 없습니다",
 	CannotParseIntegerFmt:  "\"%s\"을(를) 정수로 변환할 수 없습니다: %w",

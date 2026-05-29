@@ -22,7 +22,7 @@ func main() {
 		Name:        "Example 1",
 		Description: "This is an example program",
 		Values:      opts,
-                Epilog: `This is the first line.
+		Epilog: `This is the first line.
 This is the second line. We will then skip a line.
 
 And now 1 line was skipped. The end.`,

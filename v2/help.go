@@ -75,7 +75,88 @@ func (self *ArgumentParser) usageString(cmd *Command, width int, ancestorCommand
 		}
 	}
 
+	// One-line usage synopsis.
+	usage += "\n" + self.usageSynopsis(cmd, commands) + "\n"
+
 	return usage
+}
+
+// usageSynopsis builds the one-line "usage: ..." synopsis for a command.
+func (self *ArgumentParser) usageSynopsis(cmd *Command, commands []*Command) string {
+	parts := []string{self.Messages.UsageLabel}
+
+	// The command path.
+	for i, iCmd := range commands {
+		if i == 0 && iCmd.Name == "" {
+			parts = append(parts, os.Args[0])
+		} else {
+			parts = append(parts, iCmd.Name)
+		}
+	}
+
+	// Switch arguments.
+	for _, arg := range cmd.switchArguments {
+		token := arg.Switches[0]
+		if arg.NumArgs != 0 {
+			mv := metavarFor(arg)
+			if arg.NumArgs > 1 {
+				mv += " ..."
+			}
+			token += " " + mv
+		}
+		if !arg.Required {
+			token = "[" + token + "]"
+		}
+		parts = append(parts, token)
+	}
+
+	// The help switch.
+	if len(self.HelpSwitches) > 0 {
+		parts = append(parts, "["+self.HelpSwitches[0]+"]")
+	}
+
+	// Sub-commands.
+	if len(cmd.subCommands) > 0 {
+		parts = append(parts, "<"+self.Messages.SubCommandPlaceholder+">")
+	}
+
+	// Positional arguments.
+	for _, arg := range cmd.positionalArguments {
+		parts = append(parts, positionalSynopsis(arg))
+	}
+
+	return strings.Join(parts, " ")
+}
+
+// metavarFor returns the value placeholder to show for a value-taking switch:
+// its MetaVar if set, otherwise the upper-cased first switch with dashes
+// stripped.
+func metavarFor(arg *Argument) string {
+	if arg.MetaVar != "" {
+		return arg.MetaVar
+	}
+	return strings.TrimLeft(strings.ToUpper(arg.Switches[0]), "-")
+}
+
+// positionalSynopsis renders a positional argument for the usage line.
+func positionalSynopsis(arg *Argument) string {
+	name := arg.Name
+	if arg.MetaVar != "" {
+		name = arg.MetaVar
+	}
+	switch arg.NumArgsGlob {
+	case "?":
+		return "[" + name + "]"
+	case "*":
+		return "[" + name + " ...]"
+	case "+":
+		return name + " [...]"
+	default:
+		if arg.NumArgs > 1 {
+			return name + " ..."
+		}
+		return name
+	}
 }
 
 func (self *ArgumentParser) helpString(cmd *Command,
@@ -154,14 +235,14 @@ func (self *ArgumentParser) helpString(cmd *Command,
 			indent = "    "
 			width -= 8
 		}
-                // Don't split the epilog; treat it as raw.
-                /*
-		epilogWords := unicodemonowidth.WhitespaceSplit(cmd.Epilog)
-		epilogRows := unicodemonowidth.WrapPrintedWords(epilogWords, width)
-		text += "\n\n"
-                */
-                text += "\n"
-                epilogRows := strings.Split(cmd.Epilog, "\n")
+		// Don't split the epilog; treat it as raw.
+		/*
+			epilogWords := unicodemonowidth.WhitespaceSplit(cmd.Epilog)
+			epilogRows := unicodemonowidth.WrapPrintedWords(epilogWords, width)
+			text += "\n\n"
+		*/
+		text += "\n"
+		epilogRows := strings.Split(cmd.Epilog, "\n")
 		for _, row := range epilogRows {
 			text += indent + row + "\n"
 		}
