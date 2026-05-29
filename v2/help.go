@@ -115,6 +115,11 @@ func (self *ArgumentParser) usageSynopsis(cmd *Command, commands []*Command) str
 		parts = append(parts, "["+self.HelpSwitches[0]+"]")
 	}
 
+	// The version switch.
+	if self.Version != "" && len(self.VersionSwitches) > 0 {
+		parts = append(parts, "["+self.VersionSwitches[0]+"]")
+	}
+
 	// Sub-commands.
 	if len(cmd.subCommands) > 0 {
 		parts = append(parts, "<"+self.Messages.SubCommandPlaceholder+">")
@@ -193,6 +198,9 @@ func (self *ArgumentParser) helpString(cmd *Command,
 		formatter.addOption(argumentStrings, self.argumentHelp(arg))
 	}
 	formatter.addOption(self.HelpSwitches, self.Messages.HelpDescription)
+	if self.Version != "" {
+		formatter.addOption(self.VersionSwitches, self.Messages.VersionDescription)
+	}
 
 	// Positional arguments
 

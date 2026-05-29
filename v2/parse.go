@@ -14,6 +14,7 @@ import (
 type parseResults struct {
 	parseError       error
 	helpRequested    bool
+	versionRequested bool
 	triggeredCommand *Command
 	//ancestorValues		[]Values
 	ancestorCommands []*Command
@@ -28,6 +29,7 @@ const (
 	tokValueNotPresent
 	tokSubParser
 	tokHelp
+	tokVersion
 )
 
 type argToken struct {
@@ -171,6 +173,9 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			results.triggeredCommand = argToken.command
 		case tokHelp:
 			results.helpRequested = true
+			return results
+		case tokVersion:
+			results.versionRequested = true
 			return results
 		case tokError:
 			results.parseError = errors.New(argToken.value)
@@ -380,6 +385,21 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 			} else {
 				self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.DoesNotAcceptValueFmt, hw))
 				return nil
+			}
+		}
+	}
+
+	// Check the version switches (only when a Version is configured)
+	if self.ap.Version != "" {
+		for _, vw := range self.ap.VersionSwitches {
+			if text == vw {
+				if rhs == "" {
+					self.emitToken(tokVersion)
+					return nil
+				} else {
+					self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.DoesNotAcceptValueFmt, vw))
+					return nil
+				}
 			}
 		}
 	}

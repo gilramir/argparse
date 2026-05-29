@@ -42,6 +42,7 @@ name inside it is `argparse`.
   * [Sub-commands](#sub-commands)
   * [Default values and "Seen" arguments](#default-values-and-seen-arguments)
 * [Parse vs. ParseAndExit vs. ParseArgs](#parse-vs-parseandexit-vs-parseargs)
+* [Version](#version)
 * [Accepted command-line syntax](#accepted-command-line-syntax)
 * [Values struct and field names](#values-struct-and-field-names)
   * [Custom value types](#custom-value-types)
@@ -353,6 +354,22 @@ if err == argparse.ErrHelp {
 `ParseArgs` returns `argparse.ErrHelp` when help was requested (after writing the
 help text to the parser's `Stdout`), the parse error on bad input, or `nil` on
 success.
+
+# Version
+
+Set the `Version` field on the `ArgumentParser` to enable a version switch. When
+it is set, `--version` prints the string and stops (the same way `-h` prints the
+help): `Parse`/`ParseAndExit` exit 0, and `ParseArgs` returns `argparse.ErrVersion`
+after writing the version to `Stdout`. If `Version` is empty, `--version` is not
+treated specially. The version switch also appears in the `--help` output.
+
+```go
+ap := argparse.New(&argparse.Command{Name: "mytool", Values: opts})
+ap.Version = "mytool 1.4.0"
+// Optionally change which switches request it (default is just "--version"):
+ap.VersionSwitches = []string{"-V", "--version"}
+ap.ParseAndExit()
+```
 
 # Accepted command-line syntax
 

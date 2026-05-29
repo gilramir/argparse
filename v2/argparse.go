@@ -33,6 +33,11 @@ import (
 // been written to the parser's Stdout.
 var ErrHelp = errors.New("argparse: help requested")
 
+// ErrVersion is returned by ParseArgs when the user requested the version (for
+// example with --version). By the time it is returned, the version string has
+// already been written to the parser's Stdout.
+var ErrVersion = errors.New("argparse: version requested")
+
 type ArgumentParser struct {
 	// If this is set, instead of printing the help statement,
 	// when --help is requested, to os.Stdout, the output goes here.
@@ -49,6 +54,15 @@ type ArgumentParser struct {
 	// The switch strings that can invoke help
 	HelpSwitches []string
 
+	// If Version is non-empty, the VersionSwitches (default "--version") will
+	// print this string and stop parsing, the same way HelpSwitches print the
+	// help. If Version is empty, the version switches are not special.
+	Version string
+
+	// The switch strings that can request the version. Only consulted when
+	// Version is non-empty.
+	VersionSwitches []string
+
 	// The root Command object.
 	Root *Command
 
@@ -61,11 +75,12 @@ type ArgumentParser struct {
 // Create a new ArgumentParser, with the Command as its root Command
 func New(cmd *Command) *ArgumentParser {
 	ap := &ArgumentParser{
-		Stdout:       os.Stdout,
-		Stderr:       os.Stderr,
-		Messages:     DefaultMessages_en,
-		HelpSwitches: []string{"-h", "--help"},
-		Root:         cmd,
+		Stdout:          os.Stdout,
+		Stderr:          os.Stderr,
+		Messages:        DefaultMessages_en,
+		HelpSwitches:    []string{"-h", "--help"},
+		VersionSwitches: []string{"--version"},
+		Root:            cmd,
 	}
 	cmd.init(nil, ap)
 	if cmd.Name == "" {
@@ -110,6 +125,10 @@ func (self *ArgumentParser) ParseArgs(argv []string) (*Command, error) {
 		fmt.Fprintln(self.Stdout, helpString)
 		return cmd, ErrHelp
 	}
+	if results.versionRequested {
+		fmt.Fprintln(self.Stdout, self.Version)
+		return cmd, ErrVersion
+	}
 	if results.parseError != nil {
 		return cmd, results.parseError
 	}
@@ -120,8 +139,8 @@ func (self *ArgumentParser) ParseArgs(argv []string) (*Command, error) {
 func (self *ArgumentParser) parseRunFunction(shouldReturn bool) {
 	cmd, err := self.ParseArgs(os.Args[1:])
 
-	if err == ErrHelp {
-		// The help text was already written to Stdout by ParseArgs.
+	if err == ErrHelp || err == ErrVersion {
+		// The help or version text was already written to Stdout by ParseArgs.
 		os.Exit(0)
 	} else if err != nil {
 		fmt.Fprintln(self.Stderr, err.Error())

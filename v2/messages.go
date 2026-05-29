@@ -28,6 +28,10 @@ type Messages struct {
 	// "See this list of options"
 	HelpDescription string
 
+	// The description for the version switch (--version):
+	// "Show the version and exit"
+	VersionDescription string
+
 	// Appended to an argument's help text to show its default value.
 	// "(default: %v)"
 	HelpDefaultFmt string
@@ -138,6 +142,7 @@ var DefaultMessages_en = Messages{
 	UsageLabel:            "usage:",
 	SubCommandPlaceholder: "command",
 	HelpDescription:       "See this list of options",
+	VersionDescription:    "Show the version and exit",
 	HelpDefaultFmt:        "(default: %v)",
 	HelpChoicesFmt:        "(choices: %s)",
 
@@ -181,6 +186,7 @@ var DefaultMessages_ko = Messages{
 	UsageLabel:            "사용법:",
 	SubCommandPlaceholder: "명령",
 	HelpDescription:       "이 옵션 목록 보기",
+	VersionDescription:    "버전을 표시하고 종료",
 	HelpDefaultFmt:        "(기본값: %v)",
 	HelpChoicesFmt:        "(선택: %s)",
 
