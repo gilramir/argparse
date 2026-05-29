@@ -44,6 +44,7 @@ name inside it is `argparse`.
 * [Parse vs. ParseAndExit vs. ParseArgs](#parse-vs-parseandexit-vs-parseargs)
 * [Accepted command-line syntax](#accepted-command-line-syntax)
 * [Values struct and field names](#values-struct-and-field-names)
+  * [Custom value types](#custom-value-types)
 * [Command](#command)
 * [Argument](#argument)
 * [NumArgs and NumArgsGlob](#numargs-and-numargsglob)
@@ -409,6 +410,44 @@ many times it must appear; otherwise argparse still accepts it only once.
 * **[]int**, **[]int64** — these can be given in decimal, in hex if they start
   with `0x` (as in `0xff`), or in octal if they start with `0o` or just `0`.
 * **[]time.Duration** — each value is parsed by `time.ParseDuration()`
+
+## Custom value types
+
+A field of any type that implements
+[`encoding.TextUnmarshaler`](https://pkg.go.dev/encoding#TextUnmarshaler) is
+parsed by calling its `UnmarshalText` method, so you can accept IP addresses,
+URLs, enums, `uint`s, or any type of your own. A slice of such a type works too
+(one element parsed per value). Many standard-library types already qualify
+(for example `net.IP` and `time.Time`).
+
+```go
+type Options struct {
+	Listen net.IP   // --listen 10.0.0.1
+	Hosts  []net.IP // --host 10.0.0.1 --host 10.0.0.2
+}
+```
+
+For your own types, define `UnmarshalText` (a pointer receiver) and return an
+error to reject invalid input:
+
+```go
+type Level int
+
+func (l *Level) UnmarshalText(text []byte) error {
+	switch string(text) {
+	case "low":
+		*l = 0
+	case "high":
+		*l = 1
+	default:
+		return fmt.Errorf("unknown level %q", text)
+	}
+	return nil
+}
+```
+
+`Choices` is not supported for custom types (setting it panics); enforce the
+allowed set inside `UnmarshalText` instead.
 
 # Command
 

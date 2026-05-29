@@ -56,6 +56,17 @@ type Messages struct {
 	NeedFloatValue    string // "Need a float value"
 	NeedDurationValue string // "Need a time duration value"
 	NeedBoolValue     string // "Need a bool value"
+	NeedValue         string // "Need a value" (for custom encoding.TextUnmarshaler types)
+
+	// Error when a custom encoding.TextUnmarshaler type fails to parse. The
+	// %s is the text, the %w is the underlying error.
+	// "Cannot parse \"%s\": %w"
+	CannotParseValueFmt string
+
+	// Reported (via panic) when Choices is set on a custom
+	// encoding.TextUnmarshaler argument, which is not supported.
+	// "Choices is not supported for a custom (TextUnmarshaler) type"
+	ChoicesNotSupportedForCustomType string
 
 	// ---- command-line structure errors ----
 
@@ -124,6 +135,11 @@ var DefaultMessages_en = Messages{
 	NeedFloatValue:    "Need a float value",
 	NeedDurationValue: "Need a time duration value",
 	NeedBoolValue:     "Need a bool value",
+	NeedValue:         "Need a value",
+
+	CannotParseValueFmt: "Cannot parse \"%s\": %w",
+
+	ChoicesNotSupportedForCustomType: "Choices is not supported for a custom (TextUnmarshaler) type",
 
 	UnexpectedArgumentFmt:           "Unexpected argument: %s",
 	UnexpectedPositionalArgumentFmt: "Unexpected positional argument: %s",
@@ -158,6 +174,11 @@ var DefaultMessages_ko = Messages{
 	NeedFloatValue:    "실수 값이 필요합니다",
 	NeedDurationValue: "시간 기간 값이 필요합니다",
 	NeedBoolValue:     "불리언 값이 필요합니다",
+	NeedValue:         "값이 필요합니다",
+
+	CannotParseValueFmt: "\"%s\"을(를) 구문 분석할 수 없습니다: %w",
+
+	ChoicesNotSupportedForCustomType: "사용자 정의(TextUnmarshaler) 형식에는 Choices가 지원되지 않습니다",
 
 	UnexpectedArgumentFmt:           "예상치 못한 인수: %s",
 	UnexpectedPositionalArgumentFmt: "예상치 못한 위치 인수: %s",

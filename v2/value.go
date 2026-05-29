@@ -5,12 +5,18 @@ package argparse
 // This file implements the type system for argument values.
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"time"
 )
+
+// textUnmarshalerType is the reflect.Type of encoding.TextUnmarshaler, used to
+// detect fields (and slice elements) of custom types that know how to parse
+// themselves from a string.
+var textUnmarshalerType = reflect.TypeOf((*encoding.TextUnmarshaler)(nil)).Elem()
 
 type valueStorageType int
 
@@ -708,5 +714,80 @@ func (self *durationSliceValueT) setChoices(m *Messages, choicesIntf interface{}
 }
 
 func (self *durationSliceValueT) storageType() valueStorageType {
+	return Slice
+}
+
+// =========================================================== custom (encoding.TextUnmarshaler)
+
+// textUnmarshalerValueT handles a scalar field whose type implements
+// encoding.TextUnmarshaler.
+type textUnmarshalerValueT struct {
+	valueT
+}
+
+func newTextUnmarshalerValueT(valueP reflect.Value) *textUnmarshalerValueT {
+	return &textUnmarshalerValueT{valueT: valueT{valueP}}
+}
+
+func (self *textUnmarshalerValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *textUnmarshalerValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedValue)
+}
+
+func (self *textUnmarshalerValueT) parse(m *Messages, text string) error {
+	u := self.value.Addr().Interface().(encoding.TextUnmarshaler)
+	if err := u.UnmarshalText([]byte(text)); err != nil {
+		return fmt.Errorf(m.CannotParseValueFmt, text, err)
+	}
+	return nil
+}
+
+func (self *textUnmarshalerValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	return errors.New(m.ChoicesNotSupportedForCustomType)
+}
+
+func (self *textUnmarshalerValueT) storageType() valueStorageType {
+	return Scalar
+}
+
+// =========================================================== custom slice
+
+// textUnmarshalerSliceValueT handles a slice field whose element type
+// implements encoding.TextUnmarshaler.
+type textUnmarshalerSliceValueT struct {
+	valueT
+}
+
+func newTextUnmarshalerSliceValueT(valueP reflect.Value) *textUnmarshalerSliceValueT {
+	return &textUnmarshalerSliceValueT{valueT: valueT{valueP}}
+}
+
+func (self *textUnmarshalerSliceValueT) defaultSwitchNumArgs() int {
+	return 1
+}
+
+func (self *textUnmarshalerSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedValue)
+}
+
+func (self *textUnmarshalerSliceValueT) parse(m *Messages, text string) error {
+	// Make a new element, unmarshal into it, then append it to the slice.
+	elemPtr := reflect.New(self.value.Type().Elem())
+	u := elemPtr.Interface().(encoding.TextUnmarshaler)
+	if err := u.UnmarshalText([]byte(text)); err != nil {
+		return fmt.Errorf(m.CannotParseValueFmt, text, err)
+	}
+	self.value.Set(reflect.Append(self.value, elemPtr.Elem()))
+	return nil
+}
+
+func (self *textUnmarshalerSliceValueT) setChoices(m *Messages, choicesIntf interface{}) error {
+	return errors.New(m.ChoicesNotSupportedForCustomType)
+}
+
+func (self *textUnmarshalerSliceValueT) storageType() valueStorageType {
 	return Slice
 }

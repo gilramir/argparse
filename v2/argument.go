@@ -255,6 +255,14 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		return nil
 	}
 
+	// A scalar field whose type implements encoding.TextUnmarshaler knows how
+	// to parse itself from a string. (Checking the pointer type covers both
+	// pointer- and value-receiver UnmarshalText methods.)
+	if reflect.PtrTo(fieldType).Implements(textUnmarshalerType) {
+		self.value = newTextUnmarshalerValueT(fieldValue)
+		return nil
+	}
+
 	// We may want to look at fieldType.String() for all types here,
 	// since we really do want the dynamic type not the concrete type
 	switch fieldTypeKind {
@@ -278,6 +286,12 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		switch sliceType.String() {
 		case "time.Duration":
 			self.value = newDurationSliceValueT(fieldValue)
+			return nil
+		}
+
+		// A slice whose element type implements encoding.TextUnmarshaler.
+		if reflect.PtrTo(sliceType).Implements(textUnmarshalerType) {
+			self.value = newTextUnmarshalerSliceValueT(fieldValue)
 			return nil
 		}
 
