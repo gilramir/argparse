@@ -62,6 +62,10 @@ type parserState struct {
 
 	nextPositionalArgument          int
 	numEvaluatedPositionalArguments int
+	// How many values have been consumed for the positional argument
+	// currently at nextPositionalArgument. Used to know when a fixed-count
+	// (NumArgs > 1) positional is full and we should advance to the next one.
+	numValuesForCurrentPositional int
 
 	needNValues int
 	// when we need to keep track of an *Argument across state transitions
@@ -185,14 +189,19 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 	// Did we find all required parameters?
 	// TODO - switchArgumants
 
-	// If there aren't enough positional arguments, check the next known argument to see if it is required
+	// If fewer values were given than the positional arguments require, that's
+	// an error regardless of how the shortfall is distributed.
 	cmd := results.triggeredCommand
-	if len(cmd.positionalArguments) > 0 && self.numEvaluatedPositionalArguments < cmd.numRequiredPositionalArguments {
-		arg := results.triggeredCommand.positionalArguments[self.nextPositionalArgument]
-		if arg.NumArgs == 1 || arg.NumArgsGlob == "+" {
-			results.parseError = fmt.Errorf("Expected a required '%s' argument", arg.PrettyName())
-			return results
+	if self.numEvaluatedPositionalArguments < cmd.numRequiredPositionalArguments {
+		// nextPositionalArgument points at the first positional that is still
+		// short; clamp in case every defined positional was already visited.
+		idx := self.nextPositionalArgument
+		if idx >= len(cmd.positionalArguments) {
+			idx = len(cmd.positionalArguments) - 1
 		}
+		arg := cmd.positionalArguments[idx]
+		results.parseError = fmt.Errorf("Expected a required '%s' argument", arg.PrettyName())
+		return results
 	}
 
 	// Propagate inherited argument values
@@ -296,6 +305,11 @@ func (self *parserState) stateOneValue() stateFunc {
 
 func (self *parserState) stateMultipleValues() stateFunc {
 	if self.pos == len(self.args) {
+		// The command-line ended before all the required values were given.
+		if self.needNValues > 0 {
+			self.emitWithValue(tokError,
+				fmt.Sprintf("Expected a value after %s", self.lastSwitch))
+		}
 		return nil
 	}
 	if self.needNValues < 1 {
@@ -492,64 +506,53 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		return nil
 	}
 
-	/*
-		log.Printf("nextPositional=%d numEvaluated=%d numRequired=%d numMax=%d",
-			self.nextPositionalArgument, self.numEvaluatedPositionalArguments, self.cmd.numRequiredPositionalArguments, self.cmd.numMaxPositionalArguments)
-	*/
+	arg := self.args[self.pos]
 
-	// Is there more than enough required positional arguments, but there could be more?
-	if self.cmd.numMaxPositionalArguments == -1 {
-		arg := self.args[self.pos]
+	// Consume this token as a value for the current positional argument if
+	// there is still room: either the final positional is unbounded ("*"/"+",
+	// numMax == -1) or we have not yet reached the maximum number of values.
+	if self.cmd.numMaxPositionalArguments == -1 ||
+		self.numEvaluatedPositionalArguments < self.cmd.numMaxPositionalArguments {
 		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
 		self.emitWithArgument(tokArgument, posArg, posArg.Name)
 		self.emitWithValue(tokValue, arg)
 		self.pos += 1
-		if posArg.NumArgs == 1 || posArg.NumArgsGlob == "?" {
-			self.nextPositionalArgument++
-		}
-		self.numEvaluatedPositionalArguments++
+		self.consumedPositionalValue(posArg)
 		return self.statePositionalArgument
 	}
 
-	// We still have required positional arguments to check
-	if self.numEvaluatedPositionalArguments < self.cmd.numRequiredPositionalArguments {
-		arg := self.args[self.pos]
-		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
-		self.emitWithArgument(tokArgument, posArg, posArg.Name)
-		// If only one arg is allowed (max), then go to the next positional argument
-		if posArg.NumArgs == 1 || posArg.NumArgsGlob == "?" {
-			self.nextPositionalArgument++
-		}
-		//		log.Printf("A: using posArg #%d: %+v", self.nextPositionalArgument, posArg)
-		self.emitWithValue(tokValue, arg)
-		self.pos += 1
-		self.numEvaluatedPositionalArguments++
-		return self.statePositionalArgument
-	} else if self.numEvaluatedPositionalArguments < self.cmd.numMaxPositionalArguments ||
-		self.cmd.numMaxPositionalArguments == -1 {
-		// are we still less than the max possible number of positional
-		// arguments? if there is no max, it will be -1
-		arg := self.args[self.pos]
-		posArg := self.cmd.positionalArguments[self.nextPositionalArgument]
-		self.emitWithArgument(tokArgument, posArg, posArg.Name)
-		// If only one arg is allowed (max), then go to the next positional argument
-		if posArg.NumArgs == 1 || posArg.NumArgsGlob == "?" {
-			self.nextPositionalArgument++
-		}
-		//		log.Printf("B: using posArg #%d: %+v", self.nextPositionalArgument, posArg)
-		self.emitWithValue(tokValue, arg)
-		self.pos += 1
-		self.numEvaluatedPositionalArguments++
-		return self.statePositionalArgument
-	} else {
-		arg := self.args[self.pos]
-		// Maybe this is a switch after all the positional args?
-		if len(arg) > 1 && arg[0] == '-' && self.cmd.numMaxPositionalArguments != -1 {
-			return self.stateSwitchArgument
-		} else {
-			self.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
-		}
-		return nil
+	// There is no more room for positional values. A switch argument may
+	// follow a fixed number of positional arguments.
+	if len(arg) > 1 && arg[0] == '-' {
+		return self.stateSwitchArgument
+	}
+	self.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
+	return nil
+}
+
+// consumedPositionalValue updates the bookkeeping after a value has been
+// emitted for the positional argument at nextPositionalArgument. If that
+// positional has now received all the values it accepts, advance to the next
+// positional argument.
+func (self *parserState) consumedPositionalValue(posArg *Argument) {
+	self.numEvaluatedPositionalArguments++
+	self.numValuesForCurrentPositional++
+
+	// "*" and "+" accept an unlimited number of values and are always the last
+	// positional argument, so they never become "full". "?" accepts at most
+	// one. A fixed NumArgs is full once it has collected NumArgs values.
+	var full bool
+	switch posArg.NumArgsGlob {
+	case "*", "+":
+		full = false
+	case "?":
+		full = true
+	default:
+		full = self.numValuesForCurrentPositional >= posArg.NumArgs
+	}
+	if full {
+		self.nextPositionalArgument++
+		self.numValuesForCurrentPositional = 0
 	}
 }
 

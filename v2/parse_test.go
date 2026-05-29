@@ -1078,3 +1078,61 @@ func (s *MySuite) TestRequired03(c *C) {
 	c.Check(len(opts.PosStringSlice), Equals, 1)
 	c.Check(opts.PosStringSlice[0], Equals, "x")
 }
+
+// ====================================================== NumArgs > 1 underflow
+
+// A switch that requires N values must report an error if the command-line
+// ends before N values have been given, instead of silently accepting fewer.
+func (s *MySuite) TestSwitchNumArgsUnderflow(c *C) {
+	_, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Switches: []string{"--strings"},
+		Dest:     "StringSlice",
+		NumArgs:  3,
+	})
+
+	argv := []string{"--strings", "1", "2"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, NotNil)
+}
+
+// A positional argument that requires N values must report an error if fewer
+// than N values are given, instead of silently accepting fewer.
+func (s *MySuite) TestPositionalNumArgsUnderflow(c *C) {
+	_, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:    "PosStringSlice",
+		NumArgs: 2,
+	})
+
+	argv := []string{"only-one"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, NotNil)
+}
+
+// A fixed-count (NumArgs > 1) positional must consume exactly NumArgs values
+// and then hand the remaining values to the next positional argument, rather
+// than swallowing everything.
+func (s *MySuite) TestFixedCountPositionalThenPositional(c *C) {
+	opts, ap := createPTestParser()
+
+	ap.Add(&Argument{
+		Name:    "PosStringSlice",
+		NumArgs: 2,
+	})
+
+	ap.Add(&Argument{
+		Name: "PosString",
+	})
+
+	argv := []string{"a", "b", "c"}
+	results := ap.parseArgv(argv)
+
+	c.Assert(results.parseError, IsNil)
+	c.Check(opts.PosStringSlice, DeepEquals, []string{"a", "b"})
+	c.Check(opts.PosString, Equals, "c")
+}
