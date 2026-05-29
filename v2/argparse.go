@@ -22,10 +22,16 @@ package argparse
 // Copyright (c) 2017 by Gilbert Ramirez <gram@alumni.rice.edu>
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 )
+
+// ErrHelp is returned by ParseArgs when the user requested help (for example
+// with -h or --help). By the time it is returned, the help text has already
+// been written to the parser's Stdout.
+var ErrHelp = errors.New("argparse: help requested")
 
 type ArgumentParser struct {
 	// If this is set, instead of printing the help statement,
@@ -85,18 +91,40 @@ func (self *ArgumentParser) Parse() {
 	self.parseRunFunction(true)
 }
 
-// Parse and run the function.
-func (self *ArgumentParser) parseRunFunction(shouldReturn bool) {
-	results := self.parseArgv(os.Args[1:])
-
+// ParseArgs parses the given arguments (not os.Args) and returns the Command
+// that was triggered, having filled out its Values. Unlike Parse and
+// ParseAndExit, it never calls os.Exit and does not run any Function callback;
+// it reports problems by returning an error. This makes it suitable for
+// embedding argparse in another program (such as a REPL or sub-shell) and for
+// testing your own command-line handling.
+//
+// If the user requested help, the help text is written to the parser's Stdout
+// and ErrHelp is returned. On a user input error, the error is returned (it is
+// not printed). On success, the error is nil.
+func (self *ArgumentParser) ParseArgs(argv []string) (*Command, error) {
+	results := self.parseArgv(argv)
 	cmd := results.triggeredCommand
 
 	if results.helpRequested {
 		helpString := self.helpString(cmd, results.ancestorCommands)
 		fmt.Fprintln(self.Stdout, helpString)
+		return cmd, ErrHelp
+	}
+	if results.parseError != nil {
+		return cmd, results.parseError
+	}
+	return cmd, nil
+}
+
+// Parse and run the function.
+func (self *ArgumentParser) parseRunFunction(shouldReturn bool) {
+	cmd, err := self.ParseArgs(os.Args[1:])
+
+	if err == ErrHelp {
+		// The help text was already written to Stdout by ParseArgs.
 		os.Exit(0)
-	} else if results.parseError != nil {
-		fmt.Fprintln(self.Stderr, results.parseError.Error())
+	} else if err != nil {
+		fmt.Fprintln(self.Stderr, err.Error())
 		os.Exit(1)
 	}
 
@@ -116,7 +144,7 @@ func (self *ArgumentParser) parseRunFunction(shouldReturn bool) {
 	// The chosen command had no function to run!
 	if !shouldReturn {
 		// Print the usage to stderr, and exit with non-0.
-		helpString := self.helpString(cmd, results.ancestorCommands)
+		helpString := self.helpString(cmd, cmd.ancestors())
 		fmt.Fprintln(self.Stderr, helpString)
 		os.Exit(1)
 	}

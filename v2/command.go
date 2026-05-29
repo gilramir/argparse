@@ -47,12 +47,26 @@ type Command struct {
 
 	// Pointer to the ArgumentParser
 	ap *ArgumentParser
+
+	// Pointer to the parent Command (nil for the root Command).
+	parent *Command
+}
+
+// ancestors returns the chain of parent Commands from the root down to (but
+// not including) this Command.
+func (self *Command) ancestors() []*Command {
+	var chain []*Command
+	for p := self.parent; p != nil; p = p.parent {
+		chain = append([]*Command{p}, chain...)
+	}
+	return chain
 }
 
 func (self *Command) init(parent *Command, ap *ArgumentParser) {
 	self.Seen = make(map[string]bool)
 	self.CommandSeen = make(map[string]bool)
 	self.ap = ap
+	self.parent = parent
 
 	// Nothing futher for the root Command
 	if parent == nil {

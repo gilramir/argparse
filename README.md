@@ -41,7 +41,7 @@ name inside it is `argparse`.
   * [Single-level commands](#single-level-commands)
   * [Sub-commands](#sub-commands)
   * [Default values and "Seen" arguments](#default-values-and-seen-arguments)
-* [Parse vs. ParseAndExit](#parse-vs-parseandexit)
+* [Parse vs. ParseAndExit vs. ParseArgs](#parse-vs-parseandexit-vs-parseargs)
 * [Accepted command-line syntax](#accepted-command-line-syntax)
 * [Values struct and field names](#values-struct-and-field-names)
 * [Command](#command)
@@ -312,10 +312,10 @@ func DoOpen(cmd *argparse.Command, values argparse.Values) error {
 }
 ```
 
-# Parse vs. ParseAndExit
+# Parse vs. ParseAndExit vs. ParseArgs
 
-Both methods parse `os.Args`, handle `-h`/`--help`, and report command-line
-errors. They differ in what happens after a successful parse:
+`Parse()` and `ParseAndExit()` parse `os.Args`, handle `-h`/`--help`, and report
+command-line errors. They differ in what happens after a successful parse:
 
 | Situation | `Parse()` | `ParseAndExit()` |
 |---|---|---|
@@ -328,6 +328,28 @@ Use `Parse()` for a single-level program where you inspect the values struct
 after parsing. Use `ParseAndExit()` when your commands do their work in
 `Function` callbacks; it guarantees that running without selecting a command
 that does something is reported as an error.
+
+If you don't want argparse to call `os.Exit` at all — for example to embed it in
+a REPL or sub-shell, or to test your own command-line handling — use
+`ParseArgs`, which parses an explicit argument slice and returns an error
+instead of exiting:
+
+```go
+cmd, err := ap.ParseArgs([]string{"open", "--reason", "maintenance"})
+if err == argparse.ErrHelp {
+	// The user asked for help; the help text was already written to Stdout.
+	return
+} else if err != nil {
+	fmt.Fprintln(os.Stderr, err)
+	return
+}
+// cmd is the triggered Command, with its Values filled in. ParseArgs does not
+// run any Function callback.
+```
+
+`ParseArgs` returns `argparse.ErrHelp` when help was requested (after writing the
+help text to the parser's `Stdout`), the parse error on bad input, or `nil` on
+success.
 
 # Accepted command-line syntax
 
