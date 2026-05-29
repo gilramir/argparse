@@ -34,7 +34,7 @@ func (s *MySuite) TestValueBool(c *C) {
 	c.Assert(v.Bool, Equals, false)
 
 	// seenWithoutValue works
-	err := parserVal.seenWithoutValue()
+	err := parserVal.seenWithoutValue(&DefaultMessages_en)
 	c.Assert(err, IsNil)
 	c.Check(v.Bool, Equals, true)
 
@@ -81,7 +81,7 @@ func (s *MySuite) TestValueString(c *C) {
 	c.Assert(v.String, Equals, "")
 
 	// seenWithoutValue does not work
-	err := parserVal.seenWithoutValue()
+	err := parserVal.seenWithoutValue(&DefaultMessages_en)
 	c.Assert(err, NotNil)
 
 	// parse works
@@ -133,7 +133,7 @@ func (s *MySuite) TestValueInt(c *C) {
 	c.Assert(v.Int, Equals, 0)
 
 	// seenWithoutValue does not work
-	err := parserVal.seenWithoutValue()
+	err := parserVal.seenWithoutValue(&DefaultMessages_en)
 	c.Assert(err, NotNil)
 
 	// parse works
@@ -202,7 +202,7 @@ func (s *MySuite) TestValueInt64(c *C) {
 	c.Assert(v.Int64, Equals, int64(0))
 
 	// seenWithoutValue does not work
-	err := parserVal.seenWithoutValue()
+	err := parserVal.seenWithoutValue(&DefaultMessages_en)
 	c.Assert(err, NotNil)
 
 	// parse works
@@ -271,7 +271,7 @@ func (s *MySuite) TestValueFloat(c *C) {
 	c.Assert(v.Float, Equals, 0.0)
 
 	// seenWithoutValue does not work
-	err := parserVal.seenWithoutValue()
+	err := parserVal.seenWithoutValue(&DefaultMessages_en)
 	c.Assert(err, NotNil)
 
 	// parse works
@@ -328,7 +328,7 @@ func (s *MySuite) TestValueDuration(c *C) {
 	c.Assert(v.Duration.Seconds(), Equals, 0.0)
 
 	// seenWithoutValue does not work
-	err := parserVal.seenWithoutValue()
+	err := parserVal.seenWithoutValue(&DefaultMessages_en)
 	c.Assert(err, NotNil)
 
 	// set v.Int to some value, and then check that

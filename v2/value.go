@@ -26,7 +26,7 @@ type valueType interface {
 
 	// If the switch is seen but has no value after it.
 	// This is only legal for bools
-	seenWithoutValue() error
+	seenWithoutValue(m *Messages) error
 
 	defaultSwitchNumArgs() int
 
@@ -66,7 +66,7 @@ func (self *boolValueT) defaultSwitchNumArgs() int {
 	return 0
 }
 
-func (self *boolValueT) seenWithoutValue() error {
+func (self *boolValueT) seenWithoutValue(m *Messages) error {
 	self.value.SetBool(true)
 	return nil
 }
@@ -121,8 +121,8 @@ func (self *stringValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *stringValueT) seenWithoutValue() error {
-	return errors.New("Need a string value")
+func (self *stringValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedStringValue)
 }
 
 func (self *stringValueT) parse(m *Messages, text string) error {
@@ -170,8 +170,8 @@ func (self *intValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *intValueT) seenWithoutValue() error {
-	return errors.New("Need an int value")
+func (self *intValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedIntValue)
 }
 
 func text_to_int64(text string) (int64, error) {
@@ -197,7 +197,7 @@ func (self *intValueT) parse(m *Messages, text string) error {
 	i64, err := text_to_int64(text)
 	i := int(i64)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to an integer: %w", text, err)
+		return fmt.Errorf(m.CannotParseIntegerFmt, text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -243,14 +243,14 @@ func (self *int64ValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *int64ValueT) seenWithoutValue() error {
-	return errors.New("Need an int64 value")
+func (self *int64ValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedInt64Value)
 }
 
 func (self *int64ValueT) parse(m *Messages, text string) error {
 	i, err := text_to_int64(text)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to an integer: %w", text, err)
+		return fmt.Errorf(m.CannotParseIntegerFmt, text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -296,14 +296,14 @@ func (self *floatValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *floatValueT) seenWithoutValue() error {
-	return errors.New("Need a float value")
+func (self *floatValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedFloatValue)
 }
 
 func (self *floatValueT) parse(m *Messages, text string) error {
 	f, err := strconv.ParseFloat(text, 64)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to a float", text)
+		return fmt.Errorf(m.CannotParseFloatFmt, text)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -349,15 +349,14 @@ func (self *durationValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *durationValueT) seenWithoutValue() error {
-	// TODO - needs to support i18n
-	return errors.New("Need a time duration string")
+func (self *durationValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedDurationValue)
 }
 
 func (self *durationValueT) parse(m *Messages, text string) error {
 	d, err := time.ParseDuration(text)
 	if err != nil {
-		return fmt.Errorf("Cannot parse \"%s\" as a time duration: %s", text, err)
+		return fmt.Errorf(m.CannotParseDurationFmt, text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -403,8 +402,8 @@ func (self *boolSliceValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *boolSliceValueT) seenWithoutValue() error {
-	return errors.New("Need a bool value")
+func (self *boolSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedBoolValue)
 }
 
 func (self *boolSliceValueT) parse(m *Messages, text string) error {
@@ -458,8 +457,8 @@ func (self *stringSliceValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *stringSliceValueT) seenWithoutValue() error {
-	return errors.New("Need a string value")
+func (self *stringSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedStringValue)
 }
 
 func (self *stringSliceValueT) parse(m *Messages, text string) error {
@@ -508,14 +507,14 @@ func (self *intSliceValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *intSliceValueT) seenWithoutValue() error {
-	return errors.New("Need an int value")
+func (self *intSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedIntValue)
 }
 
 func (self *intSliceValueT) parse(m *Messages, text string) error {
 	i64, err := text_to_int64(text)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to an integer: %w", text, err)
+		return fmt.Errorf(m.CannotParseIntegerFmt, text, err)
 	}
 	i := int(i64)
 	if len(self.choices) > 0 {
@@ -563,14 +562,14 @@ func (self *int64SliceValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *int64SliceValueT) seenWithoutValue() error {
-	return errors.New("Need an int64 value")
+func (self *int64SliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedInt64Value)
 }
 
 func (self *int64SliceValueT) parse(m *Messages, text string) error {
 	i, err := text_to_int64(text)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to an int64: %w", text, err)
+		return fmt.Errorf(m.CannotParseIntegerFmt, text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -617,14 +616,14 @@ func (self *floatSliceValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *floatSliceValueT) seenWithoutValue() error {
-	return errors.New("Need a float value")
+func (self *floatSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedFloatValue)
 }
 
 func (self *floatSliceValueT) parse(m *Messages, text string) error {
 	f, err := strconv.ParseFloat(text, 64)
 	if err != nil {
-		return fmt.Errorf("Cannot convert \"%s\" to a float", text)
+		return fmt.Errorf(m.CannotParseFloatFmt, text)
 	}
 	if len(self.choices) > 0 {
 		ok := false
@@ -671,14 +670,14 @@ func (self *durationSliceValueT) defaultSwitchNumArgs() int {
 	return 1
 }
 
-func (self *durationSliceValueT) seenWithoutValue() error {
-	return errors.New("Need a time duration value")
+func (self *durationSliceValueT) seenWithoutValue(m *Messages) error {
+	return errors.New(m.NeedDurationValue)
 }
 
 func (self *durationSliceValueT) parse(m *Messages, text string) error {
 	d, err := time.ParseDuration(text)
 	if err != nil {
-		return fmt.Errorf("Cannot parse \"%s\" as a time duration: %s", text, err)
+		return fmt.Errorf(m.CannotParseDurationFmt, text, err)
 	}
 	if len(self.choices) > 0 {
 		ok := false

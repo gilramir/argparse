@@ -134,7 +134,7 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			// If the argument is a boolean argument (no value), then
 			// we mark it as seen and move on.
 			if lastArgument.NumArgs == 0 {
-				err := lastArgument.value.seenWithoutValue()
+				err := lastArgument.value.seenWithoutValue(&ap.Messages)
 				if err != nil {
 					panic(fmt.Sprintf("not reached for arg %s: %s",
 						lastArgLabel, err))
@@ -151,7 +151,7 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			err := lastArgument.value.parse(&ap.Messages, argToken.value)
 			if err != nil {
 				results.parseError = fmt.Errorf(
-					"While parsing value for %s: %w", lastArgLabel, err)
+					ap.Messages.WhileParsingValueForFmt, lastArgLabel, err)
 				return results
 			}
 		case tokValueNotPresent:
@@ -159,10 +159,10 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 				panic("Found ValueNotPresent without a preceding argument")
 			}
 			// only bools can have no value
-			err := lastArgument.value.seenWithoutValue()
+			err := lastArgument.value.seenWithoutValue(&ap.Messages)
 			if err != nil {
 				results.parseError = fmt.Errorf(
-					"%s argument: %w", lastArgLabel, err)
+					ap.Messages.ArgumentErrorFmt, lastArgLabel, err)
 				return results
 			}
 		case tokSubParser:
@@ -200,7 +200,7 @@ func (self *parserState) runParser(ap *ArgumentParser, argv []string) *parseResu
 			idx = len(cmd.positionalArguments) - 1
 		}
 		arg := cmd.positionalArguments[idx]
-		results.parseError = fmt.Errorf("Expected a required '%s' argument", arg.PrettyName())
+		results.parseError = fmt.Errorf(ap.Messages.ExpectedRequiredArgumentFmt, arg.PrettyName())
 		return results
 	}
 
@@ -235,7 +235,7 @@ func (self *parserState) stateArgument() stateFunc {
 
 	arg := self.args[self.pos]
 	if arg == "" {
-		self.emitWithValue(tokError, "<empty string>")
+		self.emitWithValue(tokError, self.ap.Messages.EmptyArgument)
 		return nil
 	}
 
@@ -267,7 +267,7 @@ func (self *parserState) stateArgument() stateFunc {
 		return self.statePositionalArgument
 	}
 
-	self.emitWithValue(tokError, fmt.Sprintf("Unexpected argument: %s", arg))
+	self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.UnexpectedArgumentFmt, arg))
 	return nil
 }
 
@@ -294,7 +294,7 @@ func (self *parserState) stateMaybeOneValue() stateFunc {
 
 func (self *parserState) stateOneValue() stateFunc {
 	if self.pos == len(self.args) {
-		self.emitWithValue(tokError, fmt.Sprintf("Expected a value after %s", self.lastSwitch))
+		self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.ExpectedValueAfterFmt, self.lastSwitch))
 		return nil
 	}
 
@@ -308,7 +308,7 @@ func (self *parserState) stateMultipleValues() stateFunc {
 		// The command-line ended before all the required values were given.
 		if self.needNValues > 0 {
 			self.emitWithValue(tokError,
-				fmt.Sprintf("Expected a value after %s", self.lastSwitch))
+				fmt.Sprintf(self.ap.Messages.ExpectedValueAfterFmt, self.lastSwitch))
 		}
 		return nil
 	}
@@ -329,7 +329,7 @@ func (self *parserState) stateMultipleValues() stateFunc {
 func (self *parserState) stateSwitchArgument() stateFunc {
 	text := self.args[self.pos]
 	if text == "" {
-		self.emitWithValue(tokError, "<empty string>")
+		self.emitWithValue(tokError, self.ap.Messages.EmptyArgument)
 		return nil
 	}
 	// "--" is special... it means the rest of the line is a positional argument
@@ -340,7 +340,7 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 			return self.statePositionalArgument
 		} else {
 			self.emitWithValue(tokError,
-				"'--' is given but there's no positional argument allowed")
+				self.ap.Messages.DashDashWithoutPositional)
 			return nil
 		}
 	}
@@ -350,7 +350,7 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 	equalsIndex := strings.Index(text, "=")
 	var rhs string
 	if equalsIndex == 0 {
-		self.emitWithValue(tokError, "A switch name cannot begin with '='")
+		self.emitWithValue(tokError, self.ap.Messages.SwitchNameCannotBeginWithEquals)
 		return nil
 	} else if equalsIndex > 0 {
 		rhs = text[equalsIndex+1:]
@@ -364,7 +364,7 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 				self.emitToken(tokHelp)
 				return nil
 			} else {
-				self.emitWithValue(tokError, hw+" does not accept a value")
+				self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.DoesNotAcceptValueFmt, hw))
 				return nil
 			}
 		}
@@ -455,7 +455,7 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 	// Didn't match ?
 	if !match {
 		// Didn't find a switch with that name
-		self.emitWithValue(tokError, fmt.Sprintf("No such switch: %s", text))
+		self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.NoSuchSwitchFmt, text))
 		return nil
 	}
 
@@ -479,7 +479,7 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 	} else {
 		if arg.NumArgs == 0 {
 			self.emitWithValue(tokError,
-				fmt.Sprintf("The %s switch does not take a value", text))
+				fmt.Sprintf(self.ap.Messages.SwitchDoesNotTakeValueFmt, text))
 			return nil
 		} else if arg.NumArgs == 1 {
 			self.emitWithValue(tokValue, rhs)
@@ -526,7 +526,7 @@ func (self *parserState) statePositionalArgument() stateFunc {
 	if len(arg) > 1 && arg[0] == '-' {
 		return self.stateSwitchArgument
 	}
-	self.emitWithValue(tokError, fmt.Sprintf("Unexpected positional argument: %s", arg))
+	self.emitWithValue(tokError, fmt.Sprintf(self.ap.Messages.UnexpectedPositionalArgumentFmt, arg))
 	return nil
 }
 

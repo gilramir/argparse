@@ -16,7 +16,8 @@ Highlights:
 * Argparse will tell you if a particular option was present on the command-line
   or not present, in case you need that information.
 * Options can be inherited by sub-commands, so you need only define them once.
-* The built-in help strings are translatable.
+* The user-facing text (help output and error messages) is translatable, with
+  English and Korean built in.
 
 # Installation
 
@@ -545,10 +546,9 @@ can be changed (for example, for internationalization):
 * **HelpSwitches** — the switches that argparse interprets as a request for help.
   The default is `[]string{"-h", "--help"}`.
 
-* **Messages** — a struct of all the messages that argparse can print to users.
-  You can override this to provide translations. The default is the built-in
-  English version of these messages. Not all strings are supported via this
-  mechanism yet; it's still a work in progress.
+* **Messages** — a `Messages` struct holding every string that argparse prints to
+  the user: the help-output headers and all command-line error messages. Override
+  it to translate that text.
 
 ```go
 ap := argparse.New(&argparse.Command{
@@ -557,6 +557,38 @@ ap := argparse.New(&argparse.Command{
 })
 ap.HelpSwitches = []string{"-h", "--help", "--aide"}
 ```
+
+Argparse ships with built-in `Messages` values you can assign directly:
+
+* `argparse.DefaultMessages_en` — English (the default).
+* `argparse.DefaultMessages_ko` — Korean.
+
+```go
+ap := argparse.New(&argparse.Command{
+	Description: "이것은 예제 프로그램입니다",
+	Values:      opts,
+})
+ap.Messages = argparse.DefaultMessages_ko
+```
+
+To provide your own translation, copy `DefaultMessages_en`, then change the
+fields you want:
+
+```go
+msgs := argparse.DefaultMessages_en
+msgs.NoSuchSwitchFmt = "No existe la opción: %s"
+msgs.HelpDescription = "Ver esta lista de opciones"
+ap.Messages = msgs
+```
+
+Note: fields whose name ends in `Fmt` are format strings for `fmt.Sprintf` /
+`fmt.Errorf`. A translation must keep the same verbs (`%s`, `%v`, `%w`) so the
+argument values are still substituted correctly.
+
+Only text shown to the *user* of your program is translatable. Errors caused by
+misusing the argparse API itself (such as adding an argument with no matching
+struct field) are reported via `panic()` and are intentionally not part of
+`Messages`.
 
 # Examples
 
