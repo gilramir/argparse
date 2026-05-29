@@ -58,6 +58,7 @@ type Command struct {
 	switchArguments     []*Argument
 	positionalArguments []*Argument
 	mutexGroups         []*mutexGroup
+	passThroughArg      *Argument
 
 	numRequiredPositionalArguments int
 	// -1 if there is no max (i.e., if the final NumArgsGlob is "*" or "+")
@@ -204,6 +205,27 @@ func (self *Command) Add(arg *Argument) {
 	if dv := arg.value.getValue(); !dv.IsZero() {
 		arg.hasDefault = true
 		arg.defaultValue = dv.Interface()
+	}
+
+	// A pass-through argument is a terminal positional that captures the rest
+	// of the command-line verbatim. It behaves like a "*" positional for the
+	// purposes of accounting, and there can only be one (the "can't add after
+	// *" rule below enforces that nothing follows it).
+	if arg.PassThrough {
+		if !arg.isPositional() {
+			panic(fmt.Sprintf(
+				"PassThrough can only be set on a positional argument, not %s",
+				arg.PrettyName()))
+		}
+		if _, ok := arg.value.(*stringSliceValueT); !ok {
+			panic(fmt.Sprintf(
+				"PassThrough argument '%s' must have a []string destination",
+				arg.PrettyName()))
+		}
+		if arg.NumArgs == 0 && arg.NumArgsGlob == "" {
+			arg.NumArgsGlob = "*"
+		}
+		self.passThroughArg = arg
 	}
 
 	if arg.isPositional() {

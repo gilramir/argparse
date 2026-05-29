@@ -43,6 +43,14 @@ type Argument struct {
 	NumArgs     int
 	NumArgsGlob string
 
+	// If true, this positional argument captures every remaining token on the
+	// command-line verbatim (including tokens beginning with '-' and a literal
+	// '--'), with no further switch parsing. It must be the last positional
+	// argument and its destination field must be []string. Capture begins when
+	// a '--' is seen, or when the first token destined for this argument is
+	// reached. See the README for the details.
+	PassThrough bool
+
 	// If true, this switch argument must be given on the command-line;
 	// otherwise a parse error is returned. This only applies to switch
 	// arguments; the requiredness of positional arguments is controlled by

@@ -375,6 +375,12 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 	}
 	// "--" is special... it means the rest of the line is a positional argument
 	if text == "--" {
+		// If there's a pass-through argument, "--" sends the entire remainder
+		// to it verbatim (this works even with no other positional arguments).
+		if self.cmd.passThroughArg != nil {
+			self.pos += 1
+			return self.statePassThrough
+		}
 		// Positional argument?
 		if self.nextPositionalArgument == 0 && len(self.cmd.positionalArguments) > 0 {
 			self.pos += 1
@@ -562,6 +568,14 @@ func (self *parserState) statePositionalArgument() stateFunc {
 		return nil
 	}
 
+	// If the positional we're about to fill is the pass-through argument,
+	// switch to capturing the rest of the command-line verbatim.
+	if self.cmd.passThroughArg != nil &&
+		self.nextPositionalArgument < len(self.cmd.positionalArguments) &&
+		self.cmd.positionalArguments[self.nextPositionalArgument] == self.cmd.passThroughArg {
+		return self.statePassThrough
+	}
+
 	arg := self.args[self.pos]
 
 	// Consume this token as a value for the current positional argument if
@@ -612,14 +626,14 @@ func (self *parserState) consumedPositionalValue(posArg *Argument) {
 	}
 }
 
-// Consume the rest of the args
-/*
+// statePassThrough consumes every remaining token verbatim into the command's
+// pass-through argument, with no switch or "--" interpretation.
 func (self *parserState) statePassThrough() stateFunc {
-	for ; self.pos < len(self.args); self.pos++ {
-		arg := self.args[self.pos]
-		self.emitWithArgument(tokArgument, self.stickyArg, self.stickyArg.String)
-		self.emitWithValue(tokValue, arg)
+	passArg := self.cmd.passThroughArg
+	for self.pos < len(self.args) {
+		self.emitWithArgument(tokArgument, passArg, passArg.Name)
+		self.emitWithValue(tokValue, self.args[self.pos])
+		self.pos++
 	}
 	return nil
 }
-*/

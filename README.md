@@ -44,6 +44,7 @@ name inside it is `argparse`.
 * [Parse vs. ParseAndExit vs. ParseArgs](#parse-vs-parseandexit-vs-parseargs)
 * [Version](#version)
 * [Accepted command-line syntax](#accepted-command-line-syntax)
+* [Capturing leftover arguments](#capturing-leftover-arguments)
 * [Values struct and field names](#values-struct-and-field-names)
   * [Custom value types](#custom-value-types)
 * [Command](#command)
@@ -395,6 +396,46 @@ myprog -- -5 -file.txt
 The value of a switch may begin with a hyphen without `--` (for example
 `--count -5` or `--count=-5`), because argparse knows a value is expected there.
 
+# Capturing leftover arguments
+
+For wrapper programs that forward arguments to another command (think
+`mytool run -- some-cmd --its-own-flags`), set `PassThrough: true` on a trailing
+positional argument with a `[]string` destination. It captures the remaining
+tokens **verbatim** — including ones beginning with `-` and any literal `--` —
+without trying to interpret them as this program's switches.
+
+```go
+type Options struct {
+	Verbose bool
+	Cmd     []string // everything to forward
+}
+
+ap.Add(&argparse.Argument{Switches: []string{"-v", "--verbose"}})
+ap.Add(&argparse.Argument{Name: "Cmd", PassThrough: true})
+```
+
+Capture begins at the first of:
+
+* a `--` token (which is consumed as the separator) — this works even when there
+  are no other positional arguments; or
+* the first token that would be assigned to the pass-through argument (after any
+  preceding switches and positionals have been handled).
+
+Once capture begins, nothing further is interpreted: switches that happen to
+match this program's own (and additional `--` tokens) are stored as-is. The
+program's switches and any preceding positionals before capture begins are
+parsed normally.
+
+```
+$ mytool -v -- some-cmd --flag -x
+# Verbose == true; Cmd == ["some-cmd", "--flag", "-x"]
+```
+
+Because a bare leading `-token` is otherwise treated as a switch, use `--` when
+the very first forwarded token begins with a hyphen and there is no preceding
+positional. A pass-through argument must be the last positional and have a
+`[]string` destination.
+
 # Values struct and field names
 
 The Values struct needs to have field names that match either the short name or
@@ -517,6 +558,11 @@ The following fields can be set in an `Argument`:
 * **NumArgsGlob**: (optional) For positional arguments only, a pattern
   (`"*"`, `"+"`, or `"?"`) describing how many values may or must be given. See
   [NumArgs and NumArgsGlob](#numargs-and-numargsglob).
+
+* **PassThrough**: (positional arguments only) If true, this argument captures
+  the rest of the command-line verbatim. It must be the last positional and have
+  a `[]string` destination. See
+  [Capturing leftover arguments](#capturing-leftover-arguments).
 
 * **Required**: (switch arguments only) If true, the switch must be given on the
   command-line; otherwise a parse error is returned. The requiredness of
