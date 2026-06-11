@@ -559,7 +559,6 @@ func (self *parserState) stateSwitchArgument() stateFunc {
 			panic(fmt.Sprintf("Unexpected num args: %v", arg.NumArgs))
 		}
 	}
-	panic("not reached")
 }
 
 func (self *parserState) statePositionalArgument() stateFunc {

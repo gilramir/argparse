@@ -355,8 +355,6 @@ func (self *Argument) sanityCheckValueType(dest Values) error {
 		return errors.New(fmt.Sprintf("Argument %s cannot be of type %s",
 			self.PrettyName(), fieldType.String()))
 	}
-	panic("Should not reach here.")
-	return nil
 }
 
 func (self *Argument) PrettyName() string {
