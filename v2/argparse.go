@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 // ErrHelp is returned by ParseArgs when the user requested help (for example
@@ -148,7 +149,7 @@ func (self *ArgumentParser) parseRunFunction(shouldReturn bool) {
 		// The help or version text was already written to Stdout by ParseArgs.
 		os.Exit(0)
 	} else if err != nil {
-		fmt.Fprintln(self.Stderr, err.Error())
+		fmt.Fprintf(self.Stderr, "%s: %s\n", filepath.Base(self.Root.Name), err.Error())
 		os.Exit(1)
 	}
 
